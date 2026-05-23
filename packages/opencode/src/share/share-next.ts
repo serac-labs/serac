@@ -15,7 +15,11 @@ export namespace ShareNext {
     return Config.get().then((x) => x.enterprise?.url ?? "https://opncd.ai")
   }
 
-  const disabled = process.env["OPENCODE_DISABLE_SHARE"] === "true" || process.env["OPENCODE_DISABLE_SHARE"] === "1"
+  const disabled =
+    process.env["SNOW_CODE_DISABLE_SHARE"] === "true" ||
+    process.env["SNOW_CODE_DISABLE_SHARE"] === "1" ||
+    process.env["OPENCODE_DISABLE_SHARE"] === "true" ||
+    process.env["OPENCODE_DISABLE_SHARE"] === "1"
 
   const shareNextUnsubs: (() => void)[] = []
   export async function init() {
