@@ -40,6 +40,13 @@ const archMap = {
 let platform = platformMap[os.platform()] || os.platform()
 let arch = archMap[os.arch()] || os.arch()
 
+// Windows 11 on ARM64 can execute x64 binaries via the built-in emulator.
+// We don't ship a native windows-arm64 build, so fall back to x64.
+const nativeArch = arch
+if (platform === "windows" && arch === "arm64") {
+  arch = "x64"
+}
+
 const binaryName = platform === "windows" ? "snow-code.exe" : "snow-code"
 
 // First check: binary in our own bin directory (from postinstall download)
@@ -81,7 +88,7 @@ if (resolved) {
   run(resolved)
 }
 
-console.error("snow-code: Binary not found for " + platform + "-" + arch)
-console.error("Try running: npm rebuild snow-code")
-console.error("Or download manually from: https://github.com/groeimetai/snow-flow/releases")
+console.error("serac: no binary found for " + platform + "-" + nativeArch)
+console.error("Try: npm rebuild @serac-labs/core")
+console.error("Or download manually: https://github.com/serac-labs/serac/releases")
 process.exit(1)

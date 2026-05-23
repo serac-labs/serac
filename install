@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-APP=snow-code
+APP=snow-flow
 
 MUTED='\033[0;2m'
 RED='\033[0;31m'
@@ -9,19 +9,19 @@ NC='\033[0m' # No Color
 
 usage() {
     cat <<EOF
-Snow-Code Installer
+Serac Installer
 
-Usage: install.sh [options]
+Usage: install [options]
 
 Options:
     -h, --help              Display this help message
-    -v, --version <version> Install a specific version (e.g., 1.0.180)
+    -v, --version <version> Install a specific version (e.g., 1.0.20)
     -b, --binary <path>     Install from a local binary instead of downloading
         --no-modify-path    Don't modify shell config files (.zshrc, .bashrc, etc.)
 
 Examples:
-    curl -fsSL https://snow-flow.dev/install | bash
-    curl -fsSL https://snow-flow.dev/install | bash -s -- --version 1.0.180
+    curl -fsSL https://serac.build/install | bash
+    curl -fsSL https://serac.build/install | bash -s -- --version 1.0.20
     ./install --binary /path/to/snow-code
 EOF
 }
@@ -99,20 +99,25 @@ else
       fi
     fi
 
+    # Windows 11 on ARM64 runs x64 binaries via the built-in emulator.
+    # No native windows-arm64 build ships, so fall back to x64.
+    native_arch="$arch"
+    if [ "$os" = "windows" ] && [ "$arch" = "arm64" ]; then
+      arch="x64"
+    fi
+
     combo="$os-$arch"
     case "$combo" in
       linux-x64|linux-arm64|darwin-x64|darwin-arm64|windows-x64)
         ;;
       *)
-        echo -e "${RED}Unsupported OS/Arch: $os/$arch${NC}"
+        echo -e "${RED}Unsupported OS/Arch: $os/$native_arch${NC}"
         exit 1
         ;;
     esac
 
-    archive_ext=".zip"
-    if [ "$os" = "linux" ]; then
-      archive_ext=".tar.gz"
-    fi
+    # Release artefacts are always .tar.gz (see publish-npm workflow).
+    archive_ext=".tar.gz"
 
     is_musl=false
     if [ "$os" = "linux" ]; then
@@ -154,21 +159,15 @@ else
     filename="$APP-$target$archive_ext"
 
 
-    if [ "$os" = "linux" ]; then
-        if ! command -v tar >/dev/null 2>&1; then
-             echo -e "${RED}Error: 'tar' is required but not installed.${NC}"
-             exit 1
-        fi
-    else
-        if ! command -v unzip >/dev/null 2>&1; then
-            echo -e "${RED}Error: 'unzip' is required but not installed.${NC}"
-            exit 1
-        fi
+    # tar is built into modern macOS, Linux, and Windows 10+ / Git Bash.
+    if ! command -v tar >/dev/null 2>&1; then
+        echo -e "${RED}Error: 'tar' is required but not installed.${NC}"
+        exit 1
     fi
 
     if [ -z "$requested_version" ]; then
-        url="https://github.com/groeimetai/snow-flow/releases/latest/download/$filename"
-        specific_version=$(curl -s https://api.github.com/repos/groeimetai/snow-flow/releases/latest | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
+        url="https://github.com/serac-labs/serac/releases/latest/download/$filename"
+        specific_version=$(curl -s https://api.github.com/repos/serac-labs/serac/releases/latest | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
 
         if [[ $? -ne 0 || -z "$specific_version" ]]; then
             echo -e "${RED}Failed to fetch version information${NC}"
@@ -177,14 +176,14 @@ else
     else
         # Strip leading 'v' if present
         requested_version="${requested_version#v}"
-        url="https://github.com/groeimetai/snow-flow/releases/download/v${requested_version}/$filename"
+        url="https://github.com/serac-labs/serac/releases/download/v${requested_version}/$filename"
         specific_version=$requested_version
 
         # Verify the release exists before downloading
-        http_status=$(curl -sI -o /dev/null -w "%{http_code}" "https://github.com/groeimetai/snow-flow/releases/tag/v${requested_version}")
+        http_status=$(curl -sI -o /dev/null -w "%{http_code}" "https://github.com/serac-labs/serac/releases/tag/v${requested_version}")
         if [ "$http_status" = "404" ]; then
             echo -e "${RED}Error: Release v${requested_version} not found${NC}"
-            echo -e "${MUTED}Available releases: https://github.com/groeimetai/snow-flow/releases${NC}"
+            echo -e "${MUTED}Available releases: https://github.com/serac-labs/serac/releases${NC}"
             exit 1
         fi
     fi
@@ -205,12 +204,17 @@ print_message() {
 }
 
 check_version() {
-    if command -v snow-code >/dev/null 2>&1; then
-        snow_code_path=$(which snow-code)
-
-        ## Check the installed version
-        installed_version=$(snow-code --version 2>/dev/null || echo "")
-
+    # Prefer `serac`; fall back to legacy `snow-code` / `snow-flow` for users
+    # upgrading from older installs.
+    local existing
+    for cmd in serac snow-code snow-flow; do
+        if command -v "$cmd" >/dev/null 2>&1; then
+            existing="$cmd"
+            break
+        fi
+    done
+    if [ -n "${existing:-}" ]; then
+        installed_version=$("$existing" --version 2>/dev/null || echo "")
         if [[ "$installed_version" != "$specific_version" ]]; then
             print_message info "${MUTED}Installed version: ${NC}$installed_version."
         else
@@ -310,9 +314,32 @@ download_with_progress() {
     return $ret
 }
 
+install_aliases() {
+    # The on-disk binary is `snow-code` (or `snow-code.exe` on Windows).
+    # Expose `serac` (current name) and `snow-flow` (legacy) as siblings so
+    # users running either command work.
+    local src_name="snow-code"
+    if [ "$os" = "windows" ] && [ -f "${INSTALL_DIR}/snow-code.exe" ]; then
+        src_name="snow-code.exe"
+    fi
+    local serac_name="serac"
+    local flow_name="snow-flow"
+    if [ "$os" = "windows" ]; then
+        serac_name="serac.exe"
+        flow_name="snow-flow.exe"
+    fi
+    (cd "$INSTALL_DIR" && ln -sf "$src_name" "$serac_name" && ln -sf "$src_name" "$flow_name") 2>/dev/null || {
+        # On filesystems without symlink support (e.g. some Windows setups),
+        # fall back to a copy.
+        cp -f "${INSTALL_DIR}/${src_name}" "${INSTALL_DIR}/${serac_name}"
+        cp -f "${INSTALL_DIR}/${src_name}" "${INSTALL_DIR}/${flow_name}"
+        chmod 755 "${INSTALL_DIR}/${serac_name}" "${INSTALL_DIR}/${flow_name}"
+    }
+}
+
 download_and_install() {
-    print_message info "\n${MUTED}Installing ${NC}snow-code ${MUTED}version: ${NC}$specific_version"
-    local tmp_dir="${TMPDIR:-/tmp}/snow_code_install_$$"
+    print_message info "\n${MUTED}Installing ${NC}serac ${MUTED}version: ${NC}$specific_version"
+    local tmp_dir="${TMPDIR:-/tmp}/serac_install_$$"
     mkdir -p "$tmp_dir"
 
     if [[ "$os" == "windows" ]] || ! [ -t 2 ] || ! download_with_progress "$url" "$tmp_dir/$filename"; then
@@ -320,21 +347,34 @@ download_and_install() {
         curl -# -L -o "$tmp_dir/$filename" "$url"
     fi
 
-    if [ "$os" = "linux" ]; then
-        tar -xzf "$tmp_dir/$filename" -C "$tmp_dir"
-    else
-        unzip -q "$tmp_dir/$filename" -d "$tmp_dir"
-    fi
+    tar -xzf "$tmp_dir/$filename" -C "$tmp_dir"
 
-    mv "$tmp_dir/snow-code" "$INSTALL_DIR"
-    chmod 755 "${INSTALL_DIR}/snow-code"
+    # The release tarball is packed with `bin/` and `mcp/` at its root
+    # (see publish-npm workflow). Mirror that layout into the install prefix.
+    local install_prefix
+    install_prefix="$(dirname "$INSTALL_DIR")"
+    mkdir -p "$install_prefix"
+    cp -R "$tmp_dir/bin/." "$INSTALL_DIR/"
+    if [ -d "$tmp_dir/mcp" ]; then
+        rm -rf "$install_prefix/mcp"
+        cp -R "$tmp_dir/mcp" "$install_prefix/mcp"
+    fi
+    if [ -f "${INSTALL_DIR}/snow-code" ]; then
+        chmod 755 "${INSTALL_DIR}/snow-code"
+    fi
+    install_aliases
     rm -rf "$tmp_dir"
 }
 
 install_from_binary() {
-    print_message info "\n${MUTED}Installing ${NC}snow-code ${MUTED}from: ${NC}$binary_path"
-    cp "$binary_path" "${INSTALL_DIR}/snow-code"
-    chmod 755 "${INSTALL_DIR}/snow-code"
+    print_message info "\n${MUTED}Installing ${NC}serac ${MUTED}from: ${NC}$binary_path"
+    local dest_name="snow-code"
+    if [ "$os" = "windows" ]; then
+        dest_name="snow-code.exe"
+    fi
+    cp "$binary_path" "${INSTALL_DIR}/${dest_name}"
+    chmod 755 "${INSTALL_DIR}/${dest_name}"
+    install_aliases
 }
 
 if [ -n "$binary_path" ]; then
@@ -436,11 +476,12 @@ echo -e "${MUTED}█░░█ █░░█ █▀▀▀ █░░█ ${NC}█░
 echo -e "${MUTED}▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀  ▀ ${NC}▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀"
 echo -e ""
 echo -e ""
-echo -e "${MUTED}Snow-Flow includes free models, to start:${NC}"
+echo -e "${MUTED}Serac is installed. To start:${NC}"
 echo -e ""
-echo -e "cd <project>  ${MUTED}# Open directory${NC}"
-echo -e "snow-code     ${MUTED}# Run command${NC}"
+echo -e "cd <project>  ${MUTED}# Open your project${NC}"
+echo -e "serac         ${MUTED}# Run serac${NC}"
 echo -e ""
-echo -e "${MUTED}For more information visit ${NC}https://snow-flow.dev/docs"
+echo -e "${MUTED}Legacy aliases ${NC}snow-flow${MUTED} and ${NC}snow-code${MUTED} also work.${NC}"
+echo -e "${MUTED}Docs: ${NC}https://serac.build/docs"
 echo -e ""
 echo -e ""

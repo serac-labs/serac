@@ -7,13 +7,21 @@ const { execSync } = require("child_process")
 
 const pkg = require("../package.json")
 const VERSION = pkg.version
-const REPO = "groeimetai/snow-flow"
+const REPO = "serac-labs/serac"
 
 const platformMap = { darwin: "darwin", linux: "linux", win32: "windows" }
 const archMap = { x64: "x64", arm64: "arm64" }
 
 const platform = platformMap[os.platform()] || os.platform()
-const arch = archMap[os.arch()] || os.arch()
+let arch = archMap[os.arch()] || os.arch()
+
+// Windows 11 on ARM64 runs x64 binaries via the built-in emulator. We don't
+// ship a native windows-arm64 build, so download the x64 tarball instead.
+const nativeArch = arch
+if (platform === "windows" && arch === "arm64") {
+  arch = "x64"
+}
+
 const tarballName = "snow-flow-" + platform + "-" + arch + ".tar.gz"
 
 const pkgDir = path.join(__dirname, "..")
@@ -53,16 +61,17 @@ function binaryMatchesPlatform(filePath) {
 if (fs.existsSync(binaryPath)) {
   var stats = fs.statSync(binaryPath)
   if (stats.size > 100000 && binaryMatchesPlatform(binaryPath)) {
-    console.log("snow-code: Binary already exists")
+    console.log("serac: binary already exists")
     process.exit(0)
   }
   if (stats.size > 100000) {
-    console.log("snow-code: Binary exists but is for wrong platform, re-downloading...")
+    console.log("serac: existing binary is for the wrong platform, re-downloading...")
   }
 }
 
 const releaseUrl = "https://github.com/" + REPO + "/releases/download/v" + VERSION + "/" + tarballName
-console.log("snow-code: Downloading binary for " + platform + "-" + arch + "...")
+const archLabel = nativeArch === arch ? platform + "-" + arch : platform + "-" + nativeArch + " (via " + arch + " emulation)"
+console.log("serac: downloading binary for " + archLabel + "...")
 
 function followRedirects(url, callback) {
   https.get(url, { headers: { "User-Agent": "snow-code" } }, function (res) {
@@ -80,8 +89,8 @@ var file = fs.createWriteStream(tarPath)
 
 followRedirects(releaseUrl, function (res) {
   if (res.statusCode !== 200) {
-    console.warn("snow-code: Could not download binary (HTTP " + res.statusCode + ")")
-    console.warn("snow-code: Download manually from: https://github.com/" + REPO + "/releases")
+    console.warn("serac: could not download binary (HTTP " + res.statusCode + ")")
+    console.warn("serac: download manually from https://github.com/" + REPO + "/releases")
     process.exit(0)
   }
 
@@ -93,9 +102,9 @@ followRedirects(releaseUrl, function (res) {
       if (platform !== "windows" && fs.existsSync(binaryPath)) {
         fs.chmodSync(binaryPath, 493)
       }
-      console.log("snow-code: Binary installed successfully!")
+      console.log("serac: binary installed")
     } catch (e) {
-      console.warn("snow-code: Could not extract binary")
+      console.warn("serac: could not extract binary")
     }
     try {
       fs.rmSync(tmpDir, { recursive: true })
