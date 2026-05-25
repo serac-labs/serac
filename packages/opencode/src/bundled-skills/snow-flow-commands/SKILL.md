@@ -20,7 +20,7 @@ Serac provides a powerful CLI for ServiceNow development orchestration.
 
 ```bash
 # Start interactive TUI
-snow-flow
+serac
 
 # Start with specific model
 serac --model claude-sonnet
@@ -204,8 +204,8 @@ serac auth logout
 ### Starting Development Session
 
 ```bash
-# 1. Start snow-flow
-snow-flow
+# 1. Start serac
+serac
 
 # 2. In TUI, create Update Set first
 # 3. Develop features
@@ -216,7 +216,7 @@ snow-flow
 
 ```bash
 # Enable token debugging
-SNOWCODE_DEBUG_TOKENS=true snow-flow
+SNOWCODE_DEBUG_TOKENS=true serac
 
 # Check debug output
 cat .snow-code/token-debug/debug-*.jsonl | jq .

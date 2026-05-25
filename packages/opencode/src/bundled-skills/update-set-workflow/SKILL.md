@@ -127,10 +127,10 @@ snow_update_set_export({
 └─────────────────────────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────────────────────────┐
-│ SNOW-FLOW OAUTH SESSION (API calls)                        │
+│ SERAC OAUTH SESSION (API calls)                             │
 │ User: oauth.service.account                                 │
 │ Current Update Set: [Set via Update Set tools]             │
-│ ← All snow-flow changes are tracked here                   │
+│ ← All Serac changes are tracked here                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -142,11 +142,11 @@ snow_update_set_export({
 ### Key points
 
 - ✅ **Update Sets ARE created** — they exist in ServiceNow
-- ✅ **Changes ARE tracked** when `auto_switch=true` — all snow-flow artifacts go into the Update Set automatically
+- ✅ **Changes ARE tracked** when `auto_switch=true` — all Serac artifacts go into the Update Set automatically
 - ❌ **NOT visible in YOUR UI session** unless you provide the `servicenow_username` parameter (which also makes it current for that UI user)
 - ✅ **Deployment still works** — the Update Set can be exported/imported normally
 - ⚠️ Don't disable `auto_switch` for development tasks
 
 ### When to use `servicenow_username`
 
-Optional. Pass your ServiceNow username when you want the Update Set to also appear as current in your UI session — handy when you're working in the ServiceNow UI alongside snow-flow and want to see the same Update Set selected in both places. It does not affect tracking; tracking is governed by `auto_switch`.
+Optional. Pass your ServiceNow username when you want the Update Set to also appear as current in your UI session — handy when you're working in the ServiceNow UI alongside Serac and want to see the same Update Set selected in both places. It does not affect tracking; tracking is governed by `auto_switch`.

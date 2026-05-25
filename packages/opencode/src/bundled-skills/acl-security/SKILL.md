@@ -225,7 +225,7 @@ gs.hasRole("itil") || current.caller_id == gs.getUserID()
 // Verify: Fields hidden, buttons disabled, records filtered
 ```
 
-Use `snow_impersonate_user` to generate an audited impersonation deep-link (admin-only, writes to `~/.snow-flow/audit/impersonations.jsonl`). Use `snow_session_context` to confirm the caller's current roles and update set before diagnosing an ACL failure.
+Use `snow_impersonate_user` to generate an audited impersonation deep-link (admin-only, writes to `~/.serac/audit/impersonations.jsonl`). Use `snow_session_context` to confirm the caller's current roles and update set before diagnosing an ACL failure.
 
 ## Debug ACLs
 
