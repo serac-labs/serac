@@ -4,10 +4,10 @@ import { Script } from "@opencode-ai/script"
 
 if (!Script.preview) {
   // Calculate SHA values
-  const arm64Sha = await $`sha256sum ./dist/snow-code-linux-arm64.tar.gz | cut -d' ' -f1`.text().then((x) => x.trim())
-  const x64Sha = await $`sha256sum ./dist/snow-code-linux-x64.tar.gz | cut -d' ' -f1`.text().then((x) => x.trim())
-  const macX64Sha = await $`sha256sum ./dist/snow-code-darwin-x64.zip | cut -d' ' -f1`.text().then((x) => x.trim())
-  const macArm64Sha = await $`sha256sum ./dist/snow-code-darwin-arm64.zip | cut -d' ' -f1`.text().then((x) => x.trim())
+  const arm64Sha = await $`sha256sum ./dist/serac-linux-arm64.tar.gz | cut -d' ' -f1`.text().then((x) => x.trim())
+  const x64Sha = await $`sha256sum ./dist/serac-linux-x64.tar.gz | cut -d' ' -f1`.text().then((x) => x.trim())
+  const macX64Sha = await $`sha256sum ./dist/serac-darwin-x64.zip | cut -d' ' -f1`.text().then((x) => x.trim())
+  const macArm64Sha = await $`sha256sum ./dist/serac-darwin-arm64.zip | cut -d' ' -f1`.text().then((x) => x.trim())
 
   const [pkgver, _subver = ""] = Script.version.split(/(-.*)/, 2)
 
@@ -16,62 +16,62 @@ if (!Script.preview) {
     "# Maintainer: dax",
     "# Maintainer: adam",
     "",
-    "pkgname='snow-code-bin'",
+    "pkgname='serac-bin'",
     `pkgver=${pkgver}`,
     `_subver=${_subver}`,
     "options=('!debug' '!strip')",
     "pkgrel=1",
     "pkgdesc='The autonomous ServiceNow development agent.'",
-    "url='https://github.com/groeimetai/snow-flow'",
+    "url='https://github.com/serac-labs/serac'",
     "arch=('aarch64' 'x86_64')",
     "license=('Elastic-2.0')",
-    "provides=('snow-code')",
-    "conflicts=('snow-code')",
+    "provides=('serac')",
+    "conflicts=('serac')",
     "depends=('ripgrep')",
     "",
-    `source_aarch64=("\${pkgname}_\${pkgver}_aarch64.tar.gz::https://github.com/groeimetai/snow-flow/releases/download/v\${pkgver}\${_subver}/snow-code-linux-arm64.tar.gz")`,
+    `source_aarch64=("\${pkgname}_\${pkgver}_aarch64.tar.gz::https://github.com/serac-labs/serac/releases/download/v\${pkgver}\${_subver}/serac-linux-arm64.tar.gz")`,
     `sha256sums_aarch64=('${arm64Sha}')`,
 
-    `source_x86_64=("\${pkgname}_\${pkgver}_x86_64.tar.gz::https://github.com/groeimetai/snow-flow/releases/download/v\${pkgver}\${_subver}/snow-code-linux-x64.tar.gz")`,
+    `source_x86_64=("\${pkgname}_\${pkgver}_x86_64.tar.gz::https://github.com/serac-labs/serac/releases/download/v\${pkgver}\${_subver}/serac-linux-x64.tar.gz")`,
     `sha256sums_x86_64=('${x64Sha}')`,
     "",
     "package() {",
-    '  install -Dm755 ./snow-code "${pkgdir}/usr/bin/snow-code"',
+    '  install -Dm755 ./serac "${pkgdir}/usr/bin/serac"',
     "}",
     "",
   ].join("\n")
 
-  // Source-based PKGBUILD for snow-code
+  // Source-based PKGBUILD for serac
   const sourcePkgbuild = [
     "# Maintainer: dax",
     "# Maintainer: adam",
     "",
-    "pkgname='snow-code'",
+    "pkgname='serac'",
     `pkgver=${pkgver}`,
     `_subver=${_subver}`,
     "options=('!debug' '!strip')",
     "pkgrel=1",
     "pkgdesc='The autonomous ServiceNow development agent.'",
-    "url='https://github.com/groeimetai/snow-flow'",
+    "url='https://github.com/serac-labs/serac'",
     "arch=('aarch64' 'x86_64')",
     "license=('Elastic-2.0')",
-    "provides=('snow-code')",
-    "conflicts=('snow-code-bin')",
+    "provides=('serac')",
+    "conflicts=('serac-bin')",
     "depends=('ripgrep')",
     "makedepends=('git' 'bun' 'go')",
     "",
-    `source=("snow-flow-\${pkgver}.tar.gz::https://github.com/groeimetai/snow-flow/archive/v\${pkgver}\${_subver}.tar.gz")`,
+    `source=("serac-\${pkgver}.tar.gz::https://github.com/serac-labs/serac/archive/v\${pkgver}\${_subver}.tar.gz")`,
     `sha256sums=('SKIP')`,
     "",
     "build() {",
-    `  cd "snow-flow-\${pkgver}"`,
+    `  cd "serac-\${pkgver}"`,
     `  bun install`,
     "  cd ./packages/opencode",
     `  SNOW_CODE_CHANNEL=latest SNOW_CODE_VERSION=${pkgver} bun run ./script/build.ts --single`,
     "}",
     "",
     "package() {",
-    `  cd "snow-flow-\${pkgver}/packages/opencode"`,
+    `  cd "serac-\${pkgver}/packages/opencode"`,
     '  mkdir -p "${pkgdir}/usr/bin"',
     '  target_arch="x64"',
     '  case "$CARCH" in',
@@ -94,19 +94,19 @@ if (!Script.preview) {
     '      base="-baseline"',
     "    fi",
     "  fi",
-    '  bin="dist/snow-code-linux-${target_arch}${base}${libc}/bin/snow-code"',
+    '  bin="dist/serac-linux-${target_arch}${base}${libc}/bin/serac"',
     '  if [ ! -f "$bin" ]; then',
     '    printf "unable to find binary for %s%s%s\\n" "$target_arch" "$base" "$libc" >&2',
     "    return 1",
     "  fi",
-    '  install -Dm755 "$bin" "${pkgdir}/usr/bin/snow-code"',
+    '  install -Dm755 "$bin" "${pkgdir}/usr/bin/serac"',
     "}",
     "",
   ].join("\n")
 
   for (const [pkg, pkgbuild] of [
-    ["snow-code-bin", binaryPkgbuild],
-    ["snow-code", sourcePkgbuild],
+    ["serac-bin", binaryPkgbuild],
+    ["serac", sourcePkgbuild],
   ]) {
     for (let i = 0; i < 30; i++) {
       try {
@@ -131,45 +131,45 @@ if (!Script.preview) {
     "# frozen_string_literal: true",
     "",
     "# This file was generated by GoReleaser. DO NOT EDIT.",
-    "class SnowCode < Formula",
+    "class Serac < Formula",
     `  desc "The autonomous ServiceNow development agent."`,
-    `  homepage "https://github.com/groeimetai/snow-flow"`,
+    `  homepage "https://github.com/serac-labs/serac"`,
     `  version "${Script.version.split("-")[0]}"`,
     "",
     `  depends_on "ripgrep"`,
     "",
     "  on_macos do",
     "    if Hardware::CPU.intel?",
-    `      url "https://github.com/groeimetai/snow-flow/releases/download/v${Script.version}/snow-code-darwin-x64.zip"`,
+    `      url "https://github.com/serac-labs/serac/releases/download/v${Script.version}/serac-darwin-x64.zip"`,
     `      sha256 "${macX64Sha}"`,
     "",
     "      def install",
-    '        bin.install "snow-code"',
+    '        bin.install "serac"',
     "      end",
     "    end",
     "    if Hardware::CPU.arm?",
-    `      url "https://github.com/groeimetai/snow-flow/releases/download/v${Script.version}/snow-code-darwin-arm64.zip"`,
+    `      url "https://github.com/serac-labs/serac/releases/download/v${Script.version}/serac-darwin-arm64.zip"`,
     `      sha256 "${macArm64Sha}"`,
     "",
     "      def install",
-    '        bin.install "snow-code"',
+    '        bin.install "serac"',
     "      end",
     "    end",
     "  end",
     "",
     "  on_linux do",
     "    if Hardware::CPU.intel? and Hardware::CPU.is_64_bit?",
-    `      url "https://github.com/groeimetai/snow-flow/releases/download/v${Script.version}/snow-code-linux-x64.tar.gz"`,
+    `      url "https://github.com/serac-labs/serac/releases/download/v${Script.version}/serac-linux-x64.tar.gz"`,
     `      sha256 "${x64Sha}"`,
     "      def install",
-    '        bin.install "snow-code"',
+    '        bin.install "serac"',
     "      end",
     "    end",
     "    if Hardware::CPU.arm? and Hardware::CPU.is_64_bit?",
-    `      url "https://github.com/groeimetai/snow-flow/releases/download/v${Script.version}/snow-code-linux-arm64.tar.gz"`,
+    `      url "https://github.com/serac-labs/serac/releases/download/v${Script.version}/serac-linux-arm64.tar.gz"`,
     `      sha256 "${arm64Sha}"`,
     "      def install",
-    '        bin.install "snow-code"',
+    '        bin.install "serac"',
     "      end",
     "    end",
     "  end",
@@ -179,9 +179,9 @@ if (!Script.preview) {
   ].join("\n")
 
   await $`rm -rf ./dist/homebrew-tap`
-  await $`git clone https://${process.env["GITHUB_TOKEN"]}@github.com/groeimetai/homebrew-tap.git ./dist/homebrew-tap`
-  await Bun.file("./dist/homebrew-tap/snow-code.rb").write(homebrewFormula)
-  await $`cd ./dist/homebrew-tap && git add snow-code.rb`
+  await $`git clone https://${process.env["GITHUB_TOKEN"]}@github.com/serac-labs/homebrew-tap.git ./dist/homebrew-tap`
+  await Bun.file("./dist/homebrew-tap/serac.rb").write(homebrewFormula)
+  await $`cd ./dist/homebrew-tap && git add serac.rb`
   await $`cd ./dist/homebrew-tap && git commit -m "Update to v${Script.version}"`
   await $`cd ./dist/homebrew-tap && git push`
 }

@@ -9,9 +9,9 @@ process.chdir(dir)
 
 const { binaries } = await import("./build.ts")
 {
-  const name = `${pkg.name}-${process.platform}-${process.arch}`
-  console.log(`smoke test: running dist/${name}/bin/snow-code --version`)
-  await $`./dist/${name}/bin/snow-code --version`
+  const name = `serac-${process.platform}-${process.arch}`
+  console.log(`smoke test: running dist/${name}/bin/serac --version`)
+  await $`./dist/${name}/bin/serac --version`
 }
 
 await $`mkdir -p ./dist/${pkg.name}`
@@ -63,7 +63,7 @@ if (!Script.preview) {
     }
   }
 
-  const image = "ghcr.io/groeimetai/snow-code"
+  const image = "ghcr.io/serac-labs/serac"
   const platforms = "linux/amd64,linux/arm64"
   const tags = [`${image}:${Script.version}`, `${image}:latest`]
   const tagFlags = tags.flatMap((t) => ["-t", t])

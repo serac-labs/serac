@@ -22,10 +22,10 @@ if (platform === "windows" && arch === "arm64") {
   arch = "x64"
 }
 
-const tarballName = "snow-flow-" + platform + "-" + arch + ".tar.gz"
+const tarballName = "serac-" + platform + "-" + arch + ".tar.gz"
 
 const pkgDir = path.join(__dirname, "..")
-const binaryName = platform === "windows" ? "snow-code.exe" : "snow-code"
+const binaryName = platform === "windows" ? "serac.exe" : "serac"
 const binaryPath = path.join(pkgDir, "bin", binaryName)
 
 // Verify the binary matches the current platform by checking magic bytes
@@ -74,7 +74,7 @@ const archLabel = nativeArch === arch ? platform + "-" + arch : platform + "-" +
 console.log("serac: downloading binary for " + archLabel + "...")
 
 function followRedirects(url, callback) {
-  https.get(url, { headers: { "User-Agent": "snow-code" } }, function (res) {
+  https.get(url, { headers: { "User-Agent": "serac" } }, function (res) {
     if (res.statusCode === 302 || res.statusCode === 301) {
       followRedirects(res.headers.location, callback)
     } else {
@@ -83,7 +83,7 @@ function followRedirects(url, callback) {
   })
 }
 
-var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "snow-flow-"))
+var tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "serac-"))
 var tarPath = path.join(tmpDir, tarballName)
 var file = fs.createWriteStream(tarPath)
 

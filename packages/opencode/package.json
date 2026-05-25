@@ -17,12 +17,12 @@
     "postinstall": "node scripts/postinstall.cjs"
   },
   "bin": {
-    "serac": "./bin/snow-code",
-    "serac-code": "./bin/snow-code",
-    "snow-flow": "./bin/snow-code",
-    "snow-code": "./bin/snow-code",
-    "snowcode": "./bin/snow-code",
-    "snowflow": "./bin/snow-code"
+    "serac": "./bin/serac",
+    "serac-code": "./bin/serac",
+    "snow-flow": "./bin/serac",
+    "snow-code": "./bin/serac",
+    "snowcode": "./bin/serac",
+    "snowflow": "./bin/serac"
   },
   "exports": {
     "./*": "./src/*.ts"

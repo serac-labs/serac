@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - test
-      - snow-flow-test
+      - serac-test
   workflow_dispatch:
     inputs:
       version:
@@ -106,28 +106,15 @@ jobs:
           sudo make -C /tmp/ldid install
 
           shopt -s nullglob
-          for bin in packages/opencode/dist/*darwin*/bin/snow-code; do
+          for bin in packages/opencode/dist/*darwin*/bin/serac; do
             echo "Signing $bin"
             ldid -S "$bin"
           done
 
-      - name: Rename output directories
+      - name: List built platforms
         run: |
           cd packages/opencode/dist
-
-          # Find all built directories and rename for snow-flow-test
-          for dir in */; do
-            if [ -d "$dir" ]; then
-              # Replace snow-code with snow-flow-test in dir name
-              new_name=$(echo "$dir" | sed 's/snow-code/snow-flow-test/' | sed 's/opencode/snow-flow-test/')
-              if [ "$dir" != "$new_name" ]; then
-                echo "Renaming $dir to $new_name"
-                mv "$dir" "$new_name"
-              fi
-            fi
-          done
-
-          echo "Built platforms:"
+          echo "Built platforms (build.ts emits serac-<os>-<arch> dirs directly):"
           ls -la
 
       - name: Prepare package for publishing
@@ -145,9 +132,9 @@ jobs:
             const catalog = (rootPkg.workspaces && rootPkg.workspaces.catalog) || {};
 
             // Change name and version, remove private flag and type
-            pkg.name = 'snow-flow-test';
+            pkg.name = 'serac-test';
             pkg.version = '$VERSION';
-            pkg.description = 'Snow-Flow Test - ServiceNow Multi-Agent Development Framework';
+            pkg.description = 'Serac Test - agentic AI for ServiceNow developers';
             pkg.private = false;
             delete pkg.type; // Remove 'module' type so bin scripts can use CommonJS
 
@@ -157,12 +144,12 @@ jobs:
               url: 'https://github.com/serac-labs/serac'
             };
 
-            // Update bin commands - include snow-code for compatibility
+            // Update bin commands - keep legacy names for compatibility
             pkg.bin = {
-              'snow-flow-test': './bin/snow-code',
-              'snow-code-test': './bin/snow-code',
-              'snow-code': './bin/snow-code',
-              'snow-flow': './bin/snow-code'
+              'serac-test': './bin/serac',
+              'serac': './bin/serac',
+              'snow-code': './bin/serac',
+              'snow-flow': './bin/serac'
             };
 
             // Helper to resolve workspace/catalog dependencies
@@ -206,7 +193,7 @@ jobs:
         run: |
           cd packages/opencode/dist
 
-          for dir in snow-flow-test-*/; do
+          for dir in serac-*/; do
             if [ -d "$dir" ]; then
               platform_name=$(basename "$dir")
               echo "Creating tarball for $platform_name..."
@@ -222,27 +209,27 @@ jobs:
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
           tag_name: v${{ steps.version.outputs.version }}
-          name: Snow-Flow Test v${{ steps.version.outputs.version }}
+          name: Serac Test v${{ steps.version.outputs.version }}
           prerelease: true
           generate_release_notes: false
           files: |
             packages/opencode/dist/*.tar.gz
           body: |
-            ## Snow-Flow Test Release (TypeScript)
+            ## Serac Test Release (TypeScript)
 
             This is a **pure TypeScript** test release - no Go dependencies!
 
             ### Install
             ```bash
-            npm install -g snow-flow-test@${{ steps.version.outputs.version }}
+            npm install -g serac-test@${{ steps.version.outputs.version }}
             ```
 
             ### Run
             ```bash
-            snow-flow-test
+            serac-test
             # or
-            snow-code-test
-            # or (compatible with production)
+            serac
+            # or (legacy aliases)
             snow-code
             snow-flow
             ```
@@ -266,7 +253,7 @@ jobs:
       - name: Publish main package to npm (OIDC)
         run: |
           cd packages/opencode
-          echo "Publishing snow-flow-test main package..."
+          echo "Publishing serac-test main package..."
           npm publish --access public --tag test --provenance
 
       # Platform binaries are distributed via GitHub releases

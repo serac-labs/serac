@@ -17,8 +17,8 @@ function run(target) {
   process.exit(code)
 }
 
-// Check for environment override
-const envPath = process.env.SNOW_CODE_BIN_PATH || process.env.OPENCODE_BIN_PATH
+// Check for environment override (legacy names kept for compatibility)
+const envPath = process.env.SERAC_BIN_PATH || process.env.SNOW_CODE_BIN_PATH || process.env.OPENCODE_BIN_PATH
 if (envPath && fs.existsSync(envPath)) {
   run(envPath)
 }
@@ -47,7 +47,7 @@ if (platform === "windows" && arch === "arm64") {
   arch = "x64"
 }
 
-const binaryName = platform === "windows" ? "snow-code.exe" : "snow-code"
+const binaryName = platform === "windows" ? "serac.exe" : "serac"
 
 // First check: binary in our own bin directory (from postinstall download)
 // Only run if file is >100KB (actual compiled binary), not this launcher script (~2KB)
@@ -60,7 +60,7 @@ if (fs.existsSync(localBinary)) {
 }
 
 // Second check: look in node_modules for platform packages
-const snowCodeBase = "snow-code-" + platform + "-" + arch
+const seracBase = "serac-" + platform + "-" + arch
 
 function findInNodeModules(startDir) {
   let current = startDir
@@ -69,7 +69,7 @@ function findInNodeModules(startDir) {
     if (fs.existsSync(modules)) {
       const entries = fs.readdirSync(modules)
       for (const entry of entries) {
-        if (entry.startsWith(snowCodeBase)) {
+        if (entry.startsWith(seracBase)) {
           const candidate = path.join(modules, entry, "bin", binaryName)
           if (fs.existsSync(candidate)) {
             return candidate

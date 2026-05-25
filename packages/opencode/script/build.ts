@@ -146,13 +146,17 @@ const targets = singleFlag
 await $`rm -rf dist`
 
 const binaries: Record<string, string> = {}
+// Distribution prefix for build output dirs and release tarballs. Kept
+// independent of pkg.name (a scoped name like @serac-labs/core would nest
+// dist/ under a directory and break the release workflow's flat globbing).
+const prefix = "serac"
 if (!skipInstall) {
   await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`
   await $`bun install --os="*" --cpu="*" @parcel/watcher@${pkg.dependencies["@parcel/watcher"]}`
 }
 for (const item of targets) {
   const name = [
-    pkg.name,
+    prefix,
     // changing to win32 flags npm for some reason
     item.os === "win32" ? "windows" : item.os,
     item.arch,
@@ -184,9 +188,9 @@ for (const item of targets) {
       //@ts-ignore (bun types aren't up to date)
       autoloadTsconfig: true,
       autoloadPackageJson: true,
-      target: name.replace(pkg.name, "bun") as any,
-      outfile: `dist/${name}/bin/snow-code`,
-      execArgv: [`--user-agent=snow-code/${Script.version}`, "--use-system-ca", "--"],
+      target: name.replace(prefix, "bun") as any,
+      outfile: `dist/${name}/bin/serac`,
+      execArgv: [`--user-agent=serac/${Script.version}`, "--use-system-ca", "--"],
       windows: {},
     },
     entrypoints: ["./src/index.ts", parserWorker, workerPath],
@@ -251,7 +255,7 @@ for (const item of targets) {
   // killed by macOS without a signature. For Linux CI, the publish workflow
   // runs rcodesign after this step.
   if (item.os === "darwin" && process.platform === "darwin") {
-    const bin = `dist/${name}/bin/snow-code`
+    const bin = `dist/${name}/bin/serac`
     await $`codesign --remove-signature ${bin}`.nothrow().quiet()
     await $`codesign --force -s - ${bin}`
   }
