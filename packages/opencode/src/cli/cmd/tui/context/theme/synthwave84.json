@@ -1,5 +1,5 @@
 {
-  "$schema": "https://snow-flow.dev/theme.json",
+  "$schema": "https://serac.build/theme.json",
   "defs": {
     "background": "#262335",
     "backgroundAlt": "#1e1a29",

@@ -75,7 +75,7 @@ export function setupConnectScreen(onConnect: (wsUrl: string) => void): void {
   })
 
   async function connect() {
-    const serverUrl = urlInput.value || "tui.snow-flow.dev"
+    const serverUrl = urlInput.value || "tui.serac.build"
     connectBtn.disabled = true
     status.className = "status"
     status.textContent = "Connecting..."

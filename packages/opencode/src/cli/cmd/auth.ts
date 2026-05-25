@@ -397,7 +397,7 @@ export const AuthLoginCommand = cmd({
         }
 
         if (provider === "opencode") {
-          prompts.log.info("Create an api key at https://snow-flow.dev/auth")
+          prompts.log.info("Create an api key at https://serac.build/auth")
         }
 
         if (provider === "vercel") {
@@ -406,7 +406,7 @@ export const AuthLoginCommand = cmd({
 
         if (["cloudflare", "cloudflare-ai-gateway"].includes(provider)) {
           prompts.log.info(
-            "Cloudflare AI Gateway can be configured with CLOUDFLARE_GATEWAY_ID, CLOUDFLARE_ACCOUNT_ID, and CLOUDFLARE_API_TOKEN environment variables. Read more: https://snow-flow.dev/docs/providers/#cloudflare-ai-gateway",
+            "Cloudflare AI Gateway can be configured with CLOUDFLARE_GATEWAY_ID, CLOUDFLARE_ACCOUNT_ID, and CLOUDFLARE_API_TOKEN environment variables. Read more: https://serac.build/docs/providers/#cloudflare-ai-gateway",
           )
         }
 

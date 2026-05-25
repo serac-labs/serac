@@ -192,9 +192,9 @@ export const loadEnterpriseAuth = (): { jwt: string; portalUrl: string; subdomai
       }
 
       // Determine portal URL based on subdomain
-      let portalUrl = "https://portal.snow-flow.dev"
+      let portalUrl = "https://portal.serac.build"
       if (subdomain && subdomain !== "portal") {
-        portalUrl = `https://${subdomain}.snow-flow.dev`
+        portalUrl = `https://${subdomain}.serac.build`
       }
 
       mcpDebug("[Auth] Found enterprise auth from:", authPath)

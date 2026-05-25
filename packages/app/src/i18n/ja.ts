@@ -122,7 +122,7 @@ export const dict = {
     "Serac Zenは、コーディングエージェント向けに最適化された信頼性の高いモデルへのアクセスを提供します。",
   "provider.connect.opencodeZen.line2": "1つのAPIキーで、Claude、GPT、Gemini、GLMなどのモデルにアクセスできます。",
   "provider.connect.opencodeZen.visit.prefix": " ",
-  "provider.connect.opencodeZen.visit.link": "snow-flow.dev/zen",
+  "provider.connect.opencodeZen.visit.link": "serac.build/zen",
   "provider.connect.opencodeZen.visit.suffix": " にアクセスしてAPIキーを取得してください。",
   "provider.connect.oauth.code.visit.prefix": " ",
   "provider.connect.oauth.code.visit.link": "このリンク",

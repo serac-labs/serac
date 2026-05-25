@@ -110,10 +110,10 @@ export default function Download() {
             <div data-component="section-content">
               <button
                 data-component="cli-row"
-                onClick={handleCopyClick("curl -fsSL https://snow-flow.dev/install | bash")}
+                onClick={handleCopyClick("curl -fsSL https://serac.build/install | bash")}
               >
                 <code>
-                  curl -fsSL https://<strong>snow-flow.dev/install</strong> | bash
+                  curl -fsSL https://<strong>serac.build/install</strong> | bash
                 </code>
                 <CopyStatus />
               </button>
@@ -288,7 +288,7 @@ export default function Download() {
                   </span>
                   <span>VS Code</span>
                 </div>
-                <a href="https://snow-flow.dev/docs/ide/" data-component="action-button">
+                <a href="https://serac.build/docs/ide/" data-component="action-button">
                   Install
                 </a>
               </div>
@@ -312,7 +312,7 @@ export default function Download() {
                   </span>
                   <span>Cursor</span>
                 </div>
-                <a href="https://snow-flow.dev/docs/ide/" data-component="action-button">
+                <a href="https://serac.build/docs/ide/" data-component="action-button">
                   Install
                 </a>
               </div>
@@ -329,7 +329,7 @@ export default function Download() {
                   </span>
                   <span>Zed</span>
                 </div>
-                <a href="https://snow-flow.dev/docs/ide/" data-component="action-button">
+                <a href="https://serac.build/docs/ide/" data-component="action-button">
                   Install
                 </a>
               </div>
@@ -346,7 +346,7 @@ export default function Download() {
                   </span>
                   <span>Windsurf</span>
                 </div>
-                <a href="https://snow-flow.dev/docs/ide/" data-component="action-button">
+                <a href="https://serac.build/docs/ide/" data-component="action-button">
                   Install
                 </a>
               </div>
@@ -363,7 +363,7 @@ export default function Download() {
                   </span>
                   <span>VSCodium</span>
                 </div>
-                <a href="https://snow-flow.dev/docs/ide/" data-component="action-button">
+                <a href="https://serac.build/docs/ide/" data-component="action-button">
                   Install
                 </a>
               </div>
@@ -387,7 +387,7 @@ export default function Download() {
                   </span>
                   <span>GitHub</span>
                 </div>
-                <a href="https://snow-flow.dev/docs/github/" data-component="action-button">
+                <a href="https://serac.build/docs/github/" data-component="action-button">
                   Install
                 </a>
               </div>
@@ -404,7 +404,7 @@ export default function Download() {
                   </span>
                   <span>GitLab</span>
                 </div>
-                <a href="https://snow-flow.dev/docs/gitlab/" data-component="action-button">
+                <a href="https://serac.build/docs/gitlab/" data-component="action-button">
                   Install
                 </a>
               </div>

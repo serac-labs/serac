@@ -29,7 +29,7 @@ export async function tmpdir<T>(options?: TmpDirOptions<T>) {
     await Bun.write(
       path.join(dirpath, "opencode.json"),
       JSON.stringify({
-        $schema: "https://snow-flow.dev/config.json",
+        $schema: "https://serac.build/config.json",
         ...options.config,
       }),
     )

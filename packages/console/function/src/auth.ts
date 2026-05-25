@@ -35,7 +35,7 @@ export const subjects = createSubjects({
 
 const MY_THEME: Theme = {
   ...THEME_OPENAUTH,
-  logo: "https://snow-flow.dev/favicon-v3.svg",
+  logo: "https://serac.build/favicon-v3.svg",
 }
 
 export default {

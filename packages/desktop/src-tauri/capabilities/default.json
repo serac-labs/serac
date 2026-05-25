@@ -34,7 +34,7 @@
       "allow": [
         { "url": "http://localhost:*" },
         { "url": "http://127.0.0.1:*" },
-        { "url": "https://*.snow-flow.dev" },
+        { "url": "https://*.serac.build" },
         { "url": "https://*.snfl.dev" },
         { "url": "https://models.dev/*" },
         { "url": "https://api.github.com/*" },

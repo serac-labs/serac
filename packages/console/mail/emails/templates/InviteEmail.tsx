@@ -15,7 +15,7 @@ import {
   buttonText,
 } from "../styles"
 
-const CONSOLE_URL = "https://snow-flow.dev/"
+const CONSOLE_URL = "https://serac.build/"
 
 interface InviteEmailProps {
   inviter: string

@@ -64,7 +64,7 @@ export namespace Config {
         const wellknown = (await response.json()) as any
         const remoteConfig = wellknown.config ?? {}
         // Add $schema to prevent load() from trying to write back to a non-existent file
-        if (!remoteConfig.$schema) remoteConfig.$schema = "https://snow-flow.dev/config.json"
+        if (!remoteConfig.$schema) remoteConfig.$schema = "https://serac.build/config.json"
         result = mergeConfigConcatArrays(
           result,
           await load(JSON.stringify(remoteConfig), `${key}/.well-known/snow-code`),
@@ -418,9 +418,9 @@ export namespace Config {
       if (!result["snow-flow-enterprise"]) {
         log.info("auto-configuring snow-flow-enterprise MCP server from auth store")
         // The enterprise proxy server expects:
-        // - SNOW_PORTAL_URL: The portal URL (e.g., https://acme.snow-flow.dev) for JWT token exchange
+        // - SNOW_PORTAL_URL: The portal URL (e.g., https://acme.serac.build) for JWT token exchange
         // - SNOW_LICENSE_KEY: The JWT token (confusing name, but it's the auth token)
-        // Note: SNOW_ENTERPRISE_URL is NOT passed here so the proxy uses its correct default (https://enterprise.snow-flow.dev)
+        // Note: SNOW_ENTERPRISE_URL is NOT passed here so the proxy uses its correct default (https://enterprise.serac.build)
         const jwtToken = entAuth.token || entAuth.licenseKey
         result["snow-flow-enterprise"] = {
           type: "local",
@@ -466,7 +466,7 @@ export namespace Config {
               log.info("auto-configuring snow-flow-enterprise MCP server from enterprise.json", {
                 subdomain: enterpriseData.subdomain,
               })
-              const portalUrl = `https://${enterpriseData.subdomain}.snow-flow.dev`
+              const portalUrl = `https://${enterpriseData.subdomain}.serac.build`
               result["snow-flow-enterprise"] = {
                 type: "local",
                 command: getMcpServerCommand("enterprise-proxy"),
@@ -1187,7 +1187,7 @@ export namespace Config {
       command: z
         .record(z.string(), Command)
         .optional()
-        .describe("Command configuration, see https://snow-flow.dev/docs/commands"),
+        .describe("Command configuration, see https://serac.build/docs/commands"),
       watcher: z
         .object({
           ignore: z.array(z.string()).optional(),
@@ -1254,7 +1254,7 @@ export namespace Config {
         })
         .catchall(Agent)
         .optional()
-        .describe("Agent configuration, see https://snow-flow.dev/docs/agents"),
+        .describe("Agent configuration, see https://serac.build/docs/agents"),
       provider: z
         .record(z.string(), Provider)
         .optional()
@@ -1434,7 +1434,7 @@ export namespace Config {
       .then(async (mod) => {
         const { provider, model, ...rest } = mod.default
         if (provider && model) result.model = `${provider}/${model}`
-        result["$schema"] = "https://snow-flow.dev/config.json"
+        result["$schema"] = "https://serac.build/config.json"
         result = mergeDeep(result, rest)
         await Bun.write(path.join(Global.Path.config, "snow-code.json"), JSON.stringify(result, null, 2))
         await fs.unlink(path.join(Global.Path.config, "config"))
@@ -1526,9 +1526,9 @@ export namespace Config {
     const parsed = Info.safeParse(data)
     if (parsed.success) {
       if (!parsed.data.$schema) {
-        parsed.data.$schema = "https://snow-flow.dev/config.json"
+        parsed.data.$schema = "https://serac.build/config.json"
         // Write the $schema to the original text to preserve variables like {env:VAR}
-        const updated = original.replace(/^\s*\{/, '{\n  "$schema": "https://snow-flow.dev/config.json",')
+        const updated = original.replace(/^\s*\{/, '{\n  "$schema": "https://serac.build/config.json",')
         await Bun.write(configFilepath, updated).catch(() => {})
       }
       const data = parsed.data

@@ -27,7 +27,7 @@
     ],
     "withGlobalTauri": true,
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.snow-flow.dev wss://*.snow-flow.dev; img-src 'self' data: https:; font-src 'self' data:"
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; connect-src 'self' http://localhost:* http://127.0.0.1:* https://*.serac.build wss://*.serac.build; img-src 'self' data: https:; font-src 'self' data:"
     },
     "macOSPrivateApi": true
   },

@@ -31,7 +31,7 @@ inputs:
     required: false
 
   oidc_base_url:
-    description: "Base URL for OIDC token exchange API. Only required when running a custom GitHub App install. Defaults to https://enterprise.snow-flow.dev/api/github-app"
+    description: "Base URL for OIDC token exchange API. Only required when running a custom GitHub App install. Defaults to https://enterprise.serac.build/api/github-app"
     required: false
 
 runs:
@@ -54,7 +54,7 @@ runs:
     - name: Install snow-code
       if: steps.cache.outputs.cache-hit != 'true'
       shell: bash
-      run: curl -fsSL https://snow-flow.dev/install | bash
+      run: curl -fsSL https://serac.build/install | bash
 
     - name: Add snow-code to PATH
       shell: bash

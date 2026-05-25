@@ -152,7 +152,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
   if (!context.enterprise?.features?.includes("github")) {
     return createErrorResult(
       'GitHub integration requires an enterprise license with the "github" feature enabled.\n\n' +
-        "Upgrade at https://portal.snow-flow.dev or contact support.",
+        "Upgrade at https://portal.serac.build or contact support.",
     )
   }
 

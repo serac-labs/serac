@@ -7,7 +7,7 @@ import { useSettings } from "@/context/settings"
 import { persisted } from "@/utils/persist"
 import { DialogReleaseNotes, type Highlight } from "@/components/dialog-release-notes"
 
-const CHANGELOG_URL = "https://snow-flow.dev/changelog.json"
+const CHANGELOG_URL = "https://serac.build/changelog.json"
 
 type Store = {
   version?: string

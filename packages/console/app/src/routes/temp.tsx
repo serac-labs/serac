@@ -62,7 +62,7 @@ export default function Home() {
               <span>
                 <span>curl -fsSL </span>
                 <span data-slot="protocol">https://</span>
-                <span data-slot="highlight">snow-flow.dev/install</span>
+                <span data-slot="highlight">serac.build/install</span>
                 <span> | bash</span>
               </span>
               <CopyStatus />
@@ -157,7 +157,7 @@ export default function Home() {
             <a href="https://github.com/groeimetai/snow-flow">GitHub</a>
           </div>
           <div data-slot="cell">
-            <a href="https://snow-flow.dev/discord">Discord</a>
+            <a href="https://serac.build/discord">Discord</a>
           </div>
         </footer>
       </div>

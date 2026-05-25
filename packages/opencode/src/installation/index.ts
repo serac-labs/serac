@@ -141,7 +141,7 @@ export namespace Installation {
     let cmd
     switch (method) {
       case "curl":
-        cmd = $`curl -fsSL https://snow-flow.dev/install | bash`.env({
+        cmd = $`curl -fsSL https://serac.build/install | bash`.env({
           ...process.env,
           VERSION: target,
         })

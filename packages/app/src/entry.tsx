@@ -57,7 +57,7 @@ const platform: Platform = {
       .then(() => {
         const notification = new Notification(title, {
           body: description ?? "",
-          icon: "https://snow-flow.dev/favicon-96x96-v3.png",
+          icon: "https://serac.build/favicon-96x96-v3.png",
         })
         notification.onclick = () => {
           window.focus()

@@ -148,7 +148,7 @@ export namespace Server {
               if (input.startsWith("http://127.0.0.1:")) return input
               if (input === "tauri://localhost" || input === "http://tauri.localhost") return input
 
-              // *.snow-flow.dev (https only, adjust if needed)
+              // *.serac.build (https only, adjust if needed)
               if (/^https:\/\/([a-z0-9-]+\.)*snow-flow\.dev$/.test(input)) {
                 return input
               }

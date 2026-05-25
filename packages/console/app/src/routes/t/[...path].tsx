@@ -3,7 +3,7 @@ import type { APIEvent } from "@solidjs/start/server"
 async function handler(evt: APIEvent) {
   const req = evt.request.clone()
   const url = new URL(req.url)
-  const targetUrl = `https://enterprise.snow-flow.dev/${url.pathname}${url.search}`
+  const targetUrl = `https://enterprise.serac.build/${url.pathname}${url.search}`
   const response = await fetch(targetUrl, {
     method: req.method,
     headers: req.headers,

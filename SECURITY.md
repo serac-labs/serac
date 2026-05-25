@@ -36,7 +36,7 @@ We appreciate your efforts to responsibly disclose your findings, and will make 
 
 To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/groeimetai/snow-flow/security/advisories/new) tab.
 
-Alternatively, email: **security@snow-flow.dev**
+Alternatively, email: **security@serac.build**
 
 Please include:
 
@@ -85,4 +85,4 @@ We maintain a security acknowledgments section for researchers who responsibly d
 
 ### Escalation
 
-If you do not receive an acknowledgment within 6 business days, you may send a follow-up email to security@snow-flow.dev.
+If you do not receive an acknowledgment within 6 business days, you may send a follow-up email to security@serac.build.

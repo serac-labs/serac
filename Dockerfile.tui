@@ -51,7 +51,7 @@ COPY packages/app/ packages/app/
 
 # Build the web app (static HTML/JS/CSS)
 # VITE_SNOW_FLOW_HOSTED tells the app to use window.location.origin as API endpoint
-# instead of redirecting to localhost:4096 on snow-flow.dev domains
+# instead of redirecting to localhost:4096 on serac.build domains
 ENV VITE_SNOW_FLOW_HOSTED=true
 RUN bun run --cwd packages/app build
 
@@ -66,7 +66,7 @@ RUN printf '#!/bin/sh\ncd /app\ncase "${1:-}" in\n  run|serve|web|auth|agent|att
 RUN mkdir -p /workspace && \
     git init /workspace && \
     printf '# My Project\n\nUse `snow-flow` in the terminal to get started.\n\n> **Note:** This workspace is ephemeral. Files are lost when your session ends.\n> Maximum workspace size: 512MB.\n' > /workspace/README.md && \
-    cd /workspace && git add -A && git -c user.name="Serac" -c user.email="noreply@snow-flow.dev" commit -m "initial workspace"
+    cd /workspace && git add -A && git -c user.name="Serac" -c user.email="noreply@serac.build" commit -m "initial workspace"
 
 # Create non-root user for runtime
 RUN groupadd --gid 1001 snowflow && \

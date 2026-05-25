@@ -283,7 +283,7 @@ function ApiMethod(props: ApiMethodProps) {
               Serac Zen provides access to curated coding models with a single API key.
             </text>
             <text fg={theme.text}>
-              Go to <span style={{ fg: theme.primary }}>https://snow-flow.dev/zen</span> to get a key
+              Go to <span style={{ fg: theme.primary }}>https://serac.build/zen</span> to get a key
             </text>
           </box>
         ) : undefined

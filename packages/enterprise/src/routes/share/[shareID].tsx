@@ -321,7 +321,7 @@ export default function () {
                           <div class="relative bg-background-stronger w-screen h-screen overflow-hidden flex flex-col">
                             <header class="h-12 px-6 py-2 flex items-center justify-between self-stretch bg-background-base border-b border-border-weak-base">
                               <div class="">
-                                <a href="https://snow-flow.dev">
+                                <a href="https://serac.build">
                                   <Mark />
                                 </a>
                               </div>
@@ -335,7 +335,7 @@ export default function () {
                                 />
                                 <IconButton
                                   as={"a"}
-                                  href="https://snow-flow.dev/discord"
+                                  href="https://serac.build/discord"
                                   target="_blank"
                                   icon="discord"
                                   variant="ghost"

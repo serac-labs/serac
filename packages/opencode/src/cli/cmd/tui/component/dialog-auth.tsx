@@ -1053,7 +1053,7 @@ function DialogAuthEnterprise() {
       const { Auth } = await import("@/auth")
       const entAuth = await Auth.get("enterprise")
       if (entAuth?.type === "enterprise" && entAuth.enterpriseUrl) {
-        // Extract subdomain from URL like https://acme.snow-flow.dev
+        // Extract subdomain from URL like https://acme.serac.build
         const match = entAuth.enterpriseUrl.match(/https?:\/\/([^.]+)\.snow-flow\.dev/)
         if (match) {
           setSubdomain(match[1])
@@ -1141,7 +1141,7 @@ function DialogAuthEnterprise() {
       return
     }
 
-    const portalUrl = `https://${sub}.snow-flow.dev`
+    const portalUrl = `https://${sub}.serac.build`
 
     try {
       // Get machine info
@@ -1189,7 +1189,7 @@ function DialogAuthEnterprise() {
 
     setStep("verifying")
     const sub = subdomain().trim().toLowerCase()
-    const resolvedPortalUrl = `https://${sub}.snow-flow.dev`
+    const resolvedPortalUrl = `https://${sub}.serac.build`
 
     try {
       // Retry up to 5 times with 2s delay — handles race condition where
@@ -1398,7 +1398,7 @@ function DialogAuthEnterprise() {
           if (daysLeft <= 0) {
             toast.show({
               variant: "error",
-              message: "Trial ended — visit portal.snow-flow.dev/portal/billing to activate features",
+              message: "Trial ended — visit portal.serac.build/portal/billing to activate features",
               duration: 8000,
             })
           } else if (daysLeft <= 3) {
@@ -1417,7 +1417,7 @@ function DialogAuthEnterprise() {
         } else if (subStatus === "past_due") {
           toast.show({
             variant: "error",
-            message: "Trial ended — visit portal.snow-flow.dev/portal/billing to activate features",
+            message: "Trial ended — visit portal.serac.build/portal/billing to activate features",
             duration: 8000,
           })
         } else if (subStatus === "active" && featureCount > 0) {
@@ -1464,7 +1464,7 @@ function DialogAuthEnterprise() {
               paddingRight={1}
             >
               <text fg={theme.text}>[1] Individual / Teams</text>
-              <text fg={theme.textMuted}>- Login via portal.snow-flow.dev</text>
+              <text fg={theme.textMuted}>- Login via portal.serac.build</text>
             </box>
             <box
               flexDirection="row"
@@ -1489,7 +1489,7 @@ function DialogAuthEnterprise() {
 
       <Show when={step() === "subdomain"}>
         <box gap={1}>
-          <text fg={theme.textMuted}>Enter your organization subdomain (e.g., "acme" for acme.snow-flow.dev)</text>
+          <text fg={theme.textMuted}>Enter your organization subdomain (e.g., "acme" for acme.serac.build)</text>
           <textarea
             ref={(val: TextareaRenderable) => (subdomainInput = val)}
             height={3}
@@ -1541,7 +1541,7 @@ function DialogAuthEnterprise() {
               verifyAuthCode()
             }}
           />
-          <text fg={theme.textMuted}>Portal: https://{subdomain()}.snow-flow.dev</text>
+          <text fg={theme.textMuted}>Portal: https://{subdomain()}.serac.build</text>
           <box paddingTop={1} flexDirection="row">
             <text fg={theme.text}>enter </text>
             <text fg={theme.textMuted}>verify</text>
@@ -1554,7 +1554,7 @@ function DialogAuthEnterprise() {
           <text fg={theme.primary} attributes={TextAttributes.BOLD}>
             Verifying...
           </text>
-          <text fg={theme.textMuted}>Validating authorization code with {subdomain()}.snow-flow.dev</text>
+          <text fg={theme.textMuted}>Validating authorization code with {subdomain()}.serac.build</text>
         </box>
       </Show>
 
@@ -1980,7 +1980,7 @@ function DialogAuthEnterpriseCombined() {
       return
     }
 
-    const portalUrl = `https://${sub}.snow-flow.dev`
+    const portalUrl = `https://${sub}.serac.build`
 
     try {
       const os = await import("os")
@@ -2026,7 +2026,7 @@ function DialogAuthEnterpriseCombined() {
 
     setStep("verifying-enterprise")
     const sub = subdomain().trim().toLowerCase()
-    const portalUrl = `https://${sub}.snow-flow.dev`
+    const portalUrl = `https://${sub}.serac.build`
 
     try {
       const response = await fetch(`${portalUrl}/api/auth/device/verify`, {
@@ -2310,7 +2310,7 @@ function DialogAuthEnterpriseCombined() {
       const { Auth } = await import("@/auth")
 
       const sub = subdomain().trim().toLowerCase()
-      const portalUrl = `https://${sub}.snow-flow.dev`
+      const portalUrl = `https://${sub}.serac.build`
       const entData = enterpriseData()
 
       // Start enterprise MCP server
@@ -2376,7 +2376,7 @@ function DialogAuthEnterpriseCombined() {
       try {
         const sub = subdomain().trim().toLowerCase()
         const activeFeatures = await fetchActiveIntegrations(
-          `https://${sub}.snow-flow.dev`,
+          `https://${sub}.serac.build`,
           enterpriseData().token ?? "",
         )
         const userRole = enterpriseData().user?.role || "developer"
@@ -2412,7 +2412,7 @@ function DialogAuthEnterpriseCombined() {
               paddingRight={1}
             >
               <text fg={theme.text}>[1] Individual / Teams</text>
-              <text fg={theme.textMuted}>- Login via portal.snow-flow.dev</text>
+              <text fg={theme.textMuted}>- Login via portal.serac.build</text>
             </box>
             <box
               flexDirection="row"
@@ -2441,7 +2441,7 @@ function DialogAuthEnterpriseCombined() {
           <text fg={theme.primary} attributes={TextAttributes.BOLD}>
             Step 1 of 2: Enterprise Portal
           </text>
-          <text fg={theme.textMuted}>Enter your organization subdomain (e.g., "acme" for acme.snow-flow.dev)</text>
+          <text fg={theme.textMuted}>Enter your organization subdomain (e.g., "acme" for acme.serac.build)</text>
           <textarea
             ref={(val: TextareaRenderable) => (subdomainInput = val)}
             height={3}
@@ -2494,7 +2494,7 @@ function DialogAuthEnterpriseCombined() {
               verifyEnterpriseAuth()
             }}
           />
-          <text fg={theme.textMuted}>Portal: https://{subdomain()}.snow-flow.dev</text>
+          <text fg={theme.textMuted}>Portal: https://{subdomain()}.serac.build</text>
           <box paddingTop={1} flexDirection="row">
             <text fg={theme.text}>enter </text>
             <text fg={theme.textMuted}>verify</text>
@@ -2508,7 +2508,7 @@ function DialogAuthEnterpriseCombined() {
           <text fg={theme.primary} attributes={TextAttributes.BOLD}>
             Verifying Enterprise...
           </text>
-          <text fg={theme.textMuted}>Validating authorization code with {subdomain()}.snow-flow.dev</text>
+          <text fg={theme.textMuted}>Validating authorization code with {subdomain()}.serac.build</text>
         </box>
       </Show>
 
@@ -2537,7 +2537,7 @@ function DialogAuthEnterpriseCombined() {
             category: "ServiceNow Instances",
             onSelect: async () => {
               setStep("completing")
-              const portalUrl = `https://${subdomain().trim().toLowerCase()}.snow-flow.dev`
+              const portalUrl = `https://${subdomain().trim().toLowerCase()}.serac.build`
               const token = enterpriseData().token!
               const creds = await fetchSnInstanceById(portalUrl, token, inst.id)
               if (creds) {

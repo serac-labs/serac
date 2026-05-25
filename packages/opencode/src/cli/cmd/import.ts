@@ -9,10 +9,10 @@ import { Filesystem } from "../../util/filesystem"
 
 export const ImportCommand = cmd({
   command: "import <file>",
-  describe: "import session data from JSON file or snow-flow.dev share URL",
+  describe: "import session data from JSON file or serac.build share URL",
   builder: (yargs: Argv) => {
     return yargs.positional("file", {
-      describe: "path to JSON file or snow-flow.dev share URL",
+      describe: "path to JSON file or serac.build share URL",
       type: "string",
       demandOption: true,
     })

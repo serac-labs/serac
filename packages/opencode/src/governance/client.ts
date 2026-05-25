@@ -11,7 +11,7 @@
  *   recordEdge      → POST /api/governance/dependency-intelligence/edges
  *
  * Base URL comes from env `SNOW_FLOW_ENTERPRISE_URL`
- * (default `https://portal.snow-flow.dev`). The JWT comes from env
+ * (default `https://portal.serac.build`). The JWT comes from env
  * `SNOW_FLOW_ENTERPRISE_TOKEN`. Without a token, every function silently
  * no-ops — keeps the OS build fully functional without enterprise auth.
  */
@@ -21,7 +21,7 @@ import { Log } from "@/util/log"
 export namespace Governance {
   const log = Log.create({ service: "governance.client" })
 
-  const DEFAULT_BASE = "https://portal.snow-flow.dev"
+  const DEFAULT_BASE = "https://portal.serac.build"
 
   function baseUrl(): string {
     return process.env["SNOW_FLOW_ENTERPRISE_URL"]?.trim() || DEFAULT_BASE

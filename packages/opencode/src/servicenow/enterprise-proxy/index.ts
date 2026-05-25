@@ -178,7 +178,7 @@ async function main() {
   try {
     mcpDebug("[Enterprise Proxy] Starting Enterprise Proxy MCP Server", {
       version: VERSION,
-      enterpriseUrl: process.env.SNOW_ENTERPRISE_URL || "https://enterprise.snow-flow.dev",
+      enterpriseUrl: process.env.SNOW_ENTERPRISE_URL || "https://enterprise.serac.build",
       licenseKeyConfigured: !!process.env.SNOW_LICENSE_KEY,
       cwd: process.cwd(),
     })
@@ -190,7 +190,7 @@ async function main() {
     mcpDebug("[Enterprise Proxy] Serac Enterprise MCP Proxy started")
     mcpDebug(`[Enterprise Proxy] Version: ${VERSION}`)
     mcpDebug(
-      `[Enterprise Proxy] Enterprise URL: ${process.env.SNOW_ENTERPRISE_URL || "https://enterprise.snow-flow.dev"}`,
+      `[Enterprise Proxy] Enterprise URL: ${process.env.SNOW_ENTERPRISE_URL || "https://enterprise.serac.build"}`,
     )
     mcpDebug(`[Enterprise Proxy] License Key: ${process.env.SNOW_LICENSE_KEY ? "✓ Configured" : "✗ Not configured"}`)
 

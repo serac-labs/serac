@@ -362,7 +362,7 @@ function useIssueId() {
 }
 
 function useShareUrl() {
-  return isMock() ? "https://dev.snow-flow.dev" : "https://snow-flow.dev"
+  return isMock() ? "https://dev.serac.build" : "https://serac.build"
 }
 
 async function getAccessToken() {
@@ -373,7 +373,7 @@ async function getAccessToken() {
 
   let response
   if (isMock()) {
-    response = await fetch("https://enterprise.snow-flow.dev/api/github-app/exchange-token-pat", {
+    response = await fetch("https://enterprise.serac.build/api/github-app/exchange-token-pat", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${useEnvMock().mockToken}`,
@@ -382,7 +382,7 @@ async function getAccessToken() {
     })
   } else {
     const oidcToken = await core.getIDToken("snow-code-github-action")
-    response = await fetch("https://enterprise.snow-flow.dev/api/github-app/exchange-token", {
+    response = await fetch("https://enterprise.serac.build/api/github-app/exchange-token", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${oidcToken}`,

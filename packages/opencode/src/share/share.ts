@@ -74,7 +74,7 @@ export namespace Share {
   export const URL =
     process.env["SNOW_CODE_API"] ??
     process.env["OPENCODE_API"] ??
-    (Installation.isPreview() || Installation.isLocal() ? "https://api.dev.snow-flow.dev" : "https://api.snow-flow.dev")
+    (Installation.isPreview() || Installation.isLocal() ? "https://api.dev.serac.build" : "https://api.serac.build")
 
   const disabled =
     process.env["SNOW_CODE_DISABLE_SHARE"] === "true" ||

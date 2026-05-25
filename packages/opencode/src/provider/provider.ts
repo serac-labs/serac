@@ -459,7 +459,7 @@ export namespace Provider {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://snow-flow.dev/",
+            "HTTP-Referer": "https://serac.build/",
             "X-Title": "snow-flow",
           },
         },
@@ -470,7 +470,7 @@ export namespace Provider {
         autoload: false,
         options: {
           headers: {
-            "http-referer": "https://snow-flow.dev/",
+            "http-referer": "https://serac.build/",
             "x-title": "snow-flow",
           },
         },
@@ -537,7 +537,7 @@ export namespace Provider {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://snow-flow.dev/",
+            "HTTP-Referer": "https://serac.build/",
             "X-Title": "snow-flow",
           },
         },
@@ -604,7 +604,7 @@ export namespace Provider {
             // Cloudflare AI Gateway uses cf-aig-authorization for authenticated gateways
             // This enables Unified Billing where Cloudflare handles upstream provider auth
             ...(apiToken ? { "cf-aig-authorization": `Bearer ${apiToken}` } : {}),
-            "HTTP-Referer": "https://snow-flow.dev/",
+            "HTTP-Referer": "https://serac.build/",
             "X-Title": "snow-flow",
           },
           // Custom fetch to handle parameter transformation and auth

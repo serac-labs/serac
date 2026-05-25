@@ -1,8 +1,8 @@
 {
-  "$schema": "https://snow-flow.dev/config.json",
+  "$schema": "https://serac.build/config.json",
   // "plugin": ["opencode-openai-codex-auth"],
   // "enterprise": {
-  //   "url": "https://enterprise.dev.snow-flow.dev",
+  //   "url": "https://enterprise.dev.serac.build",
   // },
   "provider": {
     "snow-code": {

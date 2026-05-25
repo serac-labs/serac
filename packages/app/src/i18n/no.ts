@@ -126,7 +126,7 @@ export const dict = {
   "provider.connect.opencodeZen.line2":
     "Med én enkelt API-nøkkel får du tilgang til modeller som Claude, GPT, Gemini, GLM og flere.",
   "provider.connect.opencodeZen.visit.prefix": "Besøk ",
-  "provider.connect.opencodeZen.visit.link": "snow-flow.dev/zen",
+  "provider.connect.opencodeZen.visit.link": "serac.build/zen",
   "provider.connect.opencodeZen.visit.suffix": " for å hente API-nøkkelen din.",
   "provider.connect.oauth.code.visit.prefix": "Besøk ",
   "provider.connect.oauth.code.visit.link": "denne lenken",

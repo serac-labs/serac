@@ -146,7 +146,7 @@ export namespace User {
             // @ts-ignore
             InviteEmail({
               inviter: emailInfo.inviterEmail,
-              assetsUrl: `https://snow-flow.dev/email`,
+              assetsUrl: `https://serac.build/email`,
               workspaceID: workspaceID,
               workspaceName: emailInfo.workspaceName,
             }),

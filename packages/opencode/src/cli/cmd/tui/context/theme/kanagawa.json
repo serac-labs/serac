@@ -1,5 +1,5 @@
 {
-  "$schema": "https://snow-flow.dev/theme.json",
+  "$schema": "https://serac.build/theme.json",
   "defs": {
     "sumiInk0": "#1F1F28",
     "sumiInk1": "#2A2A37",

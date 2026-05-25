@@ -3,7 +3,7 @@
  */
 export const config = {
   // Base URL
-  baseUrl: "https://snow-flow.dev",
+  baseUrl: "https://serac.build",
 
   // GitHub
   github: {

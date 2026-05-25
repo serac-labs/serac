@@ -37,7 +37,7 @@ import { registerHandlers } from "./handlers/register.js"
 import type { ProxyPrompt } from "./handlers/types.js"
 
 // Configuration from environment variables
-const LICENSE_SERVER_URL = process.env.SNOW_ENTERPRISE_URL || "https://enterprise.snow-flow.dev"
+const LICENSE_SERVER_URL = process.env.SNOW_ENTERPRISE_URL || "https://enterprise.serac.build"
 const LAZY_TOOLS_ENABLED = process.env.SNOW_ENTERPRISE_LAZY_TOOLS !== "false"
 
 /**

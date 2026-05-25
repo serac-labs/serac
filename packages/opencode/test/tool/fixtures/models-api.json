@@ -16569,9 +16569,9 @@
     "id": "opencode",
     "env": ["OPENCODE_API_KEY"],
     "npm": "@ai-sdk/openai-compatible",
-    "api": "https://snow-flow.dev/enterprise/v1",
+    "api": "https://serac.build/enterprise/v1",
     "name": "OpenCode Zen",
-    "doc": "https://snow-flow.dev/docs/enterprise",
+    "doc": "https://serac.build/docs/enterprise",
     "models": {
       "qwen3-coder": {
         "id": "qwen3-coder",

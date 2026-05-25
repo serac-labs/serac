@@ -123,7 +123,7 @@ export const dict = {
   "provider.connect.opencodeZen.line2":
     "С одним API ключом вы получите доступ к таким моделям как Claude, GPT, Gemini, GLM и другим.",
   "provider.connect.opencodeZen.visit.prefix": "Посетите ",
-  "provider.connect.opencodeZen.visit.link": "snow-flow.dev/zen",
+  "provider.connect.opencodeZen.visit.link": "serac.build/zen",
   "provider.connect.opencodeZen.visit.suffix": " чтобы получить ваш API ключ.",
   "provider.connect.oauth.code.visit.prefix": "Посетите ",
   "provider.connect.oauth.code.visit.link": "эту ссылку",

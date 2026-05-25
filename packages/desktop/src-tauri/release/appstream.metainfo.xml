@@ -23,12 +23,12 @@
   <content_rating type="oars-1.1" />
 
   <url type="bugtracker">https://github.com/groeimetai/snow-flow/issues</url>
-  <url type="homepage">https://snow-flow.dev</url>
+  <url type="homepage">https://serac.build</url>
   <url type="vcs-browser">https://github.com/groeimetai/snow-flow</url>
 
   <screenshots>
     <screenshot type="default">
-      <image>https://snow-flow.dev/docs/_astro/screenshot.Bs5D4atL_ZvsvFu.webp</image>
+      <image>https://serac.build/docs/_astro/screenshot.Bs5D4atL_ZvsvFu.webp</image>
     </screenshot>
   </screenshots>
 

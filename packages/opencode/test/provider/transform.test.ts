@@ -843,7 +843,7 @@ describe("ProviderTransform.message - strip openai metadata when store=false", (
       providerID: "opencode",
       api: {
         id: "opencode-test",
-        url: "https://api.snow-flow.dev",
+        url: "https://api.serac.build",
         npm: "@ai-sdk/openai-compatible",
       },
     }
@@ -877,7 +877,7 @@ describe("ProviderTransform.message - strip openai metadata when store=false", (
       providerID: "opencode",
       api: {
         id: "opencode-test",
-        url: "https://api.snow-flow.dev",
+        url: "https://api.serac.build",
         npm: "@ai-sdk/openai-compatible",
       },
     }

@@ -545,7 +545,7 @@ function App() {
       title: "Open docs",
       value: "docs.open",
       onSelect: () => {
-        open("https://snow-flow.dev/docs").catch(() => {})
+        open("https://serac.build/docs").catch(() => {})
         dialog.clear()
       },
       category: "System",
@@ -724,7 +724,7 @@ function App() {
         DialogAlert.show(
           dialog,
           "Warning",
-          "While openrouter is a convenient way to access LLMs your request will often be routed to subpar providers that do not work well in our testing.\n\nFor reliable access to models check out Serac Enterprise\nhttps://snow-flow.dev/enterprise",
+          "While openrouter is a convenient way to access LLMs your request will often be routed to subpar providers that do not work well in our testing.\n\nFor reliable access to models check out Serac Enterprise\nhttps://serac.build/enterprise",
         ).then(() => kv.set("openrouter_warning", true))
       })
     }

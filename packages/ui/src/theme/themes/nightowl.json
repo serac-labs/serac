@@ -1,5 +1,5 @@
 {
-  "$schema": "https://snow-flow.dev/desktop-theme.json",
+  "$schema": "https://serac.build/desktop-theme.json",
   "name": "Night Owl",
   "id": "nightowl",
   "light": {

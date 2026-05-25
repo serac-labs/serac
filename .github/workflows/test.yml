@@ -22,7 +22,7 @@ jobs:
             playwright: bunx playwright install --with-deps
             workdir: .
             command: |
-              git config --global user.email "bot@snow-flow.dev"
+              git config --global user.email "bot@serac.build"
               git config --global user.name "snow-code"
               bun turbo typecheck
               bun turbo test

@@ -236,7 +236,7 @@ export const GithubInstallCommand = cmd({
                 "",
                 "    3. Go to a GitHub issue and comment `/oc summarize` to see the agent in action",
                 "",
-                "   Learn more about the GitHub agent - https://snow-flow.dev/docs/github/#usage-examples",
+                "   Learn more about the GitHub agent - https://serac.build/docs/github/#usage-examples",
               ].join("\n"),
             )
           }
@@ -355,7 +355,7 @@ export const GithubInstallCommand = cmd({
 
             async function getInstallation() {
               return await fetch(
-                `https://enterprise.snow-flow.dev/api/github-app/installation?owner=${app.owner}&repo=${app.repo}`,
+                `https://enterprise.serac.build/api/github-app/installation?owner=${app.owner}&repo=${app.repo}`,
               )
                 .then((res) => res.json())
                 .then((data) => data.installation)
@@ -467,7 +467,7 @@ export const GithubRunCommand = cmd({
           ? (payload as IssueCommentEvent | IssuesEvent).issue.number
           : (payload as PullRequestEvent | PullRequestReviewCommentEvent).pull_request.number
       const runUrl = `/${owner}/${repo}/actions/runs/${runId}`
-      const shareBaseUrl = isMock ? "https://dev.snow-flow.dev" : "https://snow-flow.dev"
+      const shareBaseUrl = isMock ? "https://dev.serac.build" : "https://serac.build"
 
       let appToken: string
       let octoRest: Octokit
@@ -683,7 +683,7 @@ export const GithubRunCommand = cmd({
 
       function normalizeOidcBaseUrl(): string {
         const value = process.env["OIDC_BASE_URL"]
-        if (!value) return "https://enterprise.snow-flow.dev/api/github-app"
+        if (!value) return "https://enterprise.serac.build/api/github-app"
         return value.replace(/\/+$/, "")
       }
 

@@ -12,7 +12,7 @@ import path from "path"
 
 const log = Log.create({ service: "usage.anonymous-telemetry" })
 
-// Default points at the rebranded host. The legacy portal.snow-flow.dev
+// Default points at the rebranded host. The legacy portal.serac.build
 // origin redirects 301 to dashboard.serac.build, which Bun fetch follows
 // by downgrading POST→GET (per WHATWG fetch spec for 301), silently
 // dropping the body. Hitting the new host directly avoids the downgrade.
