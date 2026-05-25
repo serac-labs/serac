@@ -255,7 +255,7 @@ export namespace Installation {
         .then((data: any) => data.version)
     }
 
-    return fetch("https://api.github.com/repos/groeimetai/snow-flow/releases/latest")
+    return fetch("https://api.github.com/repos/serac-labs/serac/releases/latest")
       .then((res) => {
         if (!res.ok) throw new Error(res.statusText)
         return res.json()

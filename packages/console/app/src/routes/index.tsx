@@ -140,7 +140,7 @@ export default function Home() {
                     <button data-copy data-slot="command" onClick={handleCopyClick}>
                       <span>
                         <span data-slot="protocol">brew install </span>
-                        <span data-slot="highlight">groeimetai/tap/snow-flow</span>
+                        <span data-slot="highlight">serac-labs/tap/serac</span>
                       </span>
                       <CopyStatus />
                     </button>

@@ -124,7 +124,7 @@ export default function Home() {
             <h3 data-component="title">homebrew</h3>
             <button data-copy data-slot="button">
               <span>
-                brew install <strong>groeimetai/tap/snow-flow</strong>
+                brew install <strong>serac-labs/tap/serac</strong>
               </span>
               <CopyStatus />
             </button>
@@ -154,7 +154,7 @@ export default function Home() {
             <a href="https://x.com/snowflowdev">X.com</a>
           </div>
           <div data-slot="cell">
-            <a href="https://github.com/groeimetai/snow-flow">GitHub</a>
+            <a href="https://github.com/serac-labs/serac">GitHub</a>
           </div>
           <div data-slot="cell">
             <a href="https://serac.build/discord">Discord</a>

@@ -34,7 +34,7 @@ We appreciate your efforts to responsibly disclose your findings, and will make 
 
 ### Reporting a Vulnerability
 
-To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/groeimetai/snow-flow/security/advisories/new) tab.
+To report a security issue, please use the GitHub Security Advisory ["Report a Vulnerability"](https://github.com/serac-labs/serac/security/advisories/new) tab.
 
 Alternatively, email: **security@serac.build**
 

@@ -26,7 +26,7 @@ jobs:
       - uses: ./.github/actions/setup-bun
 
       - name: Run snow-code
-        uses: groeimetai/snow-flow/github@latest
+        uses: serac-labs/serac/github@latest
         env:
           SNOW_CODE_API_KEY: ${{ secrets.SNOW_CODE_API_KEY }}
           SNOW_CODE_PERMISSION: '{"bash": "deny"}'

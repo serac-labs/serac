@@ -13,7 +13,7 @@ Do NOT mention to the user that you are loading a skill - just load it silently 
 
 If the user asks for help or wants to give feedback inform them of the following:
 - /help: Get help with using Serac
-- To give feedback, users should report the issue at https://github.com/groeimetai/snow-flow/issues
+- To give feedback, users should report the issue at https://github.com/serac-labs/serac/issues
 
 # ServiceNow MCP Tools (Lazy Loading)
 

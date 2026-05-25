@@ -86,7 +86,7 @@ Base:    main
 Issue:   Fixes #2341
 State:   Draft
 
-URL: https://github.com/groeimetai/snow-flow/pull/5123
+URL: https://github.com/serac-labs/serac/pull/5123
 
 Next:
   - Mark as ready for review when done iterating

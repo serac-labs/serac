@@ -129,9 +129,9 @@ export default function Download() {
                 </code>
                 <CopyStatus />
               </button>
-              <button data-component="cli-row" onClick={handleCopyClick("brew install groeimetai/tap/snow-flow")}>
+              <button data-component="cli-row" onClick={handleCopyClick("brew install serac-labs/tap/serac")}>
                 <code>
-                  brew install <strong>groeimetai/tap/snow-flow</strong>
+                  brew install <strong>serac-labs/tap/serac</strong>
                 </code>
                 <CopyStatus />
               </button>

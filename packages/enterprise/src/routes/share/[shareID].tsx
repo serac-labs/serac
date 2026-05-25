@@ -328,7 +328,7 @@ export default function () {
                               <div class="flex gap-3 items-center">
                                 <IconButton
                                   as={"a"}
-                                  href="https://github.com/groeimetai/snow-flow"
+                                  href="https://github.com/serac-labs/serac"
                                   target="_blank"
                                   icon="github"
                                   variant="ghost"

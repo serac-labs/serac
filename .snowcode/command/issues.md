@@ -3,7 +3,7 @@ description: "find issue(s) on github"
 model: snow-code/claude-haiku-4-5
 ---
 
-Search through existing issues in groeimetai/snow-flow using the gh cli to find issues matching this query:
+Search through existing issues in serac-labs/serac using the gh cli to find issues matching this query:
 
 $ARGUMENTS
 

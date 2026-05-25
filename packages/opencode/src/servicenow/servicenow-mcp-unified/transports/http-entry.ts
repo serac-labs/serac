@@ -13,7 +13,7 @@
  *   MCP_HTTP_PORT         — listen port (default 8082)
  *
  * Intended runtime: Bun. The image is built from `Dockerfile.mcp-http`
- * and published as `ghcr.io/groeimetai/snow-flow-mcp-http`. Callers that
+ * and published as `ghcr.io/serac-labs/serac-mcp-http`. Callers that
  * need to self-host can also run it via `bun run http-entry.ts`.
  */
 

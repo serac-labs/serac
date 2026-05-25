@@ -39,7 +39,7 @@ Serac requires every PR to link an existing issue. `/pick-issue` starts from an 
 
 ```bash
 # Clone the repo
-git clone https://github.com/groeimetai/snow-flow.git
+git clone https://github.com/serac-labs/serac.git
 cd snow-flow
 git checkout main
 

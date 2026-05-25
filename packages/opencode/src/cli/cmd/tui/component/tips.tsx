@@ -143,7 +143,7 @@ const TIPS = [
   "Press {highlight}Ctrl+X S{/highlight} or {highlight}/status{/highlight} to see system status info",
   "Enable {highlight}tui.scroll_acceleration{/highlight} for smooth macOS-style scrolling",
   "Toggle username display in chat via command palette ({highlight}Ctrl+P{/highlight})",
-  "Run {highlight}docker run -it --rm ghcr.io/groeimetai/snow-flow{/highlight} for containerized use",
+  "Run {highlight}docker run -it --rm ghcr.io/serac-labs/serac{/highlight} for containerized use",
   "Use {highlight}/connect{/highlight} with Serac Enterprise for curated, tested models",
   "Serac can search your ServiceNow CMDB, manage incidents, and automate workflows",
   "Use {highlight}/review{/highlight} to review uncommitted changes, branches, or PRs",

@@ -2,7 +2,7 @@
  * Types for built-in auth providers
  */
 
-// AuthClient type - was from @groeimetai/snow-flow-sdk, now defined locally
+// AuthClient type - was from @serac-labs/serac-sdk, now defined locally
 export type AuthClient = {
   // OpenCode client interface
   [key: string]: any

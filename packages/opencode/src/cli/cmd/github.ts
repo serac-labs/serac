@@ -398,7 +398,7 @@ jobs:
           persist-credentials: false
 
       - name: Run snow-code
-        uses: groeimetai/snow-flow/github@latest${envStr}
+        uses: serac-labs/serac/github@latest${envStr}
         with:
           model: ${provider}/${model}`,
             )

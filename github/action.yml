@@ -41,7 +41,7 @@ runs:
       id: version
       shell: bash
       run: |
-        VERSION=$(curl -sf https://api.github.com/repos/groeimetai/snow-flow/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
+        VERSION=$(curl -sf https://api.github.com/repos/serac-labs/serac/releases/latest | grep -o '"tag_name": *"[^"]*"' | cut -d'"' -f4)
         echo "version=${VERSION:-latest}" >> $GITHUB_OUTPUT
 
     - name: Cache snow-code

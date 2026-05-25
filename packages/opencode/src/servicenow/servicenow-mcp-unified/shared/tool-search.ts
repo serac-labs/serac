@@ -1,7 +1,7 @@
 /**
  * Tool Search - Session-based tool enabling for lazy loading mode
  *
- * Ported from snow-flow (JavaScript) to snow-flow-ts (TypeScript).
+ * Ported from the original JavaScript implementation to TypeScript.
  *
  * This module provides:
  *   - Tool index for lightweight search (name + description only)

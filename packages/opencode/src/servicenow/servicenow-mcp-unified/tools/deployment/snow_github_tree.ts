@@ -32,11 +32,11 @@ Requires: Enterprise license with 'github' feature. GitHub PAT is managed server
     properties: {
       owner: {
         type: "string",
-        description: 'GitHub owner or organization (e.g. "groeimetai")',
+        description: 'GitHub owner or organization (e.g. "serac-labs")',
       },
       repo: {
         type: "string",
-        description: 'Repository name (e.g. "snow-flow")',
+        description: 'Repository name (e.g. "serac")',
       },
       path: {
         type: "string",

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-25T08:47:47.116Z",
+  "generatedAt": "2026-05-25T09:58:25.638Z",
   "count": 429,
   "groups": [
     {
@@ -7721,11 +7721,11 @@
             "properties": {
               "owner": {
                 "type": "string",
-                "description": "GitHub owner or organization (e.g. \"groeimetai\")"
+                "description": "GitHub owner or organization (e.g. \"serac-labs\")"
               },
               "repo": {
                 "type": "string",
-                "description": "Repository name (e.g. \"snow-flow\")"
+                "description": "Repository name (e.g. \"serac\")"
               },
               "path": {
                 "type": "string",

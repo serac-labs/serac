@@ -7,7 +7,7 @@ export const config = {
 
   // GitHub
   github: {
-    repoUrl: "https://github.com/groeimetai/snow-flow",
+    repoUrl: "https://github.com/serac-labs/serac",
     starsFormatted: {
       compact: "80K",
       full: "80,000",
