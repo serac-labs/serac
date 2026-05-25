@@ -138,7 +138,7 @@ async function getJwtToken(): Promise<string> {
   }
 
   if (!currentLicenseKey) {
-    throw new Error("SNOW_LICENSE_KEY or SNOW_ENTERPRISE_LICENSE_KEY not configured. Run: snow-flow auth login")
+    throw new Error("SNOW_LICENSE_KEY or SNOW_ENTERPRISE_LICENSE_KEY not configured. Run: serac auth login")
   }
 
   // Check if the license key is already a JWT token (from device auth)
@@ -218,7 +218,7 @@ async function getJwtToken(): Promise<string> {
       })
 
       if (axiosError.response?.status === 401) {
-        throw new Error("License key invalid or expired.\n\n" + "Fix this by running: snow-flow auth login")
+        throw new Error("License key invalid or expired.\n\n" + "Fix this by running: serac auth login")
       }
 
       if (axiosError.response?.status === 429) {
@@ -246,7 +246,7 @@ export async function listEnterpriseTools(): Promise<EnterpriseTool[]> {
   const licenseKey = getConfiguredLicenseKey()
   if (!licenseKey) {
     mcpDebug("[Enterprise Proxy] SNOW_LICENSE_KEY not configured")
-    throw new Error("SNOW_LICENSE_KEY or SNOW_ENTERPRISE_LICENSE_KEY not configured. Run: snow-flow auth login")
+    throw new Error("SNOW_LICENSE_KEY or SNOW_ENTERPRISE_LICENSE_KEY not configured. Run: serac auth login")
   }
 
   try {
@@ -309,11 +309,11 @@ export async function listEnterpriseTools(): Promise<EnterpriseTool[]> {
           throw new Error(
             "JWT token is invalid or expired.\n\n" +
               "🔧 This usually happens after server configuration updates (e.g., KMS secrets).\n\n" +
-              "Fix this by running: snow-flow auth login\n\n" +
+              "Fix this by running: serac auth login\n\n" +
               "The JWT will be regenerated with the latest server configuration.",
           )
         }
-        throw new Error("License key invalid or expired. Run: snow-flow auth login")
+        throw new Error("License key invalid or expired. Run: serac auth login")
       }
       if (axiosError.response?.status === 403) {
         throw new Error("Access denied. Please check your enterprise license.")
@@ -340,7 +340,7 @@ export async function listEnterpriseTools(): Promise<EnterpriseTool[]> {
 export async function proxyToolCall(toolName: string, args: Record<string, any>): Promise<any> {
   const licenseKey = getConfiguredLicenseKey()
   if (!licenseKey) {
-    throw new Error("SNOW_LICENSE_KEY or SNOW_ENTERPRISE_LICENSE_KEY not configured. Run: snow-flow auth login")
+    throw new Error("SNOW_LICENSE_KEY or SNOW_ENTERPRISE_LICENSE_KEY not configured. Run: serac auth login")
   }
 
   // Get JWT token (cached or fetch new one - reads dynamically from enterprise.json)
@@ -384,7 +384,7 @@ export async function proxyToolCall(toolName: string, args: Record<string, any>)
         cachedJwtToken = null
         jwtTokenExpiry = 0
 
-        throw new Error("License key invalid or expired. Run: snow-flow auth login")
+        throw new Error("License key invalid or expired. Run: serac auth login")
       }
 
       if (axiosError.response?.status === 403) {

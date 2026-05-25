@@ -23,26 +23,26 @@ Serac provides a powerful CLI for ServiceNow development orchestration.
 snow-flow
 
 # Start with specific model
-snow-flow --model claude-sonnet
-snow-flow --model claude-opus
-snow-flow --model gpt-4
+serac --model claude-sonnet
+serac --model claude-opus
+serac --model gpt-4
 
 # Resume previous session
-snow-flow --resume
-snow-flow --continue
+serac --resume
+serac --continue
 ```
 
 ### System Status
 
 ```bash
 # Check system status
-snow-flow status
+serac status
 
 # Real-time monitoring
-snow-flow monitor
+serac monitor
 
 # Version info
-snow-flow --version
+serac --version
 ```
 
 ## SPARC Modes
@@ -62,14 +62,14 @@ SPARC (Specification, Pseudocode, Architecture, Refinement, Completion) modes pr
 
 ```bash
 # Orchestrator mode (default)
-snow-flow sparc "Create incident dashboard widget"
+serac sparc "Create incident dashboard widget"
 
 # Specific mode
-snow-flow sparc run coder "Implement auto-assignment business rule"
-snow-flow sparc run researcher "Analyze current incident workflow"
+serac sparc run coder "Implement auto-assignment business rule"
+serac sparc run researcher "Analyze current incident workflow"
 
 # Test-driven development
-snow-flow sparc tdd "Add SLA breach notification"
+serac sparc tdd "Add SLA breach notification"
 ```
 
 ## Agent Management
@@ -78,15 +78,15 @@ snow-flow sparc tdd "Add SLA breach notification"
 
 ```bash
 # Spawn specialized agent
-snow-flow agent spawn developer
-snow-flow agent spawn researcher
-snow-flow agent spawn reviewer
+serac agent spawn developer
+serac agent spawn researcher
+serac agent spawn reviewer
 
 # List active agents
-snow-flow agent list
+serac agent list
 
 # Agent status
-snow-flow agent status <agent-id>
+serac agent status <agent-id>
 ```
 
 ### Agent Types
@@ -104,13 +104,13 @@ Multi-agent swarms for complex tasks.
 
 ```bash
 # Start swarm with objective
-snow-flow swarm "Build HR portal with self-service features"
+serac swarm "Build HR portal with self-service features"
 
 # Swarm options
-snow-flow swarm "objective" --strategy parallel
-snow-flow swarm "objective" --strategy sequential
-snow-flow swarm "objective" --mode development
-snow-flow swarm "objective" --monitor
+serac swarm "objective" --strategy parallel
+serac swarm "objective" --strategy sequential
+serac swarm "objective" --mode development
+serac swarm "objective" --monitor
 ```
 
 ### Swarm Strategies
@@ -125,16 +125,16 @@ snow-flow swarm "objective" --monitor
 
 ```bash
 # Create task
-snow-flow task create "Implement feature X"
+serac task create "Implement feature X"
 
 # List tasks
-snow-flow task list
+serac task list
 
 # Task status
-snow-flow task status <task-id>
+serac task status <task-id>
 
 # Orchestrate complex task
-snow-flow task orchestrate "Multi-step implementation"
+serac task orchestrate "Multi-step implementation"
 ```
 
 ## Memory Operations
@@ -143,51 +143,51 @@ Persistent memory across sessions.
 
 ```bash
 # Store data
-snow-flow memory store <key> <data>
+serac memory store <key> <data>
 
 # Retrieve data
-snow-flow memory get <key>
+serac memory get <key>
 
 # List all keys
-snow-flow memory list
+serac memory list
 
 # Search memory
-snow-flow memory search <query>
+serac memory search <query>
 
 # Clear memory
-snow-flow memory clear
+serac memory clear
 ```
 
 ## Configuration
 
 ```bash
 # Configure ServiceNow instance
-snow-flow config instance <url>
+serac config instance <url>
 
 # Set credentials
-snow-flow config auth
+serac config auth
 
 # View configuration
-snow-flow config show
+serac config show
 
 # Reset configuration
-snow-flow config reset
+serac config reset
 ```
 
 ## Authentication
 
 ```bash
 # Authenticate with ServiceNow
-snow-flow auth servicenow
+serac auth servicenow
 
 # Authenticate with enterprise services
-snow-flow auth enterprise
+serac auth enterprise
 
 # Check auth status
-snow-flow auth status
+serac auth status
 
 # Logout
-snow-flow auth logout
+serac auth logout
 ```
 
 ## Environment Variables
@@ -226,10 +226,10 @@ cat .snow-code/token-debug/debug-*.jsonl | jq .
 
 ```bash
 # Start swarm for complex feature
-snow-flow swarm "Build customer portal" --strategy parallel --monitor
+serac swarm "Build customer portal" --strategy parallel --monitor
 
 # Monitor progress
-snow-flow monitor
+serac monitor
 ```
 
 ## TUI Shortcuts

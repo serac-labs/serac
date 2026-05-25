@@ -149,7 +149,7 @@ export class ServiceNowAuthManager {
       throw new Error(
         "Failed to obtain access token. This can happen when:\n" +
         "• Your ServiceNow instance is hibernating — open it in a browser to wake it up\n" +
-        "• Your credentials have expired — run: snow-flow auth login\n" +
+        "• Your credentials have expired — run: serac auth login\n" +
         "• Your OAuth client ID/secret are incorrect"
       )
     }
@@ -255,7 +255,7 @@ export class ServiceNowAuthManager {
             const newAccessToken = await this.getAccessToken(context)
 
             if (!newAccessToken) {
-              throw new Error("Failed to obtain access token after 401 refresh. Please run: snow-flow auth login")
+              throw new Error("Failed to obtain access token after 401 refresh. Please run: serac auth login")
             }
 
             // Update request with new token
@@ -335,7 +335,7 @@ export class ServiceNowAuthManager {
 
     // Check if instance URL is valid
     if (!context.instanceUrl || context.instanceUrl === "" || context.instanceUrl.includes("your-instance")) {
-      throw new Error("ServiceNow credentials not configured. Please run: snow-flow auth login")
+      throw new Error("ServiceNow credentials not configured. Please run: serac auth login")
     }
 
     // Check for valid OAuth credentials
@@ -353,7 +353,7 @@ export class ServiceNowAuthManager {
 
     // Must have at least one valid auth method
     if (!hasValidOAuth && !hasValidBasic) {
-      throw new Error("ServiceNow credentials not configured. Please run: snow-flow auth login")
+      throw new Error("ServiceNow credentials not configured. Please run: serac auth login")
     }
 
     // If only Basic auth is available, skip OAuth flows and go directly to Basic auth

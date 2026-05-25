@@ -210,7 +210,7 @@ export function validateJWTExpiry(jwtPayload: JWTPayload | null): void {
     throw new McpError(
       ErrorCode.InvalidRequest,
       "🚫 Session Expired: Your authentication token has expired. Please re-authenticate.\n\n" +
-        "💡 Run: snow-flow auth login",
+        "💡 Run: serac auth login",
     )
   }
 }

@@ -65,8 +65,8 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     if (msg.includes("Failed to obtain access token") || status === 401) {
       return createErrorResult(
         `Authentication failed. Your access token may be expired.\n\n` +
-        `Run: snow-flow auth login\n\n` +
-        `If you've already logged in, check: snow-flow auth status`
+        `Run: serac auth login\n\n` +
+        `If you've already logged in, check: serac auth status`
       )
     }
 
