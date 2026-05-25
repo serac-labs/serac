@@ -4,7 +4,7 @@ description: Trace ServiceNow configuration dependencies — what artifacts touc
 license: Apache-2.0
 compatibility: Designed for Snow-Code and ServiceNow development
 metadata:
-  author: groeimetai
+  author: serac
   version: "2.0.0"
   category: servicenow
 tools:

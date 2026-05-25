@@ -4,7 +4,7 @@ description: Manage ServiceNow incidents — creation with impact/urgency priori
 license: Apache-2.0
 compatibility: Designed for Snow-Code and ServiceNow development
 metadata:
-  author: groeimetai
+  author: serac
   version: "1.0.0"
   category: servicenow
 tools:

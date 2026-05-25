@@ -4,7 +4,7 @@ description: Serac CLI reference — interactive TUI startup, SPARC modes (orche
 license: Apache-2.0
 compatibility: Designed for Snow-Code CLI
 metadata:
-  author: groeimetai
+  author: serac
   version: "1.0.0"
   category: platform
 tools: []

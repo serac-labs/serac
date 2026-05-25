@@ -4,7 +4,7 @@ description: Build ServiceNow HR Service Delivery — sn_hr_core_case from Emplo
 license: Apache-2.0
 compatibility: Designed for Snow-Code and ServiceNow development
 metadata:
-  author: groeimetai
+  author: serac
   version: "1.0.0"
   category: servicenow
 tools:

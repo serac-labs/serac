@@ -4,7 +4,7 @@ description: Build ServiceNow UI Builder / Next Experience pages — macroponent
 license: Apache-2.0
 compatibility: Designed for Snow-Code and ServiceNow development
 metadata:
-  author: groeimetai
+  author: serac
   version: "1.0.0"
   category: servicenow
 tools:

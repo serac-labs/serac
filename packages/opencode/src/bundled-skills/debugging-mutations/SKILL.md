@@ -4,7 +4,7 @@ description: Verify what changed on a ServiceNow instance after a tool call — 
 license: Apache-2.0
 compatibility: Designed for Snow-Code and ServiceNow development
 metadata:
-  author: groeimetai
+  author: serac
   version: "1.0.0"
   category: servicenow
 tools:

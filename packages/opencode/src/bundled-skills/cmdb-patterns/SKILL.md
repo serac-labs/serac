@@ -4,7 +4,7 @@ description: Create ServiceNow CIs and cmdb_rel_ci relationships, walk upstream/
 license: Apache-2.0
 compatibility: Designed for Snow-Code and ServiceNow development
 metadata:
-  author: groeimetai
+  author: serac
   version: "1.0.0"
   category: servicenow
 tools:

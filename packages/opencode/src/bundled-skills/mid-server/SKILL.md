@@ -4,7 +4,7 @@ description: Communicate with ServiceNow MID Servers via the ECC queue — send 
 license: Apache-2.0
 compatibility: Designed for Snow-Code and ServiceNow development
 metadata:
-  author: groeimetai
+  author: serac
   version: "1.0.0"
   category: servicenow
 tools:

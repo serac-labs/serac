@@ -4,7 +4,7 @@ description: Build ServiceNow UI Actions (form/list buttons, context menus) and 
 license: Apache-2.0
 compatibility: Designed for Snow-Code and ServiceNow development
 metadata:
-  author: groeimetai
+  author: serac
   version: "1.0.0"
   category: servicenow
 tools:
