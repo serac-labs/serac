@@ -53,7 +53,7 @@ export const toolDefinition: MCPToolDefinition = {
         type: "string",
         description:
           "[stdio only] Local directory to also write the files into. " +
-          "Default: /tmp/snow-flow-artifacts. Ignored on HTTP transport — " +
+          "Default: /tmp/serac-artifacts. Ignored on HTTP transport — " +
           "use the returned `files` map and the `write` tool to land them in the sandbox.",
       },
     },
@@ -136,7 +136,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     // map and skip the disk write.
     let writtenDir: string | undefined
     if (!isHttp) {
-      const outputDir: string = args.output_dir || path.join(os.tmpdir(), "snow-flow-artifacts")
+      const outputDir: string = args.output_dir || path.join(os.tmpdir(), "serac-artifacts")
       const artifactDir = path.join(outputDir, artifactTable, artifactName)
       await fs.mkdir(artifactDir, { recursive: true })
       for (const [filename, content] of Object.entries(files)) {

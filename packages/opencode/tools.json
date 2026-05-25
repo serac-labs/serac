@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-14T12:08:21.411Z",
+  "generatedAt": "2026-05-25T08:47:47.116Z",
   "count": 429,
   "groups": [
     {
@@ -10320,8 +10320,8 @@
               },
               "update_set_name": {
                 "type": "string",
-                "description": "[write actions] Name for auto-created update set (default: \"Snow-Flow: Flow Designer changes\"). Only used when ensure_update_set=true and no update_set_id provided.",
-                "default": "Snow-Flow: Flow Designer changes"
+                "description": "[write actions] Name for auto-created update set (default: \"Serac: Flow Designer changes\"). Only used when ensure_update_set=true and no update_set_id provided.",
+                "default": "Serac: Flow Designer changes"
               },
               "ensure_update_set": {
                 "type": "boolean",
@@ -12364,7 +12364,7 @@
               },
               "output_dir": {
                 "type": "string",
-                "description": "[stdio only] Local directory to also write the files into. Default: /tmp/snow-flow-artifacts. Ignored on HTTP transport — use the returned `files` map and the `write` tool to land them in the sandbox."
+                "description": "[stdio only] Local directory to also write the files into. Default: /tmp/serac-artifacts. Ignored on HTTP transport — use the returned `files` map and the `write` tool to land them in the sandbox."
               }
             },
             "required": [
@@ -19745,7 +19745,7 @@
         },
         {
           "name": "snow_redeploy_script_endpoint",
-          "description": "Force-redeploy the Snow-Flow scripted REST executor endpoint (/api/snow_flow_exec/execute). Use when snow_execute_script / UI policy tools fail with 'Requested URI does not represent any resource'. Clears the in-memory cache and runs the auto-deploy with full diagnostics. Set hard_reset=true to delete and recreate the existing definition + operation records.",
+          "description": "Force-redeploy the Serac scripted REST executor endpoint (/api/snow_flow_exec/execute). Use when snow_execute_script / UI policy tools fail with 'Requested URI does not represent any resource'. Clears the in-memory cache and runs the auto-deploy with full diagnostics. Set hard_reset=true to delete and recreate the existing definition + operation records.",
           "permission": "admin",
           "allowedRoles": [
             "admin"
@@ -20061,7 +20061,7 @@
       "tools": [
         {
           "name": "snow_impersonate_user",
-          "description": "Generate a ServiceNow impersonation deep-link for ACL / role debugging. Verifies the caller has the 'admin' role, resolves the target user (by sys_id or username), appends an audit entry to ~/.snow-flow/audit/impersonations.jsonl, and returns an /impersonate.do URL the admin opens in the browser to actually switch session. Does NOT modify the OAuth session itself — ServiceNow's impersonation endpoint is cookie-based.",
+          "description": "Generate a ServiceNow impersonation deep-link for ACL / role debugging. Verifies the caller has the 'admin' role, resolves the target user (by sys_id or username), appends an audit entry to ~/.serac/audit/impersonations.jsonl, and returns an /impersonate.do URL the admin opens in the browser to actually switch session. Does NOT modify the OAuth session itself — ServiceNow's impersonation endpoint is cookie-based.",
           "permission": "admin",
           "allowedRoles": [
             "admin"
@@ -25066,7 +25066,7 @@
       "tools": [
         {
           "name": "snow_create_workflow",
-          "description": "⚠️ LEGACY: Create workflow definition (deprecated - ServiceNow recommends Flow Designer). Use for backwards compatibility only. For new automations, consider Flow Designer and ask Snow-Flow to generate a specification document.",
+          "description": "⚠️ LEGACY: Create workflow definition (deprecated - ServiceNow recommends Flow Designer). Use for backwards compatibility only. For new automations, consider Flow Designer and ask Serac to generate a specification document.",
           "permission": "write",
           "allowedRoles": [
             "developer",
@@ -25250,7 +25250,7 @@
         },
         {
           "name": "snow_workflow_manage",
-          "description": "⚠️ LEGACY: Manage legacy workflows (deprecated - ServiceNow recommends Flow Designer). Use for backwards compatibility only. For new automations, consider Flow Designer (not programmable via Snow-Flow, but specs can be generated). Actions: list, get, stop, retry, clone, enable/disable, delete, get_history",
+          "description": "⚠️ LEGACY: Manage legacy workflows (deprecated - ServiceNow recommends Flow Designer). Use for backwards compatibility only. For new automations, consider Flow Designer (not programmable via Serac, but specs can be generated). Actions: list, get, stop, retry, clone, enable/disable, delete, get_history",
           "permission": "write",
           "allowedRoles": [
             "developer",

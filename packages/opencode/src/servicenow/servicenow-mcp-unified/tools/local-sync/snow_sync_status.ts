@@ -38,7 +38,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
   const { sys_id, check_all = false, include_file_details = false, validate_coherence = false } = args
 
   try {
-    const syncDir = path.join("/tmp", "snow-flow-artifacts")
+    const syncDir = path.join("/tmp", "serac-artifacts")
 
     // Verify sync directory exists
     try {

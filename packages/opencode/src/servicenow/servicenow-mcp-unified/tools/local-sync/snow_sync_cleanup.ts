@@ -11,7 +11,7 @@ import * as path from "path"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_sync_cleanup",
-  // Stdio-only: deletes a hard-coded `/tmp/snow-flow-artifacts` directory.
+  // Stdio-only: deletes a hard-coded `/tmp/serac-artifacts` directory.
   // In HTTP multi-tenant context that would wipe artifacts of every tenant.
   transports: ["stdio"],
   description: "Clean up local artifact files after sync with retention policies",
@@ -41,7 +41,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
   const { sys_id, cleanup_all = false, keep_backup = true, max_age_days = 0 } = args
 
   try {
-    const syncDir = path.join("/tmp", "snow-flow-artifacts")
+    const syncDir = path.join("/tmp", "serac-artifacts")
 
     // Verify sync directory exists
     try {
