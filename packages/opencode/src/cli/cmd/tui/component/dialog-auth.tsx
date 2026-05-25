@@ -1287,7 +1287,7 @@ function DialogAuthEnterprise() {
       try {
         const { MCP } = await import("@/mcp")
         const { Config } = await import("@/config/config")
-        await MCP.add("snow-flow-enterprise", {
+        await MCP.add("serac-enterprise", {
           type: "local",
           command: Config.getMcpServerCommand("enterprise-proxy"),
           environment: {
@@ -2149,7 +2149,7 @@ function DialogAuthEnterpriseCombined() {
       const { Config } = await import("@/config/config")
 
       // Start enterprise MCP server
-      await MCP.add("snow-flow-enterprise", {
+      await MCP.add("serac-enterprise", {
         type: "local",
         command: Config.getMcpServerCommand("enterprise-proxy"),
         environment: {
@@ -2314,7 +2314,7 @@ function DialogAuthEnterpriseCombined() {
       const entData = enterpriseData()
 
       // Start enterprise MCP server
-      await MCP.add("snow-flow-enterprise", {
+      await MCP.add("serac-enterprise", {
         type: "local",
         command: Config.getMcpServerCommand("enterprise-proxy"),
         environment: {

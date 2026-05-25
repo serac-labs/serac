@@ -417,14 +417,14 @@ export namespace Config {
           enabled: true,
         }
       }
-      if (!result["snow-flow-enterprise"]) {
-        log.info("auto-configuring snow-flow-enterprise MCP server from auth store")
+      if (!result["serac-enterprise"] && !result["snow-flow-enterprise"]) {
+        log.info("auto-configuring serac-enterprise MCP server from auth store")
         // The enterprise proxy server expects:
         // - SNOW_PORTAL_URL: The portal URL (e.g., https://acme.serac.build) for JWT token exchange
         // - SNOW_LICENSE_KEY: The JWT token (confusing name, but it's the auth token)
         // Note: SNOW_ENTERPRISE_URL is NOT passed here so the proxy uses its correct default (https://enterprise.serac.build)
         const jwtToken = entAuth.token || entAuth.licenseKey
-        result["snow-flow-enterprise"] = {
+        result["serac-enterprise"] = {
           type: "local",
           command: getMcpServerCommand("enterprise-proxy"),
           environment: {
@@ -439,7 +439,7 @@ export namespace Config {
 
     // Fallback: Check for Enterprise credentials from ~/.snow-code/enterprise.json
     // This file is created by device auth flow and should be the primary token source
-    if (!result["snow-flow-enterprise"] || !result["servicenow-unified"]) {
+    if ((!result["serac-enterprise"] && !result["snow-flow-enterprise"]) || !result["servicenow-unified"]) {
       try {
         const enterpriseJsonPath = path.join(os.homedir(), ".snow-code", "enterprise.json")
         if (existsSync(enterpriseJsonPath)) {
@@ -464,12 +464,12 @@ export namespace Config {
                 enabled: true,
               }
             }
-            if (!result["snow-flow-enterprise"]) {
-              log.info("auto-configuring snow-flow-enterprise MCP server from enterprise.json", {
+            if (!result["serac-enterprise"] && !result["snow-flow-enterprise"]) {
+              log.info("auto-configuring serac-enterprise MCP server from enterprise.json", {
                 subdomain: enterpriseData.subdomain,
               })
               const portalUrl = `https://${enterpriseData.subdomain}.serac.build`
-              result["snow-flow-enterprise"] = {
+              result["serac-enterprise"] = {
                 type: "local",
                 command: getMcpServerCommand("enterprise-proxy"),
                 environment: {

@@ -20,7 +20,7 @@ const LAZY_TOOLS_ENABLED = process.env.SNOW_ENTERPRISE_LAZY_TOOLS !== "false"
  */
 const server = new Server(
   {
-    name: "snow-flow-enterprise-proxy",
+    name: "serac-enterprise-proxy",
     version: VERSION,
   },
   {

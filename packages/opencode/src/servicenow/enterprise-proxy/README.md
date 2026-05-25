@@ -87,7 +87,7 @@ Automatically added to `~/.config/snow-code/snow-code.json`:
 ```json
 {
   "mcpServers": {
-    "snow-flow-enterprise": {
+    "serac-enterprise": {
       "command": "node",
       "args": ["node_modules/snow-flow/dist/mcp/enterprise-proxy/index.js"],
       "env": {

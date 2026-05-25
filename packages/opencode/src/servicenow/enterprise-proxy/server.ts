@@ -107,7 +107,7 @@ function logConfiguration(): void {
 function createProxyServer(): Server {
   const server = new Server(
     {
-      name: "snow-flow-enterprise-proxy",
+      name: "serac-enterprise-proxy",
       version: "1.0.0",
     },
     {
