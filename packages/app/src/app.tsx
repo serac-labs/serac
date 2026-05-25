@@ -99,7 +99,7 @@ export function AppInterface(props: { defaultUrl?: string }) {
   const defaultServerUrl = () => {
     if (props.defaultUrl) return props.defaultUrl
     if (stored) return stored
-    if (import.meta.env.VITE_SNOW_FLOW_HOSTED) return window.location.origin
+    if ((import.meta.env.VITE_SERAC_HOSTED || import.meta.env.VITE_SNOW_FLOW_HOSTED)) return window.location.origin
     if (location.hostname.includes("serac.build")) return "http://localhost:4096"
     if (import.meta.env.DEV)
       return `http://${import.meta.env.VITE_OPENCODE_SERVER_HOST ?? "localhost"}:${import.meta.env.VITE_OPENCODE_SERVER_PORT ?? "4096"}`
@@ -134,7 +134,7 @@ export function AppInterface(props: { defaultUrl?: string }) {
               <Route
                 path="/"
                 component={() =>
-                  import.meta.env.VITE_SNOW_FLOW_HOSTED ? (
+                  (import.meta.env.VITE_SERAC_HOSTED || import.meta.env.VITE_SNOW_FLOW_HOSTED) ? (
                     <Navigate href={`/${base64Encode("/workspace")}/session`} />
                   ) : (
                     <Suspense fallback={<Loading />}>

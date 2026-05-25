@@ -28,6 +28,7 @@ import { mcpDebug } from "../../shared/mcp-debug.js"
 function loadRoleFromAuthJson(): UserRole | null {
   const authPaths = [
     path.join(os.homedir(), ".local", "share", "snow-code", "auth.json"),
+    path.join(os.homedir(), ".serac", "auth.json"),
     path.join(os.homedir(), ".snow-flow", "auth.json"),
   ]
 
@@ -55,7 +56,7 @@ function loadRoleFromAuthJson(): UserRole | null {
 
 /**
  * STDIO-ONLY: Extract a JWT payload from machine-local sources.
- * Priority: 1. `SNOW_FLOW_USER_ROLE` env var, 2. auth.json enterprise role,
+ * Priority: 1. `SERAC_USER_ROLE` (or legacy `SNOW_FLOW_USER_ROLE`) env var, 2. auth.json enterprise role,
  * 3. Default "developer".
  *
  * Never call this from an HTTP request handler — the env var and auth.json
@@ -71,7 +72,7 @@ function loadRoleFromAuthJson(): UserRole | null {
  */
 export function extractJWTPayload(_headers?: Record<string, string>): JWTPayload | null {
   // Priority 1: Check environment variable (explicit override)
-  const devRole = process.env.SNOW_FLOW_USER_ROLE as UserRole | undefined
+  const devRole = (process.env.SERAC_USER_ROLE || process.env.SNOW_FLOW_USER_ROLE) as UserRole | undefined
 
   if (devRole && ["developer", "stakeholder", "admin"].includes(devRole)) {
     mcpDebug(`[Permission] Using role from env: ${devRole}`)

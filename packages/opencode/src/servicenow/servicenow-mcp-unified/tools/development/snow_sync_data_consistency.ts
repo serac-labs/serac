@@ -8,11 +8,11 @@ import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/t
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 import { promises as fs } from "fs"
-import { join } from "path"
+import { seracMemoryPath } from "../../shared/serac-home.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_sync_data_consistency",
-  // Stdio-only: reads `process.cwd()/.snow-flow/memory` (shared across
+  // Stdio-only: reads `process.cwd()/.serac/memory` (shared across
   // tenants in HTTP mode).
   transports: ["stdio"],
   description:
@@ -54,7 +54,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 
   try {
     const client = await getAuthenticatedClient(context)
-    const memoryPath = process.env.SNOW_MEMORY_PATH || join(process.cwd(), ".snow-flow", "memory")
+    const memoryPath = seracMemoryPath()
 
     const syncResult = {
       operation,

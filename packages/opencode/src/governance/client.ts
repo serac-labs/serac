@@ -10,9 +10,10 @@
  *   recordAudit     → POST /api/governance/ai-audit/record
  *   recordEdge      → POST /api/governance/dependency-intelligence/edges
  *
- * Base URL comes from env `SNOW_FLOW_ENTERPRISE_URL`
- * (default `https://portal.serac.build`). The JWT comes from env
- * `SNOW_FLOW_ENTERPRISE_TOKEN`. Without a token, every function silently
+ * Base URL comes from env `SERAC_ENTERPRISE_URL` (or legacy
+ * `SNOW_FLOW_ENTERPRISE_URL`, default `https://portal.serac.build`). The JWT
+ * comes from env `SERAC_ENTERPRISE_TOKEN` (or legacy
+ * `SNOW_FLOW_ENTERPRISE_TOKEN`). Without a token, every function silently
  * no-ops — keeps the OS build fully functional without enterprise auth.
  */
 
@@ -24,11 +25,11 @@ export namespace Governance {
   const DEFAULT_BASE = "https://portal.serac.build"
 
   function baseUrl(): string {
-    return process.env["SNOW_FLOW_ENTERPRISE_URL"]?.trim() || DEFAULT_BASE
+    return (process.env["SERAC_ENTERPRISE_URL"] || process.env["SNOW_FLOW_ENTERPRISE_URL"])?.trim() || DEFAULT_BASE
   }
 
   function token(): string | undefined {
-    const t = process.env["SNOW_FLOW_ENTERPRISE_TOKEN"]?.trim()
+    const t = (process.env["SERAC_ENTERPRISE_TOKEN"] || process.env["SNOW_FLOW_ENTERPRISE_TOKEN"])?.trim()
     return t && t.length > 0 ? t : undefined
   }
 

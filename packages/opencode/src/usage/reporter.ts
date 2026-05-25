@@ -172,7 +172,7 @@ async function resolveAuth(): Promise<AuthCache | undefined> {
     if (entry.type === "enterprise" && entry.licenseKey) {
       return {
         licenseKey: entry.licenseKey,
-        portalUrl: entry.enterpriseUrl || process.env.SNOW_FLOW_PORTAL_URL || "https://dashboard.serac.build",
+        portalUrl: entry.enterpriseUrl || (process.env.SERAC_PORTAL_URL || process.env.SNOW_FLOW_PORTAL_URL) || "https://dashboard.serac.build",
         cachedAt: Date.now(),
       }
     }

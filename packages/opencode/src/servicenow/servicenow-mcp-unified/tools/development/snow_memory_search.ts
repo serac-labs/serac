@@ -8,10 +8,11 @@ import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/t
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 import { promises as fs } from "fs"
 import { join } from "path"
+import { seracMemoryPath } from "../../shared/serac-home.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_memory_search",
-  // Stdio-only: reads `process.cwd()/.snow-flow/memory` which is a
+  // Stdio-only: reads `process.cwd()/.serac/memory` which is a
   // server-wide path in HTTP context and would expose one tenant's cache
   // to others.
   transports: ["stdio"],
@@ -49,7 +50,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 
   try {
     // Memory path (configurable)
-    const memoryPath = process.env.SNOW_MEMORY_PATH || join(process.cwd(), ".snow-flow", "memory")
+    const memoryPath = seracMemoryPath()
 
     // Try to read memory cache
     let memoryData: any[] = []

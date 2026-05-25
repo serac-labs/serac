@@ -18,7 +18,7 @@ const log = Log.create({ service: "usage.anonymous-telemetry" })
 // dropping the body. Hitting the new host directly avoids the downgrade.
 // Old installs still pinned at the legacy URL only land in telemetry once
 // the nginx redirect is bumped to 308 (Permanent Redirect, method-preserving).
-const PORTAL_URL = process.env.SNOW_FLOW_PORTAL_URL || "https://dashboard.serac.build"
+const PORTAL_URL = (process.env.SERAC_PORTAL_URL || process.env.SNOW_FLOW_PORTAL_URL) || "https://dashboard.serac.build"
 const PENDING_END_PING_PATH = path.join(Global.Path.state, "anonymous-telemetry-pending-end.json")
 
 interface TelemetryPingPayload {
@@ -110,13 +110,13 @@ async function sendPing(payload: TelemetryPingPayload): Promise<boolean> {
       signal: AbortSignal.timeout(3_000),
     })
     log.info("telemetry ping sent", { status: response.status, type: payload.type })
-    if (process.env.SNOW_FLOW_DEBUG_TELEMETRY) {
+    if ((process.env.SERAC_DEBUG_TELEMETRY || process.env.SNOW_FLOW_DEBUG_TELEMETRY)) {
       console.error(`[telemetry] ping OK (${payload.type}) → ${response.status}`)
     }
     return response.ok
   } catch (error) {
     log.info("telemetry ping failed", { error: String(error), type: payload.type })
-    if (process.env.SNOW_FLOW_DEBUG_TELEMETRY) {
+    if ((process.env.SERAC_DEBUG_TELEMETRY || process.env.SNOW_FLOW_DEBUG_TELEMETRY)) {
       console.error(`[telemetry] ping failed (${payload.type}):`, String(error))
     }
     return false

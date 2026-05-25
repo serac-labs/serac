@@ -552,7 +552,7 @@ export default function Page() {
   })
 
   // Auto-open terminal in hosted mode
-  if (import.meta.env.VITE_SNOW_FLOW_HOSTED) {
+  if ((import.meta.env.VITE_SERAC_HOSTED || import.meta.env.VITE_SNOW_FLOW_HOSTED)) {
     onMount(() => {
       if (!view().terminal.opened()) {
         view().terminal.toggle()
@@ -1701,7 +1701,7 @@ export default function Page() {
     if (scrollSpyFrame !== undefined) cancelAnimationFrame(scrollSpyFrame)
   })
 
-  if (import.meta.env.VITE_SNOW_FLOW_HOSTED) {
+  if ((import.meta.env.VITE_SERAC_HOSTED || import.meta.env.VITE_SNOW_FLOW_HOSTED)) {
     return (
       <div class="relative bg-background-base size-full overflow-hidden flex flex-col">
         <SessionHeader />

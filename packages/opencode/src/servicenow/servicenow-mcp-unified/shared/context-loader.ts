@@ -38,7 +38,8 @@ export const loadFromAuthJson = (): ServiceNowContext | undefined => {
       : []),
     // 3. Linux/fallback: ~/.local/share/snow-code/auth.json (XDG data dir on Linux)
     path.join(os.homedir(), ".local", "share", "snow-code", "auth.json"),
-    // 4. Serac specific auth
+    // 4. Serac specific auth (~/.serac, falling back to legacy ~/.snow-flow)
+    path.join(os.homedir(), ".serac", "auth.json"),
     path.join(os.homedir(), ".snow-flow", "auth.json"),
     // 5. OpenCode (fallback for compatibility)
     path.join(os.homedir(), ".local", "share", "opencode", "auth.json"),
@@ -149,7 +150,8 @@ export const loadEnterpriseAuth = (): { jwt: string; portalUrl: string; subdomai
   const enterpriseAuthPaths = [
     // 1. Snow-Code enterprise config (from device auth flow)
     path.join(os.homedir(), ".snow-code", "enterprise.json"),
-    // 2. Serac enterprise auth (legacy)
+    // 2. Serac enterprise auth (~/.serac, falling back to legacy ~/.snow-flow)
+    path.join(os.homedir(), ".serac", "auth.json"),
     path.join(os.homedir(), ".snow-flow", "auth.json"),
   ]
 

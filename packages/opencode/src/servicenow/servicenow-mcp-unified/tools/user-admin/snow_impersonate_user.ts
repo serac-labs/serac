@@ -2,7 +2,7 @@
  * snow_impersonate_user - Generate a ServiceNow impersonation deep-link
  *
  * Verifies the caller has the 'admin' role, resolves the target user,
- * appends an entry to ~/.snow-flow/audit/impersonations.jsonl, and
+ * appends an entry to ~/.serac/audit/impersonations.jsonl, and
  * returns the impersonation URL the admin clicks in their browser
  * session to switch context.
  *
@@ -16,12 +16,12 @@ import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 import { appendFileSync, existsSync, mkdirSync } from "fs"
 import { join } from "path"
-import { homedir } from "os"
+import { seracHomePath } from "../../shared/serac-home.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_impersonate_user",
   description:
-    "Generate a ServiceNow impersonation deep-link for ACL / role debugging. Verifies the caller has the 'admin' role, resolves the target user (by sys_id or username), appends an audit entry to ~/.snow-flow/audit/impersonations.jsonl, and returns an /impersonate.do URL the admin opens in the browser to actually switch session. Does NOT modify the OAuth session itself — ServiceNow's impersonation endpoint is cookie-based.",
+    "Generate a ServiceNow impersonation deep-link for ACL / role debugging. Verifies the caller has the 'admin' role, resolves the target user (by sys_id or username), appends an audit entry to ~/.serac/audit/impersonations.jsonl, and returns an /impersonate.do URL the admin opens in the browser to actually switch session. Does NOT modify the OAuth session itself — ServiceNow's impersonation endpoint is cookie-based.",
   category: "user-admin",
   subcategory: "security",
   use_cases: ["debugging", "acl", "impersonation", "testing-permissions"],
@@ -142,7 +142,7 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
     `Impersonation link generated.`,
     `  Target: ${user.name} (${user.user_name})`,
     `  URL:    ${impersonateUrl}`,
-    auditErr ? `  ⚠ Audit log write failed: ${auditErr}` : `  Audit: ~/.snow-flow/audit/impersonations.jsonl`,
+    auditErr ? `  ⚠ Audit log write failed: ${auditErr}` : `  Audit: ~/.serac/audit/impersonations.jsonl`,
     ``,
     `Open the URL in the browser where you're logged in as admin to switch session. The OAuth connection itself is not altered.`,
   ].join("\n")
@@ -160,7 +160,7 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
 }
 
 function writeAudit(entry: Record<string, unknown>): string | undefined {
-  const dir = join(homedir(), ".snow-flow", "audit")
+  const dir = seracHomePath("audit")
   const file = join(dir, "impersonations.jsonl")
 
   let error: string | undefined

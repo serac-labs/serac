@@ -17,6 +17,7 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import * as crypto from "node:crypto"
 import * as os from "node:os"
+import { seracHomePath } from "./serac-home"
 import { ServiceNowContext, OAuthTokenResponse, EnterpriseLicense } from "./types"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 
@@ -661,8 +662,7 @@ export class ServiceNowAuthManager {
    * Get path for the encryption salt file
    */
   private getSaltPath(): string {
-    const homeDir = process.env.HOME || process.env.USERPROFILE || os.homedir()
-    return path.join(homeDir, ".snow-flow", ".token-cache-salt")
+    return seracHomePath(".token-cache-salt")
   }
 
   /**
@@ -816,9 +816,8 @@ export class ServiceNowAuthManager {
    * Get token cache file path
    */
   private getTokenCachePath(): string {
-    // Store in user's home directory
-    const homeDir = process.env.HOME || process.env.USERPROFILE || os.homedir()
-    return path.join(homeDir, ".snow-flow", "token-cache.json")
+    // Store in user's home directory (~/.serac, falling back to legacy ~/.snow-flow)
+    return seracHomePath("token-cache.json")
   }
 
   /**

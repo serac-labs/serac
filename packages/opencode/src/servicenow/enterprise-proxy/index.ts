@@ -12,7 +12,7 @@ import { mcpDebug } from "../shared/mcp-debug.js"
 import { fetchAndCacheTools, buildEnterpriseToolIndex, ToolSearch, getCurrentSessionId } from "./tool-cache.js"
 import { ENTERPRISE_META_TOOLS, executeToolSearch, executeToolExecute } from "./meta-tools.js"
 
-const VERSION = process.env.SNOW_FLOW_VERSION || "8.30.31"
+const VERSION = (process.env.SERAC_VERSION || process.env.SNOW_FLOW_VERSION) || "8.30.31"
 const LAZY_TOOLS_ENABLED = process.env.SNOW_ENTERPRISE_LAZY_TOOLS !== "false"
 
 /**

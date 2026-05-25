@@ -29,7 +29,7 @@ import { mcpDebug } from "../shared/mcp-debug.js"
 // Configuration from environment variables
 const ENTERPRISE_URL = process.env.SNOW_ENTERPRISE_URL || "https://enterprise.serac.build"
 const PORTAL_URL = process.env.SNOW_PORTAL_URL || "https://portal.serac.build"
-const VERSION = process.env.SNOW_FLOW_VERSION || "8.30.31"
+const VERSION = (process.env.SERAC_VERSION || process.env.SNOW_FLOW_VERSION) || "8.30.31"
 
 /**
  * Get the license key/token from the most reliable source

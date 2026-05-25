@@ -99,7 +99,7 @@ export namespace PortalSync {
       }
 
       // Determine portal URL
-      const baseUrl = portalUrl || process.env.SNOW_FLOW_PORTAL_URL || "https://dashboard.serac.build"
+      const baseUrl = portalUrl || (process.env.SERAC_PORTAL_URL || process.env.SNOW_FLOW_PORTAL_URL) || "https://dashboard.serac.build"
 
       // SECURITY: Ensure credentials are only sent over HTTPS (except localhost for dev)
       const parsedUrl = new URL(baseUrl)
@@ -211,7 +211,7 @@ export namespace PortalSync {
       }
 
       // Determine portal URL
-      const baseUrl = portalUrl || process.env.SNOW_FLOW_PORTAL_URL || "https://dashboard.serac.build"
+      const baseUrl = portalUrl || (process.env.SERAC_PORTAL_URL || process.env.SNOW_FLOW_PORTAL_URL) || "https://dashboard.serac.build"
 
       // SECURITY: Ensure credentials are only fetched over HTTPS (except localhost for dev)
       const parsedUrl = new URL(baseUrl)
