@@ -74,7 +74,7 @@ RUN mkdir -p /home/coder/.config/snow-code && \
 RUN mkdir -p /home/coder/workspace && \
     git init /home/coder/workspace && \
     printf '# My Project\n\nUse `snow-flow` in the terminal or press `Cmd+Esc` / `Ctrl+Esc` to get started.\n\n> **Note:** This workspace is ephemeral. Files are lost when your session ends.\n' > /home/coder/workspace/README.md && \
-    cd /home/coder/workspace && git add -A && git -c user.name="Snow-Flow" -c user.email="noreply@snow-flow.dev" commit -m "initial workspace" && \
+    cd /home/coder/workspace && git add -A && git -c user.name="Serac" -c user.email="noreply@snow-flow.dev" commit -m "initial workspace" && \
     chown -R coder:coder /home/coder/workspace /home/coder/.config /home/coder/.local /opt/snow-flow
 
 USER coder

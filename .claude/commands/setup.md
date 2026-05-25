@@ -1,4 +1,4 @@
-First-time bootstrap for contributing to Snow-Flow. Run this once after cloning. It verifies prerequisites, installs dependencies, does a smoke check, and orients you in the monorepo.
+First-time bootstrap for contributing to Serac. Run this once after cloning. It verifies prerequisites, installs dependencies, does a smoke check, and orients you in the monorepo.
 
 ## Steps
 
@@ -6,7 +6,7 @@ First-time bootstrap for contributing to Snow-Flow. Run this once after cloning.
    - `bun --version` (must be 1.3+, reject otherwise with a clear message pointing to https://bun.sh)
    - `node --version` (informational, not blocking)
    - `gh --version` and `gh auth status` (informational for `/pick-issue`, `/suggest-contribution`, and `/open-pr` — warn if not authenticated)
-   - `git branch --show-current` — if not on `main`, tell the user that Snow-Flow's default branch is `main` and suggest `git checkout main`
+   - `git branch --show-current` — if not on `main`, tell the user that Serac's default branch is `main` and suggest `git checkout main`
 
 2. **Install dependencies.** From the repo root: `bun install`. Stream the output. If it fails: do not proceed, surface the error as-is.
 

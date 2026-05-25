@@ -483,4 +483,4 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow v8.41.17"
+export const author = "Serac v8.41.17"

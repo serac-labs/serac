@@ -2,7 +2,7 @@
  * snow_query_table - Universal table querying
  *
  * Query any ServiceNow table with pagination, filtering, and field selection.
- * The most frequently used tool in Snow-Flow.
+ * The most frequently used tool in Serac.
  */
 
 import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
@@ -245,4 +245,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow SDK Migration"
+export const author = "Serac SDK Migration"

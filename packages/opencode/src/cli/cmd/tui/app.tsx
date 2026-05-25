@@ -222,14 +222,14 @@ function App() {
     if (!terminalTitleEnabled() || Flag.OPENCODE_DISABLE_TERMINAL_TITLE) return
 
     if (route.data.type === "home") {
-      renderer.setTerminalTitle("Snow-Flow")
+      renderer.setTerminalTitle("Serac")
       return
     }
 
     if (route.data.type === "session") {
       const session = sync.session.get(route.data.sessionID)
       if (!session || SessionApi.isDefaultTitle(session.title)) {
-        renderer.setTerminalTitle("Snow-Flow")
+        renderer.setTerminalTitle("Serac")
         return
       }
 
@@ -470,7 +470,7 @@ function App() {
       category: "Provider",
     },
     {
-      title: "Update Snow-Flow",
+      title: "Update Serac",
       value: "app.update",
       category: "System",
       slash: {
@@ -724,7 +724,7 @@ function App() {
         DialogAlert.show(
           dialog,
           "Warning",
-          "While openrouter is a convenient way to access LLMs your request will often be routed to subpar providers that do not work well in our testing.\n\nFor reliable access to models check out Snow-Flow Enterprise\nhttps://snow-flow.dev/enterprise",
+          "While openrouter is a convenient way to access LLMs your request will often be routed to subpar providers that do not work well in our testing.\n\nFor reliable access to models check out Serac Enterprise\nhttps://snow-flow.dev/enterprise",
         ).then(() => kv.set("openrouter_warning", true))
       })
     }

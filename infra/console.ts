@@ -101,7 +101,7 @@ export const stripeWebhook = new stripe.WebhookEndpoint("StripeWebhookEndpoint",
 })
 
 const zenProduct = new stripe.Product("ZenBlack", {
-  name: "Snow-Flow Enterprise",
+  name: "Serac Enterprise",
 })
 const zenPriceProps = {
   product: zenProduct.id,

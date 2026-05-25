@@ -72,7 +72,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     const triggerTimeStr = triggerTime.toISOString().replace("T", " ").substring(0, 19)
 
     const triggerResponse = await client.post("/api/now/table/sys_trigger", {
-      name: `Snow-Flow Trigger - ${job.name}`,
+      name: `Serac Trigger - ${job.name}`,
       next_action: triggerTimeStr,
       trigger_type: 0, // Run Once
       state: 0, // Ready
@@ -164,4 +164,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow SDK"
+export const author = "Serac SDK"

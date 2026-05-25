@@ -8,7 +8,7 @@ import * as prompts from "@clack/prompts"
 import { Auth } from "./index"
 
 /**
- * OAuth HTML Templates with Snow-Flow minimalist branding
+ * OAuth HTML Templates with Serac minimalist branding
  */
 const baseStyles = `
   <style>
@@ -167,7 +167,7 @@ const OAuthTemplates = {
   success: `
     <html>
       <head>
-        <title>Snow-Flow - Authentication Successful</title>
+        <title>Serac - Authentication Successful</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${baseStyles}
@@ -185,7 +185,7 @@ const OAuthTemplates = {
           </h1>
 
           <p>
-            Your ServiceNow instance is now connected to Snow-Flow.
+            Your ServiceNow instance is now connected to Serac.
           </p>
 
           <div class="instruction">
@@ -193,7 +193,7 @@ const OAuthTemplates = {
           </div>
 
           <div class="footer">
-            Snow-Flow: ServiceNow Multi-Agent Development Framework
+            Serac: ServiceNow Multi-Agent Development Framework
           </div>
         </div>
       </body>
@@ -203,7 +203,7 @@ const OAuthTemplates = {
   error: (error: string) => `
     <html>
       <head>
-        <title>Snow-Flow - Authentication Error</title>
+        <title>Serac - Authentication Error</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${baseStyles}
@@ -233,7 +233,7 @@ const OAuthTemplates = {
           </div>
 
           <div class="footer">
-            Need help? Check the Snow-Flow documentation.
+            Need help? Check the Serac documentation.
           </div>
         </div>
       </body>
@@ -243,7 +243,7 @@ const OAuthTemplates = {
   securityError: `
     <html>
       <head>
-        <title>Snow-Flow - Security Error</title>
+        <title>Serac - Security Error</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${baseStyles}
@@ -279,7 +279,7 @@ const OAuthTemplates = {
   missingCode: `
     <html>
       <head>
-        <title>Snow-Flow - Missing Authorization Code</title>
+        <title>Serac - Missing Authorization Code</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${baseStyles}
@@ -305,7 +305,7 @@ const OAuthTemplates = {
           </div>
 
           <div class="footer">
-            Snow-Flow: ServiceNow Multi-Agent Development Framework
+            Serac: ServiceNow Multi-Agent Development Framework
           </div>
         </div>
       </body>
@@ -315,7 +315,7 @@ const OAuthTemplates = {
   tokenExchangeFailed: (error: string) => `
     <html>
       <head>
-        <title>Snow-Flow - Token Exchange Failed</title>
+        <title>Serac - Token Exchange Failed</title>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         ${baseStyles}
@@ -345,7 +345,7 @@ const OAuthTemplates = {
           </div>
 
           <div class="footer">
-            Snow-Flow: ServiceNow Multi-Agent Development Framework
+            Serac: ServiceNow Multi-Agent Development Framework
           </div>
         </div>
       </body>

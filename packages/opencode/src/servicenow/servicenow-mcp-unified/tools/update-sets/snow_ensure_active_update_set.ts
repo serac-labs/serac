@@ -58,7 +58,7 @@ export const toolDefinition: MCPToolDefinition = {
 export async function execute(args: any, context: ServiceNowContext): Promise<ToolResult> {
   const {
     name,
-    description = `Snow-Flow: ${name}`,
+    description = `Serac: ${name}`,
     sync_with_user = true,
     create_if_missing = true,
     application_scope = "global",
@@ -169,4 +169,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow SDK Migration"
+export const author = "Serac SDK Migration"

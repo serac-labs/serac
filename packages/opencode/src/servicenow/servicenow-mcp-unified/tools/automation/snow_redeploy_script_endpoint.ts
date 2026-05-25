@@ -26,7 +26,7 @@ const ENDPOINT_SERVICE_ID = "snow_flow_exec"
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_redeploy_script_endpoint",
   description:
-    "Force-redeploy the Snow-Flow scripted REST executor endpoint (/api/snow_flow_exec/execute). Use when snow_execute_script / UI policy tools fail with 'Requested URI does not represent any resource'. Clears the in-memory cache and runs the auto-deploy with full diagnostics. Set hard_reset=true to delete and recreate the existing definition + operation records.",
+    "Force-redeploy the Serac scripted REST executor endpoint (/api/snow_flow_exec/execute). Use when snow_execute_script / UI policy tools fail with 'Requested URI does not represent any resource'. Clears the in-memory cache and runs the auto-deploy with full diagnostics. Set hard_reset=true to delete and recreate the existing definition + operation records.",
   category: "automation",
   subcategory: "script-execution",
   use_cases: ["endpoint-redeploy", "diagnostics", "script-execution"],
@@ -123,4 +123,4 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow"
+export const author = "Serac"

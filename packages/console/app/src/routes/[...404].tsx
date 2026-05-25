@@ -7,13 +7,13 @@ import logoDark from "../asset/logo-ornate-dark.svg"
 export default function NotFound() {
   return (
     <main data-page="not-found">
-      <Title>Not Found | Snow-Flow</Title>
+      <Title>Not Found | Serac</Title>
       <HttpStatusCode code={404} />
       <div data-component="content">
         <section data-component="top">
           <a href="/" data-slot="logo-link">
-            <img data-slot="logo light" src={logoLight} alt="Snow-Flow logo light" />
-            <img data-slot="logo dark" src={logoDark} alt="Snow-Flow logo dark" />
+            <img data-slot="logo light" src={logoLight} alt="Serac logo light" />
+            <img data-slot="logo dark" src={logoDark} alt="Serac logo dark" />
           </a>
           <h1 data-slot="title">404 - Page Not Found</h1>
         </section>

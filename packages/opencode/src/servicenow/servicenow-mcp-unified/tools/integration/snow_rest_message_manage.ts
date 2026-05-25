@@ -1519,7 +1519,7 @@ ${paramLines.length > 0 ? "    " + paramLines.join("\n    ") : "    // No parame
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow SDK"
+export const author = "Serac SDK"
 export const changelog = {
   "2.0.0":
     "Added message-level headers, method-level headers, query parameters, improved test with ES5 script generation",

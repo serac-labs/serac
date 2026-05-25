@@ -102,9 +102,9 @@ export default function Changelog() {
 
   return (
     <main data-page="changelog">
-      <Title>Snow-Flow | Changelog</Title>
+      <Title>Serac | Changelog</Title>
       <Link rel="canonical" href={`${config.baseUrl}/changelog`} />
-      <Meta name="description" content="Snow-Flow release notes and changelog" />
+      <Meta name="description" content="Serac release notes and changelog" />
 
       <div data-component="container">
         <Header />
@@ -112,7 +112,7 @@ export default function Changelog() {
         <div data-component="content">
           <section data-component="changelog-hero">
             <h1>Changelog</h1>
-            <p>New updates and improvements to Snow-Flow</p>
+            <p>New updates and improvements to Serac</p>
           </section>
 
           <section data-component="releases">

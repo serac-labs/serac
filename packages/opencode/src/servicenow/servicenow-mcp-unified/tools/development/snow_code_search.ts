@@ -190,4 +190,4 @@ function snippet(row: Record<string, string>, spec: CodeTable, needle: string, c
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow SDK"
+export const author = "Serac SDK"

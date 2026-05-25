@@ -180,7 +180,7 @@ async function getJwtToken(): Promise<string> {
         headers: {
           "Content-Type": "application/json",
           "X-Instance-ID": INSTANCE_ID,
-          "X-Snow-Flow-Version": VERSION,
+          "X-Serac-Version": VERSION,
         },
         timeout: 10000,
       },
@@ -270,7 +270,7 @@ export async function listEnterpriseTools(): Promise<EnterpriseTool[]> {
       headers: {
         Authorization: `Bearer ${jwtToken}`,
         "X-Instance-ID": INSTANCE_ID,
-        "X-Snow-Flow-Version": VERSION,
+        "X-Serac-Version": VERSION,
       },
       timeout: 10000, // 10 seconds for listing
     })
@@ -359,7 +359,7 @@ export async function proxyToolCall(toolName: string, args: Record<string, any>)
         Authorization: `Bearer ${jwtToken}`,
         "Content-Type": "application/json",
         "X-Instance-ID": INSTANCE_ID,
-        "X-Snow-Flow-Version": VERSION,
+        "X-Serac-Version": VERSION,
       },
       timeout: 120000, // 2 minutes for tool execution
     })
@@ -450,7 +450,7 @@ export async function validateLicenseKey(
         headers: {
           "Content-Type": "application/json",
           "X-Instance-ID": INSTANCE_ID,
-          "X-Snow-Flow-Version": VERSION,
+          "X-Serac-Version": VERSION,
         },
         timeout: 10000,
       },

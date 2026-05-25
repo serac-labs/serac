@@ -1,6 +1,6 @@
 ---
 name: snow-flow-commands
-description: Snow-Flow CLI reference — interactive TUI startup, SPARC modes (orchestrator/coder/researcher/TDD), swarm coordination strategies, agent spawning, memory operations, and ServiceNow auth configuration.
+description: Serac CLI reference — interactive TUI startup, SPARC modes (orchestrator/coder/researcher/TDD), swarm coordination strategies, agent spawning, memory operations, and ServiceNow auth configuration.
 license: Apache-2.0
 compatibility: Designed for Snow-Code CLI
 metadata:
@@ -10,13 +10,13 @@ metadata:
 tools: []
 ---
 
-# Snow-Flow CLI Commands
+# Serac CLI Commands
 
-Snow-Flow provides a powerful CLI for ServiceNow development orchestration.
+Serac provides a powerful CLI for ServiceNow development orchestration.
 
 ## Core Commands
 
-### Starting Snow-Flow
+### Starting Serac
 
 ```bash
 # Start interactive TUI

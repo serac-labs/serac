@@ -1,6 +1,6 @@
-# SKILLS.md — Snow-Flow Skill Index
+# SKILLS.md — Serac Skill Index
 
-This file lists every skill bundled with Snow-Flow. Skills are **specialized knowledge packages** loaded on demand. To use a skill, call:
+This file lists every skill bundled with Serac. Skills are **specialized knowledge packages** loaded on demand. To use a skill, call:
 
 ```javascript
 Skill({ skill: "skill-name" })
@@ -100,12 +100,12 @@ The authoritative description for each skill lives in its own `SKILL.md` frontma
 | `debugging-mutations` | Post-execution mutation inspection: `snow_inspect_mutations`, syslog, flow execution logs, sys_audit caveats |
 | `blast-radius` | Assess the blast radius of a change before deploying |
 
-## Snow-Flow Specific
+## Serac Specific
 
 | Skill | Purpose |
 |---|---|
 | `mcp-tool-discovery` | Discover and use MCP tools via `tool_search` |
-| `snow-flow-commands` | Snow-Flow CLI commands and modes |
+| `snow-flow-commands` | Serac CLI commands and modes |
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: mcp-tool-discovery
-description: Use tool_search to discover and enable lazy-loaded Snow-Flow MCP tools (snow_*, jira_*, github_*, etc). Explains naming conventions, search strategies, and always-available activity tools.
+description: Use tool_search to discover and enable lazy-loaded Serac MCP tools (snow_*, jira_*, github_*, etc). Explains naming conventions, search strategies, and always-available activity tools.
 license: Apache-2.0
 compatibility: Designed for Snow-Code and ServiceNow development
 metadata:
@@ -13,7 +13,7 @@ tools:
 
 # MCP Tool Discovery Guide
 
-Snow-Flow provides 400+ tools via MCP (Model Context Protocol) servers. Tools are **lazy-loaded** to save tokens - use `tool_search` to discover them.
+Serac provides 400+ tools via MCP (Model Context Protocol) servers. Tools are **lazy-loaded** to save tokens - use `tool_search` to discover them.
 
 ## Quick Start
 
@@ -161,7 +161,7 @@ Tools follow consistent naming patterns:
 
 ## MCP Server Categories
 
-Snow-Flow includes specialized MCP servers:
+Serac includes specialized MCP servers:
 
 | Server                     | Purpose               | Example Tools        |
 | -------------------------- | --------------------- | -------------------- |

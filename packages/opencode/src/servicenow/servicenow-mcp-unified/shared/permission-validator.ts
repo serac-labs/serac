@@ -159,7 +159,7 @@ export function validatePermission(tool: MCPToolDefinition, jwtPayload: JWTPaylo
     const permissionType = permission === "admin" ? "admin" : "write"
     const errorMessage =
       `🚫 ${permissionType === "admin" ? "Admin" : "Write"} Access Denied: Tool '${tool.name}' requires ${permissionType} permissions.\n\n` +
-      `💡 Stakeholders have read-only access to Snow-Flow tools.\n` +
+      `💡 Stakeholders have read-only access to Serac tools.\n` +
       `   You can query data, view analytics, and generate reports,\n` +
       `   but cannot create, update, or delete records.\n\n` +
       `   If you need to modify data, please contact a developer or admin.`

@@ -42,7 +42,7 @@ jobs:
         run: |
           TODAY=$(date -u +%Y-%m-%d)
 
-          snow-code run -m snow-code/claude-sonnet-4-5 "Generate a daily PR activity recap for the Snow-Flow repository.
+          snow-code run -m snow-code/claude-sonnet-4-5 "Generate a daily PR activity recap for the Serac repository.
 
           TODAY'S DATE: ${TODAY}
 

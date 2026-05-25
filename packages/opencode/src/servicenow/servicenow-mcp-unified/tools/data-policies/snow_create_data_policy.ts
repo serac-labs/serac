@@ -53,4 +53,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "1.1.0"
-export const author = "Snow-Flow v8.41.17"
+export const author = "Serac v8.41.17"

@@ -1893,4 +1893,4 @@ async function performAutoAssignment(
 }
 
 export var version = "4.0.0"
-export var author = "Snow-Flow v8.3.0 Tool Consolidation"
+export var author = "Serac v8.3.0 Tool Consolidation"

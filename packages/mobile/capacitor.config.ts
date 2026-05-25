@@ -2,7 +2,7 @@ import type { CapacitorConfig } from "@capacitor/cli"
 
 const config: CapacitorConfig = {
   appId: "dev.snowflow.tui",
-  appName: "Snow-Flow",
+  appName: "Serac",
   webDir: "dist",
   server: {
     androidScheme: "https",

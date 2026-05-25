@@ -1,5 +1,5 @@
 /**
- * Snow-Flow Flow Designer Tool
+ * Serac Flow Designer Tool
  *
  * DISCLAIMER:
  * This tool uses both official and undocumented ServiceNow APIs to interact
@@ -979,7 +979,7 @@ async function ensureUpdateSetForFlow(
   if (args.ensure_update_set !== true) return {}
 
   var targetId = args.update_set_id
-  var setName = args.update_set_name || "Snow-Flow: Flow Designer changes"
+  var setName = args.update_set_name || "Serac: Flow Designer changes"
 
   // If explicit update_set_id provided, just switch to it
   if (targetId) {
@@ -1015,7 +1015,7 @@ async function ensureUpdateSetForFlow(
   try {
     var createResp = await client.post("/api/now/table/sys_update_set", {
       name: setName,
-      description: "Auto-created by Snow-Flow for Flow Designer changes",
+      description: "Auto-created by Serac for Flow Designer changes",
       state: "in progress",
     })
     var created = createResp.data.result
@@ -5992,8 +5992,8 @@ export const toolDefinition: MCPToolDefinition = {
       update_set_name: {
         type: "string",
         description:
-          '[write actions] Name for auto-created update set (default: "Snow-Flow: Flow Designer changes"). Only used when ensure_update_set=true and no update_set_id provided.',
-        default: "Snow-Flow: Flow Designer changes",
+          '[write actions] Name for auto-created update set (default: "Serac: Flow Designer changes"). Only used when ensure_update_set=true and no update_set_id provided.',
+        default: "Serac: Flow Designer changes",
       },
       ensure_update_set: {
         type: "boolean",
@@ -8618,4 +8618,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "6.0.0"
-export const author = "Snow-Flow Team"
+export const author = "Serac Team"

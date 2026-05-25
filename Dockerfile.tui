@@ -66,7 +66,7 @@ RUN printf '#!/bin/sh\ncd /app\ncase "${1:-}" in\n  run|serve|web|auth|agent|att
 RUN mkdir -p /workspace && \
     git init /workspace && \
     printf '# My Project\n\nUse `snow-flow` in the terminal to get started.\n\n> **Note:** This workspace is ephemeral. Files are lost when your session ends.\n> Maximum workspace size: 512MB.\n' > /workspace/README.md && \
-    cd /workspace && git add -A && git -c user.name="Snow-Flow" -c user.email="noreply@snow-flow.dev" commit -m "initial workspace"
+    cd /workspace && git add -A && git -c user.name="Serac" -c user.email="noreply@snow-flow.dev" commit -m "initial workspace"
 
 # Create non-root user for runtime
 RUN groupadd --gid 1001 snowflow && \

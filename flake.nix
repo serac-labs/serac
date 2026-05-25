@@ -1,5 +1,5 @@
 {
-  description = "Snow-Flow development flake";
+  description = "Serac development flake";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixpkgs-unstable";

@@ -42,7 +42,7 @@ export async function loadChangelog(): Promise<ChangelogData> {
   const response = await fetch("https://api.github.com/repos/groeimetai/snow-flow/releases?per_page=20", {
     headers: {
       Accept: "application/vnd.github.v3+json",
-      "User-Agent": "Snow-Flow-Console",
+      "User-Agent": "Serac-Console",
     },
     cf: {
       // best-effort edge caching (ignored outside Cloudflare)

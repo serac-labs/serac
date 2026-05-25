@@ -1,5 +1,5 @@
-name: "Snow-Flow GitHub Action"
-description: "Run Snow-Flow in GitHub Actions workflows"
+name: "Serac GitHub Action"
+description: "Run Serac in GitHub Actions workflows"
 branding:
   icon: "code"
   color: "orange"

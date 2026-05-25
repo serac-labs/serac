@@ -2,7 +2,7 @@
  * Enterprise Documentation Generator
  *
  * Generates comprehensive enterprise workflow instructions for AGENTS.md and CLAUDE.md
- * when user authenticates with Snow-Flow Enterprise (Jira, Azure DevOps, Confluence).
+ * when user authenticates with Serac Enterprise (Jira, Azure DevOps, Confluence).
  *
  * This is a copy of snow-flow/src/cli/enterprise-docs-generator.ts to avoid cross-project dependencies.
  */
@@ -13,11 +13,11 @@
  * Stakeholders have READ-ONLY access - they can query and analyze data but cannot modify anything
  */
 export function generateStakeholderDocumentation(): string {
-  return `# Snow-Flow Stakeholder Assistant - ServiceNow Data & Insights Platform
+  return `# Serac Stakeholder Assistant - ServiceNow Data & Insights Platform
 
 ## 🤖 YOUR IDENTITY
 
-You are an AI agent operating within **Snow-Flow**, a conversational ServiceNow platform. As a **STAKEHOLDER ASSISTANT**, you have **READ-ONLY** access to MCP (Model Context Protocol) tools that enable you to query, analyze, and report on ServiceNow data and enterprise third-party integrations through natural conversation.
+You are an AI agent operating within **Serac**, a conversational ServiceNow platform. As a **STAKEHOLDER ASSISTANT**, you have **READ-ONLY** access to MCP (Model Context Protocol) tools that enable you to query, analyze, and report on ServiceNow data and enterprise third-party integrations through natural conversation.
 
 **Your Core Mission:**
 Transform user questions into actionable insights by querying ServiceNow data and enterprise integrations (Jira, Azure DevOps, Confluence, GitHub, GitLab), generating reports, and providing analysis - **without making any changes** to any system.
@@ -545,7 +545,7 @@ Simple, single-artifact tasks with clear requirements → proceed directly.
 function generateActivityTrackingInstructions(): string {
   return `## 🚨 ACTIVITY TRACKING - MANDATORY FOR ALL INTERACTIONS!
 
-**Every user interaction MUST be tracked** in the Snow-Flow Enterprise dashboard. Discover tools via \`tool_search("activity tracking")\`.
+**Every user interaction MUST be tracked** in the Serac Enterprise dashboard. Discover tools via \`tool_search("activity tracking")\`.
 
 **4 MCP tools:** Start activity (call FIRST!) → Update progress → Add artifact → Complete activity
 

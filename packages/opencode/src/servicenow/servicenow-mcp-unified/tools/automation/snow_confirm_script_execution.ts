@@ -77,7 +77,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 
     // Wrap script with output capture
     const wrappedScript = `
-// Snow-Flow Confirmed Execution - ID: ${executionId}
+// Serac Confirmed Execution - ID: ${executionId}
 // Description: ${escapeForJS(description)}
 var __sfOutput = [];
 var __sfStartTime = new GlideDateTime();
@@ -114,11 +114,11 @@ gs.error = function(msg) {
 };
 
 try {
-  gs.info('=== Snow-Flow Confirmed Execution Started ===');
+  gs.info('=== Serac Confirmed Execution Started ===');
   __sfResult = (function() {
     ${script}
   })();
-  gs.info('=== Snow-Flow Confirmed Execution Completed ===');
+  gs.info('=== Serac Confirmed Execution Completed ===');
 } catch(e) {
   __sfError = e.toString();
   gs.error('Error: ' + e.toString());
@@ -146,7 +146,7 @@ gs.info('${outputMarker}:DONE');
 `
 
     // Create Scheduled Script Job
-    const jobName = `Snow-Flow Confirm - ${executionId}`
+    const jobName = `Serac Confirm - ${executionId}`
 
     const createResponse = await client.post("/api/now/table/sysauto_script", {
       name: jobName,
@@ -277,4 +277,4 @@ gs.info('${outputMarker}:DONE');
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow SDK"
+export const author = "Serac SDK"

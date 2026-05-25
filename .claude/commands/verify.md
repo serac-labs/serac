@@ -34,7 +34,7 @@ Run the right tests and type checks for your current diff — not the full suite
 
 ## Cross-references
 
-- `CONTRIBUTING.md` — general "Developing Snow-Flow" section has the full command reference
+- `CONTRIBUTING.md` — general "Developing Serac" section has the full command reference
 - `.claude/playbook.md` — per contribution type, which tests matter most
 
 ## Output format

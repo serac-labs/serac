@@ -101,7 +101,7 @@ export const dict = {
   "dialog.model.manage": "إدارة النماذج",
   "dialog.model.manage.description": "تخصيص النماذج التي تظهر في محدد النماذج.",
 
-  "dialog.model.unpaid.freeModels.title": "نماذج مجانية مقدمة من Snow-Flow",
+  "dialog.model.unpaid.freeModels.title": "نماذج مجانية مقدمة من Serac",
   "dialog.model.unpaid.addMore.title": "إضافة المزيد من النماذج من موفرين مشهورين",
 
   "dialog.provider.viewAll": "عرض المزيد من الموفرين",
@@ -114,12 +114,12 @@ export const dict = {
   "provider.connect.status.waiting": "في انتظار التفويض...",
   "provider.connect.status.failed": "فشل التفويض: {{error}}",
   "provider.connect.apiKey.description":
-    "أدخل مفتاح واجهة برمجة تطبيقات {{provider}} الخاص بك لتوصيل حسابك واستخدام نماذج {{provider}} في Snow-Flow.",
+    "أدخل مفتاح واجهة برمجة تطبيقات {{provider}} الخاص بك لتوصيل حسابك واستخدام نماذج {{provider}} في Serac.",
   "provider.connect.apiKey.label": "مفتاح واجهة برمجة تطبيقات {{provider}}",
   "provider.connect.apiKey.placeholder": "مفتاح API",
   "provider.connect.apiKey.required": "مفتاح API مطلوب",
   "provider.connect.opencodeZen.line1":
-    "يمنحك Snow-Flow Zen الوصول إلى مجموعة مختارة من النماذج الموثوقة والمحسنة لوكلاء البرمجة.",
+    "يمنحك Serac Zen الوصول إلى مجموعة مختارة من النماذج الموثوقة والمحسنة لوكلاء البرمجة.",
   "provider.connect.opencodeZen.line2":
     "باستخدام مفتاح API واحد، ستحصل على إمكانية الوصول إلى نماذج مثل Claude و GPT و Gemini و GLM والمزيد.",
   "provider.connect.opencodeZen.visit.prefix": "قم بزيارة ",
@@ -128,7 +128,7 @@ export const dict = {
   "provider.connect.oauth.code.visit.prefix": "قم بزيارة ",
   "provider.connect.oauth.code.visit.link": "هذا الرابط",
   "provider.connect.oauth.code.visit.suffix":
-    " للحصول على رمز التفويض الخاص بك لتوصيل حسابك واستخدام نماذج {{provider}} في Snow-Flow.",
+    " للحصول على رمز التفويض الخاص بك لتوصيل حسابك واستخدام نماذج {{provider}} في Serac.",
   "provider.connect.oauth.code.label": "رمز تفويض {{method}}",
   "provider.connect.oauth.code.placeholder": "رمز التفويض",
   "provider.connect.oauth.code.required": "رمز التفويض مطلوب",
@@ -136,7 +136,7 @@ export const dict = {
   "provider.connect.oauth.auto.visit.prefix": "قم بزيارة ",
   "provider.connect.oauth.auto.visit.link": "هذا الرابط",
   "provider.connect.oauth.auto.visit.suffix":
-    " وأدخل الرمز أدناه لتوصيل حسابك واستخدام نماذج {{provider}} في Snow-Flow.",
+    " وأدخل الرمز أدناه لتوصيل حسابك واستخدام نماذج {{provider}} في Serac.",
   "provider.connect.oauth.auto.confirmationCode": "رمز التأكيد",
   "provider.connect.toast.connected.title": "تم توصيل {{provider}}",
   "provider.connect.toast.connected.description": "نماذج {{provider}} متاحة الآن للاستخدام.",
@@ -247,7 +247,7 @@ export const dict = {
   "dialog.directory.empty": "لم يتم العثور على مجلدات",
 
   "dialog.server.title": "الخوادم",
-  "dialog.server.description": "تبديل خادم Snow-Flow الذي يتصل به هذا التطبيق.",
+  "dialog.server.description": "تبديل خادم Serac الذي يتصل به هذا التطبيق.",
   "dialog.server.search.placeholder": "البحث في الخوادم",
   "dialog.server.empty": "لا توجد خوادم بعد",
   "dialog.server.add.title": "إضافة خادم",
@@ -365,7 +365,7 @@ export const dict = {
   "toast.session.listFailed.title": "فشل تحميل الجلسات لـ {{project}}",
 
   "toast.update.title": "تحديث متاح",
-  "toast.update.description": "نسخة جديدة من Snow-Flow ({{version}}) متاحة الآن للتثبيت.",
+  "toast.update.description": "نسخة جديدة من Serac ({{version}}) متاحة الآن للتثبيت.",
   "toast.update.action.installRestart": "تثبيت وإعادة تشغيل",
   "toast.update.action.notYet": "ليس الآن",
 
@@ -376,7 +376,7 @@ export const dict = {
   "error.page.action.checking": "جارٍ التحقق...",
   "error.page.action.checkUpdates": "التحقق من وجود تحديثات",
   "error.page.action.updateTo": "تحديث إلى {{version}}",
-  "error.page.report.prefix": "يرجى الإبلاغ عن هذا الخطأ لفريق Snow-Flow",
+  "error.page.report.prefix": "يرجى الإبلاغ عن هذا الخطأ لفريق Serac",
   "error.page.report.discord": "على Discord",
   "error.page.version": "الإصدار: {{version}}",
 
@@ -394,7 +394,7 @@ export const dict = {
   "error.chain.didYouMean": "هل كنت تعني: {{suggestions}}",
   "error.chain.modelNotFound": "النموذج غير موجود: {{provider}}/{{model}}",
   "error.chain.checkConfig": "تحقق من أسماء الموفر/النموذج في التكوين (snow-code.jsonc)",
-  "error.chain.mcpFailed": 'فشل خادم MCP "{{name}}". لاحظ أن Snow-Flow لا يدعم مصادقة MCP بعد.',
+  "error.chain.mcpFailed": 'فشل خادم MCP "{{name}}". لاحظ أن Serac لا يدعم مصادقة MCP بعد.',
   "error.chain.providerAuthFailed": "فشلت مصادقة الموفر ({{provider}}): {{message}}",
   "error.chain.providerInitFailed": 'فشل تهيئة الموفر "{{provider}}". تحقق من بيانات الاعتماد والتكوين.',
   "error.chain.configJsonInvalid": "ملف التكوين في {{path}} ليس JSON(C) صالحًا",
@@ -499,12 +499,12 @@ export const dict = {
   "sidebar.workspaces.enable": "تمكين مساحات العمل",
   "sidebar.workspaces.disable": "تعطيل مساحات العمل",
   "sidebar.gettingStarted.title": "البدء",
-  "sidebar.gettingStarted.line1": "يتضمن Snow-Flow نماذج مجانية حتى تتمكن من البدء فورًا.",
+  "sidebar.gettingStarted.line1": "يتضمن Serac نماذج مجانية حتى تتمكن من البدء فورًا.",
   "sidebar.gettingStarted.line2": "قم بتوصيل أي موفر لاستخدام النماذج، بما في ذلك Claude و GPT و Gemini وما إلى ذلك.",
   "sidebar.project.recentSessions": "الجلسات الحديثة",
   "sidebar.project.viewAllSessions": "عرض جميع الجلسات",
 
-  "app.name.desktop": "Snow-Flow Desktop",
+  "app.name.desktop": "Serac Desktop",
   "settings.section.desktop": "سطح المكتب",
   "settings.section.server": "الخادم",
   "settings.tab.general": "عام",
@@ -516,11 +516,11 @@ export const dict = {
   "settings.general.section.sounds": "المؤثرات الصوتية",
 
   "settings.general.row.language.title": "اللغة",
-  "settings.general.row.language.description": "تغيير لغة العرض لـ Snow-Flow",
+  "settings.general.row.language.description": "تغيير لغة العرض لـ Serac",
   "settings.general.row.appearance.title": "المظهر",
-  "settings.general.row.appearance.description": "تخصيص كيفية ظهور Snow-Flow على جهازك",
+  "settings.general.row.appearance.description": "تخصيص كيفية ظهور Serac على جهازك",
   "settings.general.row.theme.title": "السمة",
-  "settings.general.row.theme.description": "تخصيص سمة Snow-Flow.",
+  "settings.general.row.theme.description": "تخصيص سمة Serac.",
   "settings.general.row.font.title": "الخط",
   "settings.general.row.font.description": "تخصيص الخط الأحادي المستخدم في كتل التعليمات البرمجية",
 
@@ -528,13 +528,13 @@ export const dict = {
   "settings.general.row.releaseNotes.description": 'عرض نوافذ "ما الجديد" المنبثقة بعد التحديثات',
 
   "settings.updates.row.startup.title": "التحقق من التحديثات عند بدء التشغيل",
-  "settings.updates.row.startup.description": "التحقق تلقائيًا من التحديثات عند تشغيل Snow-Flow",
+  "settings.updates.row.startup.description": "التحقق تلقائيًا من التحديثات عند تشغيل Serac",
   "settings.updates.row.check.title": "التحقق من التحديثات",
   "settings.updates.row.check.description": "التحقق يدويًا من التحديثات وتثبيتها إذا كانت متاحة",
   "settings.updates.action.checkNow": "تحقق الآن",
   "settings.updates.action.checking": "جارٍ التحقق...",
   "settings.updates.toast.latest.title": "أنت على آخر إصدار",
-  "settings.updates.toast.latest.description": "أنت تستخدم أحدث إصدار من Snow-Flow.",
+  "settings.updates.toast.latest.description": "أنت تستخدم أحدث إصدار من Serac.",
   "font.option.ibmPlexMono": "IBM Plex Mono",
   "font.option.cascadiaCode": "Cascadia Code",
   "font.option.firaCode": "Fira Code",

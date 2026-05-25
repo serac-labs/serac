@@ -44,7 +44,7 @@ async function discoverMidServers(
   instanceUrl: string,
   headers: Record<string, string>,
 ): Promise<Array<{ name: string; sysId: string; status: string; validated: boolean }>> {
-  // Try Snow-Flow LLM API first
+  // Try Serac LLM API first
   try {
     const response = await fetch(`${instanceUrl}/api/snow_flow/llm/mid-servers`, { headers })
     if (response.ok) {
@@ -82,7 +82,7 @@ async function discoverRestMessages(
   instanceUrl: string,
   headers: Record<string, string>,
 ): Promise<DiscoveredEndpoint[]> {
-  // Try Snow-Flow LLM API first
+  // Try Serac LLM API first
   try {
     const response = await fetch(`${instanceUrl}/api/snow_flow/llm/rest-messages`, { headers })
     if (response.ok) {
@@ -243,7 +243,7 @@ async function lookupModelInModelsDev(
 }
 
 // ============================================================================
-// Deploy Snow-Flow LLM API to ServiceNow (ported from old auth.ts)
+// Deploy Serac LLM API to ServiceNow (ported from old auth.ts)
 // ============================================================================
 
 async function deploySnowFlowLLMAPI(options: {
@@ -413,7 +413,7 @@ SnowFlowLLMService.prototype = {
           script: scriptIncludeScript,
           active: true,
           client_callable: false,
-          description: "Snow-Flow LLM Service for MID Server LLM integration",
+          description: "Serac LLM Service for MID Server LLM integration",
         }),
       })
       if (!createResponse.ok) {
@@ -439,9 +439,9 @@ SnowFlowLLMService.prototype = {
         method: "POST",
         headers,
         body: JSON.stringify({
-          name: "Snow-Flow LLM",
+          name: "Serac LLM",
           service_id: "snow_flow",
-          short_description: "Snow-Flow LLM API for MID Server integration",
+          short_description: "Serac LLM API for MID Server integration",
           active: true,
         }),
       })
@@ -512,9 +512,9 @@ SnowFlowLLMService.prototype = {
     var model = body.model || 'default';
     var messages = body.messages || [];
     var maxTokens = body.max_tokens || 100;
-    var restMessage = request.getHeader('X-Snow-Flow-Rest-Message') ||
+    var restMessage = request.getHeader('X-Serac-Rest-Message') ||
                       gs.getProperty('snow_flow.llm.rest_message', '');
-    var httpMethod = request.getHeader('X-Snow-Flow-Http-Method') ||
+    var httpMethod = request.getHeader('X-Serac-Http-Method') ||
                      gs.getProperty('snow_flow.llm.http_method', 'Chat_Completions');
     if (!restMessage) {
         response.setStatus(400);
@@ -614,7 +614,7 @@ SnowFlowLLMService.prototype = {
             body: JSON.stringify({
               name: prop.name,
               value: prop.value,
-              description: "Snow-Flow LLM configuration",
+              description: "Serac LLM configuration",
               type: "string",
             }),
           })
@@ -629,7 +629,7 @@ SnowFlowLLMService.prototype = {
 }
 
 /**
- * Test LLM chat via Snow-Flow API
+ * Test LLM chat via Serac API
  */
 async function testSnowFlowLLMChat(options: {
   instanceUrl: string
@@ -1006,7 +1006,7 @@ export function DialogAuthServiceNowLLM() {
     if (result.success) {
       setGatewayDeployed(true)
       setApiBaseUri(result.baseUri || "")
-      toast.show({ variant: "info", message: "Snow-Flow LLM API deployed successfully!", duration: 3000 })
+      toast.show({ variant: "info", message: "Serac LLM API deployed successfully!", duration: 3000 })
     } else {
       toast.show({ variant: "error", message: `Deployment failed: ${result.error}`, duration: 5000 })
     }
@@ -1319,7 +1319,7 @@ export function DialogAuthServiceNowLLM() {
           </Show>
           <box paddingTop={1}>
             <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-              Deploy Snow-Flow LLM API to ServiceNow?
+              Deploy Serac LLM API to ServiceNow?
             </text>
             <text fg={theme.textMuted}>This creates a Scripted REST API with LLM endpoints on your instance</text>
           </box>
@@ -1334,7 +1334,7 @@ export function DialogAuthServiceNowLLM() {
       <Show when={step() === "deploying"}>
         <box gap={1}>
           <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-            Deploying Snow-Flow LLM API...
+            Deploying Serac LLM API...
           </text>
           <text fg={theme.textMuted}>Creating Script Include and REST Resources on {instance()}</text>
         </box>

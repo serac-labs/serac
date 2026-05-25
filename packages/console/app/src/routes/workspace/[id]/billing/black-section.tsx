@@ -179,7 +179,7 @@ export function BlackSection() {
             <div data-slot="section-title">
               <h2>Subscription</h2>
               <div data-slot="title-row">
-                <p>You are subscribed to Snow-Flow Black for ${sub().plan} per month.</p>
+                <p>You are subscribed to Serac Black for ${sub().plan} per month.</p>
                 <button
                   data-color="primary"
                   disabled={sessionSubmission.pending || store.sessionRedirecting}
@@ -235,8 +235,8 @@ export function BlackSection() {
             <div data-slot="title-row">
               <p>
                 {billing()?.timeSubscriptionSelected
-                  ? `We're ready to enroll you into the $${billing()?.subscriptionPlan} per month Snow-Flow Black plan.`
-                  : `You are on the waitlist for the $${billing()?.subscriptionPlan} per month Snow-Flow Black plan.`}
+                  ? `We're ready to enroll you into the $${billing()?.subscriptionPlan} per month Serac Black plan.`
+                  : `You are on the waitlist for the $${billing()?.subscriptionPlan} per month Serac Black plan.`}
               </p>
               <button
                 data-color="danger"

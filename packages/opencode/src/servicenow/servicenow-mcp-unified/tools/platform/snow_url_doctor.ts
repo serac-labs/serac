@@ -209,4 +209,4 @@ function detectWorkspace(path: string): string | undefined {
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow SDK"
+export const author = "Serac SDK"

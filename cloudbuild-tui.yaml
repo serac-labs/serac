@@ -1,4 +1,4 @@
-# Cloud Build Configuration for Snow-Flow TUI Server
+# Cloud Build Configuration for Serac TUI Server
 #
 # Builds and deploys the TUI WebSocket service to Cloud Run.
 # Spawns PTY-backed TUI sessions over WebSocket connections.

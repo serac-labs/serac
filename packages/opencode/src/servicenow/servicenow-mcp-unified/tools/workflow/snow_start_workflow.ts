@@ -4,7 +4,7 @@
  * ⚠️ LEGACY FEATURE WARNING:
  * ServiceNow Workflow (wf_workflow) is a LEGACY feature. ServiceNow recommends
  * using Flow Designer for new automation needs. Flow Designer is NOT currently
- * supported programmatically via Snow-Flow MCP tools.
+ * supported programmatically via Serac MCP tools.
  *
  * Note: Uses the standard workflow start approach via GlideRecord update
  * which triggers any associated workflow.
@@ -15,7 +15,7 @@ import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
 
 const LEGACY_WARNING =
-  "⚠️ LEGACY: ServiceNow Workflow is deprecated. For new automations, consider Flow Designer (not programmable via Snow-Flow, but specs can be generated)."
+  "⚠️ LEGACY: ServiceNow Workflow is deprecated. For new automations, consider Flow Designer (not programmable via Serac, but specs can be generated)."
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_start_workflow",
@@ -159,4 +159,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow SDK"
+export const author = "Serac SDK"

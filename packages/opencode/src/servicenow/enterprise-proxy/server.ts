@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /**
- * Snow-Flow Enterprise MCP Proxy
+ * Serac Enterprise MCP Proxy
  *
  * Forwards MCP tool requests from Claude Code to the Enterprise License Server.
- * This allows the open source Snow-Flow to use enterprise-hosted tools.
+ * This allows the open source Serac to use enterprise-hosted tools.
  *
  * Architecture:
  * Claude Code → stdio → This Proxy → HTTPS → License Server → External APIs
@@ -89,7 +89,7 @@ function logConfiguration(): void {
   }
 
   mcpDebug("═══════════════════════════════════════════════════")
-  mcpDebug("Snow-Flow Enterprise MCP Proxy")
+  mcpDebug("Serac Enterprise MCP Proxy")
   mcpDebug("═══════════════════════════════════════════════════")
   mcpDebug(`License Server: ${LICENSE_SERVER_URL}`)
   mcpDebug(`Token Source: ${tokenSource}`)

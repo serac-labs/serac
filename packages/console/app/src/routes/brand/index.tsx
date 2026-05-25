@@ -53,16 +53,16 @@ export default function Brand() {
 
   return (
     <main data-page="enterprise">
-      <Title>Snow-Flow | Brand</Title>
+      <Title>Serac | Brand</Title>
       <Link rel="canonical" href={`${config.baseUrl}/brand`} />
-      <Meta name="description" content="Snow-Flow brand guidelines" />
+      <Meta name="description" content="Serac brand guidelines" />
       <div data-component="container">
         <Header />
 
         <div data-component="content">
           <section data-component="brand-content">
             <h1>Brand guidelines</h1>
-            <p>Resources and assets to help you work with the Snow-Flow brand.</p>
+            <p>Resources and assets to help you work with the Serac brand.</p>
             <button
               data-component="download-button"
               onClick={() => downloadFile(brandAssets, "opencode-brand-assets.zip")}
@@ -80,7 +80,7 @@ export default function Brand() {
 
             <div data-component="brand-grid">
               <div>
-                <img src={previewLogoLight} alt="Snow-Flow brand guidelines" />
+                <img src={previewLogoLight} alt="Serac brand guidelines" />
                 <div data-component="actions">
                   <button onClick={() => downloadFile(logoLightPng, "opencode-logo-light.png")}>
                     PNG
@@ -107,7 +107,7 @@ export default function Brand() {
                 </div>
               </div>
               <div>
-                <img src={previewLogoDark} alt="Snow-Flow brand guidelines" />
+                <img src={previewLogoDark} alt="Serac brand guidelines" />
                 <div data-component="actions">
                   <button onClick={() => downloadFile(logoDarkPng, "opencode-logo-dark.png")}>
                     PNG
@@ -134,7 +134,7 @@ export default function Brand() {
                 </div>
               </div>
               <div>
-                <img src={previewWordmarkLight} alt="Snow-Flow brand guidelines" />
+                <img src={previewWordmarkLight} alt="Serac brand guidelines" />
                 <div data-component="actions">
                   <button onClick={() => downloadFile(wordmarkLightPng, "opencode-wordmark-light.png")}>
                     PNG
@@ -161,7 +161,7 @@ export default function Brand() {
                 </div>
               </div>
               <div>
-                <img src={previewWordmarkDark} alt="Snow-Flow brand guidelines" />
+                <img src={previewWordmarkDark} alt="Serac brand guidelines" />
                 <div data-component="actions">
                   <button onClick={() => downloadFile(wordmarkDarkPng, "opencode-wordmark-dark.png")}>
                     PNG
@@ -188,7 +188,7 @@ export default function Brand() {
                 </div>
               </div>
               <div>
-                <img src={previewWordmarkSimpleLight} alt="Snow-Flow brand guidelines" />
+                <img src={previewWordmarkSimpleLight} alt="Serac brand guidelines" />
                 <div data-component="actions">
                   <button onClick={() => downloadFile(wordmarkSimpleLightPng, "opencode-wordmark-simple-light.png")}>
                     PNG
@@ -215,7 +215,7 @@ export default function Brand() {
                 </div>
               </div>
               <div>
-                <img src={previewWordmarkSimpleDark} alt="Snow-Flow brand guidelines" />
+                <img src={previewWordmarkSimpleDark} alt="Serac brand guidelines" />
                 <div data-component="actions">
                   <button onClick={() => downloadFile(wordmarkSimpleDarkPng, "opencode-wordmark-simple-dark.png")}>
                     PNG

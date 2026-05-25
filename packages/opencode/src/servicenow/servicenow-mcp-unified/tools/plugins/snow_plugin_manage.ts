@@ -555,4 +555,4 @@ async function executeProgress(args: any, context: ServiceNowContext): Promise<T
 }
 
 export const version = "1.1.1"
-export const author = "Snow-Flow"
+export const author = "Serac"

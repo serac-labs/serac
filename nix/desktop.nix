@@ -91,7 +91,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   '';
 
   meta = {
-    description = "Snow-Flow Desktop App";
+    description = "Serac Desktop App";
     homepage = "https://snow-flow.dev";
     license = lib.licenses.elastic20;
     mainProgram = "snow-code-desktop";

@@ -80,19 +80,19 @@ export default function Download() {
   }
   return (
     <main data-page="download">
-      <Title>Snow-Flow | Download</Title>
+      <Title>Serac | Download</Title>
       <Link rel="canonical" href={`${config.baseUrl}/download`} />
-      <Meta name="description" content="Download Snow-Flow for macOS, Windows, and Linux" />
+      <Meta name="description" content="Download Serac for macOS, Windows, and Linux" />
       <div data-component="container">
         <Header hideGetStarted />
 
         <div data-component="content">
           <section data-component="download-hero">
             <div data-component="hero-icon">
-              <img src={desktopAppIcon} alt="Snow-Flow Desktop" />
+              <img src={desktopAppIcon} alt="Serac Desktop" />
             </div>
             <div data-component="hero-text">
-              <h1>Download Snow-Flow</h1>
+              <h1>Download Serac</h1>
               <p>Available in Beta for macOS, Windows, and Linux</p>
               <Show when={detectedOS()}>
                 <a href={getDownloadHref(getDownloadPlatform(detectedOS()))} data-component="download-button">
@@ -105,7 +105,7 @@ export default function Download() {
 
           <section data-component="download-section">
             <div data-component="section-label">
-              <span>[1]</span> Snow-Flow Terminal
+              <span>[1]</span> Serac Terminal
             </div>
             <div data-component="section-content">
               <button
@@ -146,7 +146,7 @@ export default function Download() {
 
           <section data-component="download-section">
             <div data-component="section-label">
-              <span>[2]</span> Snow-Flow Desktop (Beta)
+              <span>[2]</span> Serac Desktop (Beta)
             </div>
             <div data-component="section-content">
               <button data-component="cli-row" onClick={handleCopyClick("brew install --cask snow-flow-desktop")}>
@@ -266,7 +266,7 @@ export default function Download() {
 
           <section data-component="download-section">
             <div data-component="section-label">
-              <span>[3]</span> Snow-Flow Extensions
+              <span>[3]</span> Serac Extensions
             </div>
             <div data-component="section-content">
               <div data-component="download-row">
@@ -372,7 +372,7 @@ export default function Download() {
 
           <section data-component="download-section">
             <div data-component="section-label">
-              <span>[4]</span> Snow-Flow Integrations
+              <span>[4]</span> Serac Integrations
             </div>
             <div data-component="section-content">
               <div data-component="download-row">
@@ -418,48 +418,48 @@ export default function Download() {
           </div>
           <ul>
             <li>
-              <Faq question="What is Snow-Flow?">
-                Snow-Flow is an open source agent that helps you write and run code with any AI model. It's available as
+              <Faq question="What is Serac?">
+                Serac is an open source agent that helps you write and run code with any AI model. It's available as
                 a terminal-based interface, desktop app, or IDE extension.
               </Faq>
             </li>
             <li>
-              <Faq question="How do I use Snow-Flow?">
+              <Faq question="How do I use Serac?">
                 The easiest way to get started is to read the <a href="/docs">intro</a>.
               </Faq>
             </li>
             <li>
-              <Faq question="Do I need extra AI subscriptions to use Snow-Flow?">
-                Not necessarily, but probably. You'll need an AI subscription if you want to connect Snow-Flow to a paid
+              <Faq question="Do I need extra AI subscriptions to use Serac?">
+                Not necessarily, but probably. You'll need an AI subscription if you want to connect Serac to a paid
                 provider, although you can work with{" "}
                 <a href="/docs/providers/#lm-studio" target="_blank">
                   local models
                 </a>{" "}
-                for free. While we encourage users to use <A href="/zen">Zen</A>, Snow-Flow works with all popular
+                for free. While we encourage users to use <A href="/zen">Zen</A>, Serac works with all popular
                 providers such as OpenAI, Anthropic, xAI etc.
               </Faq>
             </li>
             <li>
-              <Faq question="Can I only use Snow-Flow in the terminal?">
-                Not anymore! Snow-Flow is now available as an app for your <a href="/download">desktop</a> and{" "}
+              <Faq question="Can I only use Serac in the terminal?">
+                Not anymore! Serac is now available as an app for your <a href="/download">desktop</a> and{" "}
                 <a href="/docs/cli/#web">web</a>!
               </Faq>
             </li>
             <li>
-              <Faq question="How much does Snow-Flow cost?">
-                Snow-Flow is 100% free to use. Any additional costs will come from your subscription to a model
-                provider. While Snow-Flow works with any model provider, we recommend using <A href="/zen">Zen</A>.
+              <Faq question="How much does Serac cost?">
+                Serac is 100% free to use. Any additional costs will come from your subscription to a model
+                provider. While Serac works with any model provider, we recommend using <A href="/zen">Zen</A>.
               </Faq>
             </li>
             <li>
               <Faq question="What about data and privacy?">
-                Your data and information is only stored when you create sharable links in Snow-Flow. Learn more about{" "}
+                Your data and information is only stored when you create sharable links in Serac. Learn more about{" "}
                 <a href="/docs/share/#privacy">share pages</a>.
               </Faq>
             </li>
             <li>
-              <Faq question="Is Snow-Flow open source?">
-                Yes, Snow-Flow is fully open source. The source code is public on{" "}
+              <Faq question="Is Serac open source?">
+                Yes, Serac is fully open source. The source code is public on{" "}
                 <a href={config.github.repoUrl} target="_blank">
                   GitHub
                 </a>{" "}

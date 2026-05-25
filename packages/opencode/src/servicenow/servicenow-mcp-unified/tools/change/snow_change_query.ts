@@ -228,4 +228,4 @@ async function executeAssessRisk(args: any, context: ServiceNowContext): Promise
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow v8.2.0 Tool Merging - Phase 2"
+export const author = "Serac v8.2.0 Tool Merging - Phase 2"

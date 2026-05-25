@@ -75,7 +75,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       action,
       state: newState || asset.state,
       user: user_sys_id || "system",
-      reason: reason || `Asset ${action} via Snow-Flow automation`,
+      reason: reason || `Asset ${action} via Serac automation`,
       notes: notes || "",
       timestamp: new Date().toISOString(),
     })
@@ -86,7 +86,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       action,
       previous_state: asset.state,
       new_state: newState || asset.state,
-      reason: reason || `Automated via Snow-Flow`,
+      reason: reason || `Automated via Serac`,
       notes,
     })
   } catch (error: any) {

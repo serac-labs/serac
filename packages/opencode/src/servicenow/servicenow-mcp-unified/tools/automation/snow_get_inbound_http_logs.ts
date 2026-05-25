@@ -264,4 +264,4 @@ function parseRelativeTime(relative: string): string {
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow Team"
+export const author = "Serac Team"

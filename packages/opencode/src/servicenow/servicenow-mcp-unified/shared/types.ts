@@ -328,7 +328,7 @@ export interface ServerStats {
 }
 
 /**
- * Widget coherence validation result (Snow-Flow specific)
+ * Widget coherence validation result (Serac specific)
  */
 export interface WidgetCoherenceResult {
   coherent: boolean
@@ -348,7 +348,7 @@ export interface WidgetCoherenceResult {
 }
 
 /**
- * ES5 validation result (Snow-Flow specific)
+ * ES5 validation result (Serac specific)
  */
 export interface ES5ValidationResult {
   valid: boolean
@@ -370,7 +370,7 @@ export interface ES5ValidationResult {
 }
 
 /**
- * Update Set context (Snow-Flow specific)
+ * Update Set context (Serac specific)
  */
 export interface UpdateSetContext {
   sys_id: string

@@ -278,4 +278,4 @@ async function checkElementDependencies(
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow Builder Toolkit Migration"
+export const author = "Serac Builder Toolkit Migration"

@@ -370,7 +370,7 @@ export function DialogAuth() {
       },
     },
     {
-      title: "Snow-Flow Portal",
+      title: "Serac Portal",
       value: "enterprise-portal",
       description: isEnterpriseConfigured() ? "Connected" : undefined,
       category: "Portal",
@@ -1446,7 +1446,7 @@ function DialogAuthEnterprise() {
     <box paddingLeft={2} paddingRight={2} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          Snow-Flow Portal
+          Serac Portal
         </text>
         <text fg={theme.textMuted}>esc</text>
       </box>

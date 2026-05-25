@@ -1863,4 +1863,4 @@ function validateES5Syntax(code: string): { valid: boolean; violations: any[] } 
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow v8.3.0 Tool Consolidation"
+export const author = "Serac v8.3.0 Tool Consolidation"

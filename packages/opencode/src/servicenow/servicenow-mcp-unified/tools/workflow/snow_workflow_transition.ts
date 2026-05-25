@@ -13,7 +13,7 @@ import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
 
 const LEGACY_WARNING =
-  "⚠️ LEGACY: Workflow transitions are deprecated. Consider Flow Designer for new automations (ask Snow-Flow to generate a Flow Designer specification)."
+  "⚠️ LEGACY: Workflow transitions are deprecated. Consider Flow Designer for new automations (ask Serac to generate a Flow Designer specification)."
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_workflow_transition",
@@ -225,4 +225,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow"
+export const author = "Serac"

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Snow-Flow Enterprise MCP Proxy
+ * Serac Enterprise MCP Proxy
  * Bridges SnowCode CLI (stdio MCP) with Enterprise License Server (HTTPS REST)
  */
 
@@ -187,7 +187,7 @@ async function main() {
     await server.connect(transport)
 
     // Log to stderr (stdout is reserved for MCP protocol)
-    mcpDebug("[Enterprise Proxy] Snow-Flow Enterprise MCP Proxy started")
+    mcpDebug("[Enterprise Proxy] Serac Enterprise MCP Proxy started")
     mcpDebug(`[Enterprise Proxy] Version: ${VERSION}`)
     mcpDebug(
       `[Enterprise Proxy] Enterprise URL: ${process.env.SNOW_ENTERPRISE_URL || "https://enterprise.snow-flow.dev"}`,

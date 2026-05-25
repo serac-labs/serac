@@ -289,4 +289,4 @@ Only proceed if you understand what this script does and trust its source!
 }
 
 export const version = "3.1.0"
-export const author = "Snow-Flow SDK"
+export const author = "Serac SDK"

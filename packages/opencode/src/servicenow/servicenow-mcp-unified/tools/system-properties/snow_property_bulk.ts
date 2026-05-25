@@ -164,7 +164,7 @@ async function executeBulkSet(args: any, context: ServiceNowContext): Promise<To
         await client.post("/api/now/table/sys_properties", {
           name,
           value,
-          description: description || "Created by Snow-Flow bulk operation",
+          description: description || "Created by Serac bulk operation",
           type,
           suffix: "global",
         })
@@ -189,4 +189,4 @@ async function executeBulkSet(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow v8.2.0 Tool Merging"
+export const author = "Serac v8.2.0 Tool Merging"

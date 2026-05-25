@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-Successfully migrating Snow-Flow from **34 separate MCP servers** to **1 unified MCP server** with comprehensive ServiceNow tool coverage. This consolidation eliminates approximately **15,000 lines of duplicate code** while providing **347+ specialized ServiceNow tools** organized across 90+ functional domains.
+Successfully migrating Serac from **34 separate MCP servers** to **1 unified MCP server** with comprehensive ServiceNow tool coverage. This consolidation eliminates approximately **15,000 lines of duplicate code** while providing **347+ specialized ServiceNow tools** organized across 90+ functional domains.
 
 ### Mission Progress - Phase 2 Complete
 
@@ -267,7 +267,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 
 // Metadata
 export const version = "1.0.0"
-export const author = "Snow-Flow SDK Migration"
+export const author = "Serac SDK Migration"
 ```
 
 **Pattern Benefits:**

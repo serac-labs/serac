@@ -231,9 +231,9 @@ export async function ensureEndpointDiagnosed(context: ServiceNowContext): Promi
     diagnostics.push(`no existing sys_ws_definition with service_id=${ENDPOINT_SERVICE_ID}; creating`)
     const svc = await client
       .post("/api/now/table/sys_ws_definition", {
-        name: "Snow-Flow Script Executor",
+        name: "Serac Script Executor",
         service_id: ENDPOINT_SERVICE_ID,
-        short_description: "Synchronous script execution endpoint for Snow-Flow",
+        short_description: "Synchronous script execution endpoint for Serac",
         active: true,
       })
       .catch((err: { response?: { status?: number; data?: { error?: { message?: string } } } }) => {
@@ -411,18 +411,18 @@ gs.error = function(msg) {
 };
 
 try {
-  gs.info('=== Snow-Flow Script Execution Started ===');
+  gs.info('=== Serac Script Execution Started ===');
   gs.info('Description: ${escape(description)}');
   __sfResult = (function() {
     ${script}
   })();
-  gs.info('=== Snow-Flow Script Execution Completed ===');
+  gs.info('=== Serac Script Execution Completed ===');
   if (__sfResult !== undefined && __sfResult !== null) {
     gs.info('Script returned: ' + (typeof __sfResult === 'object' ? JSON.stringify(__sfResult) : String(__sfResult)));
   }
 } catch(e) {
   __sfError = e.toString();
-  gs.error('=== Snow-Flow Script Execution Failed ===');
+  gs.error('=== Serac Script Execution Failed ===');
   gs.error('Error: ' + e.toString());
   if (e.stack) {
     gs.error('Stack: ' + e.stack);
@@ -451,7 +451,7 @@ gs.setProperty('${marker}', JSON.stringify(__sfResultObj));
 gs.info('${marker}:DONE');
 `
 
-  const name = `Snow-Flow Exec - ${executionId}`
+  const name = `Serac Exec - ${executionId}`
 
   const job = await client
     .post("/api/now/table/sysauto_script", {
@@ -580,7 +580,7 @@ export async function executeServerScript(
 ): Promise<ScriptExecutionResult> {
   const executionId = options.executionId || `exec_${Date.now()}_${randomBytes(6).toString("hex")}`
   const timeout = options.timeout ?? 30000
-  const description = options.description || "Snow-Flow server-side execution"
+  const description = options.description || "Serac server-side execution"
 
   const client = await getAuthenticatedClient(context)
 

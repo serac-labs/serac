@@ -1,5 +1,5 @@
 /**
- * Snow-Flow Flow Designer Tool
+ * Serac Flow Designer Tool
  *
  * DISCLAIMER:
  * This tool uses both official and undocumented ServiceNow APIs to interact

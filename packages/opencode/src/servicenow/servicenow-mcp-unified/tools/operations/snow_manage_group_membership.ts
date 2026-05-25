@@ -276,4 +276,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export var version = "1.0.0"
-export var author = "Snow-Flow SDK Migration - TIER 3 Merge"
+export var author = "Serac SDK Migration - TIER 3 Merge"

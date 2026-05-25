@@ -4,13 +4,13 @@
 
 ### Overview
 
-Snow-Flow is an AI-powered coding assistant that runs locally on your machine. It provides an agent system with access to powerful tools including shell execution, file operations, and web access.
+Serac is an AI-powered coding assistant that runs locally on your machine. It provides an agent system with access to powerful tools including shell execution, file operations, and web access.
 
 ### No Sandbox
 
-Snow-Flow does **not** sandbox the agent. The permission system exists as a UX feature to help users stay aware of what actions the agent is taking - it prompts for confirmation before executing commands, writing files, etc. However, it is not designed to provide security isolation.
+Serac does **not** sandbox the agent. The permission system exists as a UX feature to help users stay aware of what actions the agent is taking - it prompts for confirmation before executing commands, writing files, etc. However, it is not designed to provide security isolation.
 
-If you need true isolation, run Snow-Flow inside a Docker container or VM.
+If you need true isolation, run Serac inside a Docker container or VM.
 
 ### Server Mode
 
@@ -51,11 +51,11 @@ The following components are in scope:
 
 | Component             | Repository           |
 | --------------------- | -------------------- |
-| Snow-Flow CLI         | `packages/opencode/` |
-| Snow-Flow Web UI      | `packages/app/`      |
-| Snow-Flow Desktop App | `packages/desktop/`  |
-| Snow-Flow Plugin SDK  | `packages/plugin/`   |
-| Snow-Flow SDK         | `packages/sdk/`      |
+| Serac CLI         | `packages/opencode/` |
+| Serac Web UI      | `packages/app/`      |
+| Serac Desktop App | `packages/desktop/`  |
+| Serac Plugin SDK  | `packages/plugin/`   |
+| Serac SDK         | `packages/sdk/`      |
 
 ### Response SLAs
 

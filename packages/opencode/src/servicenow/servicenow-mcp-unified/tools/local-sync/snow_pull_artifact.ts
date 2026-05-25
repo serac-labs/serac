@@ -187,4 +187,4 @@ async function detectArtifactTable(client: any, sys_id: string): Promise<string>
 }
 
 export const version = "1.1.0"
-export const author = "Snow-Flow SDK Migration"
+export const author = "Serac SDK Migration"

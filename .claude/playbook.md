@@ -177,7 +177,7 @@ Explain, show ServiceNow code examples in fenced blocks (ES5 only for Rhino), fl
 ### Style rules specific to skills
 
 - **Triggers in the description are scanned verbatim.** Write them the way a user would phrase them ("review code", "check my ACLs"). Vague descriptions mean the skill never loads.
-- **Code examples must be ES5** — Snow-Flow users are on ServiceNow Rhino.
+- **Code examples must be ES5** — Serac users are on ServiceNow Rhino.
 - **Cite tools** in the frontmatter's `tools:` array so the TUI can pre-surface them when the skill activates. Use the real tool names from the unified MCP server.
 - **Short is fine.** The `code-review` skill is 270 lines. A focused skill on "how to create a scheduled job" could be 40 lines. Don't pad.
 
@@ -262,6 +262,6 @@ From CONTRIBUTING.md, in order of importance:
 
 - Don't rewrite existing tools to match your style. A tool that works and passes tests stays as-is unless you have a bug fix or a clear perf win.
 - Don't refactor across package boundaries in a single PR.
-- Don't add dependencies without justification — Snow-Flow tries to stay dependency-light. If your PR adds a package, explain why in the body.
+- Don't add dependencies without justification — Serac tries to stay dependency-light. If your PR adds a package, explain why in the body.
 - Don't commit generated files unless the repo already commits them. Check `.gitignore` if unsure.
 - Don't skip `/verify` before opening a PR. It's cheap and catches obvious breakage.

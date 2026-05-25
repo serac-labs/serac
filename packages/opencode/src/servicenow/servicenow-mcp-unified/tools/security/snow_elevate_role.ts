@@ -212,4 +212,4 @@ function parseWrapperResult(raw: unknown): {
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow"
+export const author = "Serac"

@@ -699,4 +699,4 @@ async function upsertArtifact(
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow Enterprise GitHub Pipeline"
+export const author = "Serac Enterprise GitHub Pipeline"

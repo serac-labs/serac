@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Snow-Flow",
+  "productName": "Serac",
   "identifier": "ai.snow-code.desktop",
   "bundle": {
     "createUpdaterArtifacts": true,

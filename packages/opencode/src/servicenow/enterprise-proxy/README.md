@@ -1,8 +1,8 @@
-# Snow-Flow Enterprise MCP Proxy
+# Serac Enterprise MCP Proxy
 
 ## Overview
 
-The Enterprise MCP Proxy bridges **SnowCode CLI** (stdio MCP protocol) with the **Snow-Flow Enterprise License Server** (HTTPS REST API), enabling enterprise features like Jira, Azure DevOps, and Confluence integrations.
+The Enterprise MCP Proxy bridges **SnowCode CLI** (stdio MCP protocol) with the **Serac Enterprise License Server** (HTTPS REST API), enabling enterprise features like Jira, Azure DevOps, and Confluence integrations.
 
 ### 🚀 Enterprise Tool Ecosystem
 
@@ -308,7 +308,7 @@ await confluence_improve_content({
 # During snow-flow auth login
 $ snow-flow auth login
 
-? Do you have a Snow-Flow Enterprise license? Yes
+? Do you have a Serac Enterprise license? Yes
 ? Enterprise License Key: SNOW-ENT-CUST-ABC123
 
 ✓ Enterprise MCP Proxy configured
@@ -386,4 +386,4 @@ npm run test:integration
 ## License
 
 Open Source (Elastic License v2)
-Part of the Snow-Flow platform
+Part of the Serac platform

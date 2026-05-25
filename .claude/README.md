@@ -1,10 +1,10 @@
-# AI contributor harness for Snow-Flow
+# AI contributor harness for Serac
 
-A minimal, opinionated harness for contributing to Snow-Flow with an AI coding agent (Claude Code, OpenCode, or any harness that reads `.claude/commands/`). Use it if you want, skip it if you don't — Snow-Flow accepts regular PRs either way.
+A minimal, opinionated harness for contributing to Serac with an AI coding agent (Claude Code, OpenCode, or any harness that reads `.claude/commands/`). Use it if you want, skip it if you don't — Serac accepts regular PRs either way.
 
 ## What this gives you
 
-Six slash commands that map to the concrete work a Snow-Flow contributor actually does, plus a `playbook.md` the agent reads before suggesting or scaffolding anything so it doesn't guess about where files belong.
+Six slash commands that map to the concrete work a Serac contributor actually does, plus a `playbook.md` the agent reads before suggesting or scaffolding anything so it doesn't guess about where files belong.
 
 | Command | Purpose |
 |---|---|
@@ -26,7 +26,7 @@ The `/open-pr` command is built to resist writing AI-fluff descriptions. It will
 
 ## Issue-First Policy
 
-Snow-Flow requires every PR to link an existing issue. `/pick-issue` starts from an issue. `/suggest-contribution` will tell you when there's already a matching issue, and when you need to open a new one before coding. Don't skip this step — PRs without linked issues get closed.
+Serac requires every PR to link an existing issue. `/pick-issue` starts from an issue. `/suggest-contribution` will tell you when there's already a matching issue, and when you need to open a new one before coding. Don't skip this step — PRs without linked issues get closed.
 
 ## Prerequisites
 

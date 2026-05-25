@@ -1,6 +1,6 @@
 # INSTANCE.md — ServiceNow Instance Knowledge Base
 
-This file is automatically maintained by Snow-Flow to store instance-specific knowledge.
+This file is automatically maintained by Serac to store instance-specific knowledge.
 The AI agent reads and updates this file to remember facts about your ServiceNow instance
 across sessions. You can also manually edit this file.
 

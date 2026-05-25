@@ -193,4 +193,4 @@ function maskValue(value: string): string {
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow SDK Migration"
+export const author = "Serac SDK Migration"

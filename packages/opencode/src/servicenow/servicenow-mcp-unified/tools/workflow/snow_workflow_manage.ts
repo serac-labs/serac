@@ -4,13 +4,13 @@
  * ⚠️ LEGACY FEATURE WARNING:
  * ServiceNow Workflow (wf_workflow) is a LEGACY feature. ServiceNow recommends
  * using Flow Designer for new automation needs. Flow Designer is NOT currently
- * supported programmatically via Snow-Flow MCP tools.
+ * supported programmatically via Serac MCP tools.
  *
  * Before using this tool, consider:
  * 1. Do you need legacy workflow specifically for backwards compatibility?
  * 2. Would Flow Designer be a better fit for this automation?
  *
- * If Flow Designer is preferred, Snow-Flow can generate a specification document
+ * If Flow Designer is preferred, Serac can generate a specification document
  * that describes the flow logic, triggers, and actions you need to implement
  * manually in ServiceNow Flow Designer.
  *
@@ -42,7 +42,7 @@ RECOMMENDATIONS:
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_workflow_manage",
   description:
-    "⚠️ LEGACY: Manage legacy workflows (deprecated - ServiceNow recommends Flow Designer). Use for backwards compatibility only. For new automations, consider Flow Designer (not programmable via Snow-Flow, but specs can be generated). Actions: list, get, stop, retry, clone, enable/disable, delete, get_history",
+    "⚠️ LEGACY: Manage legacy workflows (deprecated - ServiceNow recommends Flow Designer). Use for backwards compatibility only. For new automations, consider Flow Designer (not programmable via Serac, but specs can be generated). Actions: list, get, stop, retry, clone, enable/disable, delete, get_history",
   category: "automation",
   subcategory: "workflow",
   use_cases: ["workflow", "process-automation", "workflow-management"],
@@ -538,4 +538,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow"
+export const author = "Serac"

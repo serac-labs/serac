@@ -38,7 +38,7 @@ export const loadFromAuthJson = (): ServiceNowContext | undefined => {
       : []),
     // 3. Linux/fallback: ~/.local/share/snow-code/auth.json (XDG data dir on Linux)
     path.join(os.homedir(), ".local", "share", "snow-code", "auth.json"),
-    // 4. Snow-Flow specific auth
+    // 4. Serac specific auth
     path.join(os.homedir(), ".snow-flow", "auth.json"),
     // 5. OpenCode (fallback for compatibility)
     path.join(os.homedir(), ".local", "share", "opencode", "auth.json"),
@@ -149,7 +149,7 @@ export const loadEnterpriseAuth = (): { jwt: string; portalUrl: string; subdomai
   const enterpriseAuthPaths = [
     // 1. Snow-Code enterprise config (from device auth flow)
     path.join(os.homedir(), ".snow-code", "enterprise.json"),
-    // 2. Snow-Flow enterprise auth (legacy)
+    // 2. Serac enterprise auth (legacy)
     path.join(os.homedir(), ".snow-flow", "auth.json"),
   ]
 
@@ -226,7 +226,7 @@ export const fetchFromPortal = (url: string, jwt: string): Promise<any> => {
       headers: {
         Authorization: `Bearer ${jwt}`,
         Accept: "application/json",
-        "User-Agent": "Snow-Flow-MCP/1.0",
+        "User-Agent": "Serac-MCP/1.0",
       },
     }
 

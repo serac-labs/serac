@@ -115,7 +115,7 @@ snow_update_set_export({
 
 ## OAuth Context & Update Set Tracking
 
-**Snow-Flow uses OAuth service account authentication.** All API calls run as an OAuth **service account**, not as your UI user. Update Sets must be "current" for the user making the changes — for API changes that means current for the service account.
+**Serac uses OAuth service account authentication.** All API calls run as an OAuth **service account**, not as your UI user. Update Sets must be "current" for the user making the changes — for API changes that means current for the service account.
 
 ### The Two Contexts
 

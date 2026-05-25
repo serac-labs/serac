@@ -290,4 +290,4 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "1.0.0"
-export const author = "Snow-Flow Team"
+export const author = "Serac Team"

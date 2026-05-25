@@ -1,7 +1,7 @@
 /**
  * Activity Tracker
  *
- * Automatically reports agent work to the Snow-Flow Enterprise portal so the
+ * Automatically reports agent work to the Serac Enterprise portal so the
  * agent no longer has to call `activity_start`, `activity_add_artifact`, and
  * `activity_complete` itself.
  *

@@ -280,7 +280,7 @@ function ApiMethod(props: ApiMethodProps) {
         props.providerID === "opencode" ? (
           <box gap={1}>
             <text fg={theme.textMuted}>
-              Snow-Flow Zen provides access to curated coding models with a single API key.
+              Serac Zen provides access to curated coding models with a single API key.
             </text>
             <text fg={theme.text}>
               Go to <span style={{ fg: theme.primary }}>https://snow-flow.dev/zen</span> to get a key

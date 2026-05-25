@@ -185,7 +185,7 @@ async function executeSet(args: any, context: ServiceNowContext): Promise<ToolRe
     const createData: any = {
       name,
       value,
-      description: description || "Created by Snow-Flow",
+      description: description || "Created by Serac",
       type,
       choices: choices || "",
       is_private: is_private ? "true" : "false",
@@ -325,4 +325,4 @@ async function executeValidate(args: any, context: ServiceNowContext): Promise<T
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow v8.2.0 Tool Merging"
+export const author = "Serac v8.2.0 Tool Merging"

@@ -135,7 +135,7 @@ async function executeImport(args: any, context: ServiceNowContext): Promise<Too
         await client.post("/api/now/table/sys_properties", {
           name,
           value,
-          description: description || "Imported by Snow-Flow",
+          description: description || "Imported by Serac",
           type,
           suffix: "global",
         })
@@ -261,4 +261,4 @@ async function executeHistory(args: any, context: ServiceNowContext): Promise<To
 }
 
 export const version = "2.0.0"
-export const author = "Snow-Flow v8.2.0 Tool Merging"
+export const author = "Serac v8.2.0 Tool Merging"
