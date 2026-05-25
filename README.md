@@ -16,8 +16,8 @@
 </p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@serac-labs/serac"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/serac?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" /></a>&nbsp;
-  <a href="https://www.npmjs.com/package/@serac-labs/serac"><img alt="Downloads" src="https://img.shields.io/npm/dw/@serac-labs/serac?style=for-the-badge&logo=npm&logoColor=white&label=downloads&color=CB3837" /></a>&nbsp;
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" /></a>&nbsp;
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="Downloads" src="https://img.shields.io/npm/dw/@serac-labs/core?style=for-the-badge&logo=npm&logoColor=white&label=downloads&color=CB3837" /></a>&nbsp;
   <a href="https://github.com/serac-labs/serac/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/serac-labs/serac?style=for-the-badge&logo=github&color=yellow" /></a>&nbsp;
   <a href="https://github.com/serac-labs/serac"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" /></a>&nbsp;
   <a href="https://github.com/serac-labs/serac/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Elastic--2.0-blue?style=for-the-badge" /></a>

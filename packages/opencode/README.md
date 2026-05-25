@@ -14,8 +14,8 @@
 <p align="center">The autonomous ServiceNow development agent.</p>
 
 <p align="center">
-  <a href="https://www.npmjs.com/package/@serac-labs/serac"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/serac?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" /></a>&nbsp;
-  <a href="https://github.com/serac-labs/serac/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/github/license/serac-labs/serac?style=for-the-badge&color=blue" /></a>
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" /></a>&nbsp;
+  <a href="https://github.com/serac-labs/serac/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Elastic--2.0-blue?style=for-the-badge" /></a>
 </p>
 
 ---
