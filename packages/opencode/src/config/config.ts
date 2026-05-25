@@ -243,7 +243,7 @@ export namespace Config {
         if (existsSync(pkgPath)) {
           try {
             const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"))
-            if (["snow-flow-test", "snow-code", "snow-flow"].includes(pkg.name)) {
+            if (["serac", "@serac-labs/core", "snow-flow-test", "snow-code", "snow-flow"].includes(pkg.name)) {
               return current
             }
           } catch {
@@ -272,6 +272,8 @@ export namespace Config {
       path.join(path.dirname(process.execPath), "..", "mcp", `${serverName}.js`),
 
       // 4. In cwd/node_modules (for when running from another package)
+      path.join(process.cwd(), "node_modules", "serac", "mcp", `${serverName}.js`),
+      path.join(process.cwd(), "node_modules", "@serac-labs", "core", "mcp", `${serverName}.js`),
       path.join(process.cwd(), "node_modules", "snow-flow-test", "mcp", `${serverName}.js`),
       path.join(process.cwd(), "node_modules", "snow-flow", "mcp", `${serverName}.js`),
       path.join(process.cwd(), "node_modules", "snow-code", "mcp", `${serverName}.js`),
