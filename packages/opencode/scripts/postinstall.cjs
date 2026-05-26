@@ -3,11 +3,30 @@ const https = require("https")
 const fs = require("fs")
 const path = require("path")
 const os = require("os")
+const crypto = require("crypto")
 const { execSync } = require("child_process")
 
 const pkg = require("../package.json")
 const VERSION = pkg.version
 const REPO = "serac-labs/serac"
+
+// Expected SHA-256 of each platform tarball, generated at publish time and
+// shipped INSIDE this package, so npm's provenance/attestation covers it.
+// The binary itself is downloaded separately from GitHub Releases (below),
+// which provenance does NOT cover — so we verify it against this before
+// trusting it, closing that supply-chain gap. A missing file/entry skips
+// verification (graceful for older/local builds); a tampered package that
+// stripped this file would fail `npm audit signatures`.
+let EXPECTED_CHECKSUMS = {}
+try {
+  EXPECTED_CHECKSUMS = require("../checksums.json")
+} catch (e) {
+  /* no checksums shipped (older package or local build) — skip verification */
+}
+
+function sha256(filePath) {
+  return crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex")
+}
 
 const platformMap = { darwin: "darwin", linux: "linux", win32: "windows" }
 const archMap = { x64: "x64", arm64: "arm64" }
@@ -97,6 +116,27 @@ followRedirects(releaseUrl, function (res) {
   res.pipe(file)
   file.on("finish", function () {
     file.close()
+
+    // Integrity gate: verify the downloaded tarball against the
+    // provenance-covered checksum BEFORE extracting or executing anything.
+    var expectedHash = EXPECTED_CHECKSUMS[tarballName]
+    if (expectedHash) {
+      var actualHash = sha256(tarPath)
+      if (actualHash !== expectedHash) {
+        console.error("serac: SECURITY: checksum mismatch for " + tarballName)
+        console.error("serac:   expected " + expectedHash)
+        console.error("serac:   actual   " + actualHash)
+        console.error("serac: refusing to install a tampered binary — aborting.")
+        try {
+          fs.rmSync(tmpDir, { recursive: true })
+        } catch (e) {}
+        process.exit(1)
+      }
+      console.log("serac: binary checksum verified")
+    } else {
+      console.warn("serac: no published checksum for " + tarballName + " — skipping integrity check")
+    }
+
     try {
       execSync('tar -xzf "' + tarPath + '" -C "' + pkgDir + '"', { stdio: "pipe" })
       if (platform !== "windows" && fs.existsSync(binaryPath)) {
