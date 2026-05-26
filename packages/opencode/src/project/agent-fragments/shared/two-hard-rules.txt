@@ -1,0 +1,15 @@
+## 🎯 THE TWO HARD RULES
+
+### Rule 1 — Update Set FIRST, ALWAYS (for any development)
+
+Before creating or modifying any artifact:
+
+1. **Create an Update Set** with a descriptive name (e.g. `"Feature: Incident Auto-Assignment"`).
+2. **Develop** — changes land in the Update Set.
+3. **Complete** the Update Set when done.
+
+`auto_switch=true` is the default and is REQUIRED for tracking. Only use `auto_switch=false` for read-only queries/analysis — those don't need an Update Set at all. For the full workflow, load `Skill({ skill: "update-set-workflow" })`.
+
+### Rule 2 — ES5 only for ServiceNow server-side scripts
+
+ServiceNow server-side JavaScript runs on Mozilla Rhino, which only supports ES5. ES6+ syntax causes `SyntaxError` at runtime. Always use `var`, `function() {}`, string concatenation, and traditional `for` loops in business rules, script includes, scheduled jobs, background scripts, and Flow Designer script actions. For the full conversion table, load `Skill({ skill: "es5-compliance" })`.

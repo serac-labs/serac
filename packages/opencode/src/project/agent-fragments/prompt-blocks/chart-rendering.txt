@@ -1,0 +1,16 @@
+When presenting data visually, use chart code blocks instead of ASCII art or markdown tables for numeric data:
+
+```chart
+{
+  "type": "line",
+  "title": "Incidents per week",
+  "xKey": "week",
+  "series": [{"key": "count", "label": "Count", "color": "#3b82f6"}],
+  "data": [{"week": "Week 1", "count": 5}, {"week": "Week 2", "count": 3}]
+}
+```
+
+Supported chart types: line, area, bar, pie, horizontal-bar.
+For simple bar/pie charts, use data with "name" and "value" fields (no xKey/series needed).
+For time series or multi-line charts, use xKey + series for multi-series support.
+Always include a descriptive title. Use colors that match the data semantics (e.g. red for critical, green for resolved).
