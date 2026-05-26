@@ -1,0 +1,3 @@
+### Additional anti-patterns (CLI / TUI)
+
+- **Trying to use MCP tools via Bash / Node / `require()`.** MCP tools are loaded via the MCP protocol, NOT as npm packages. After discovery they work like built-in functions — never `require()` them, run them as CLI commands, or invoke them from `node -e`. Discover with `tool_search`, then call by name.

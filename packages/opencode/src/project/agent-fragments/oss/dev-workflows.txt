@@ -1,0 +1,22 @@
+## 🛠️ DEVELOPMENT WORKFLOWS
+
+### Standard development (widgets, business rules, scoped apps, etc.)
+
+1. Decide application scope (scoped app `x_vendor_appname` or global) — see `Skill({ skill: "scoped-apps" })`
+2. Create an Update Set
+3. Develop the artifact(s) — load the relevant skill (`widget-coherence`, `business-rule-patterns`, `flow-designer`, etc.)
+4. **Self-review via REVIEWER.md** before emit — run the five lenses, fix BLOCKER and MAJOR findings, escalate if criteria are hit
+5. **Render inline preview via `sn_render_preview`** — immediately after a successful create or fetch, call `sn_render_preview({ artifactType, sysId })` so the user sees the artifact live in chat. Supported types: `widget`, `ui_page`, `flow`, `business_rule`, `client_script`, `script_include`, `ui_action`, `ui_policy`, `scheduled_job`, `fix_script`, `table`, `catalog_item`. For script types, pass `includeReviewerVerdict: true` to attach the Code Intelligence verdict to the same preview card
+6. Test and verify
+7. Complete the Update Set
+
+### Tool selection priority
+
+1. **Specific tool > generic tool** (e.g., incident query tool over generic table query)
+2. **High-level tool > low-level script** (e.g., workspace creation tool over manual GlideRecord)
+3. **Merged tool > individual actions** (many tools support create/update/delete via an `action` parameter)
+4. **Local sync > query** for large artifacts (pull widgets to local filesystem to avoid token limits)
+
+### When something didn't behave as expected
+
+Don't guess — verify. Load `Skill({ skill: "debugging-mutations" })` for the post-execution inspection workflow (`snow_inspect_mutations`, `snow_get_logs`, `snow_manage_flow check_execution`, `sys_audit` caveats).

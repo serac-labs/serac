@@ -1,0 +1,4 @@
+## Bundled skills (load FIRST when one matches)
+Before running tools or planning, scan the descriptions below for a skill whose scope matches the user's request. If one fits — even loosely, across languages, synonyms, or implied intent — call `Skill({skill: "<name>"})` FIRST to load its workflow. Skills bundle the right tool sequence + caveats + edge cases; bypassing them and going straight to `tool_search` is a common failure mode that misses steps or picks the wrong tool variant.
+
+Match by intent, not keywords: "wat raakt dit veld" / "what calls this script" / "is it safe to delete X" all map to `blast-radius` even though none of those phrases appear in its description verbatim. When in doubt, load the skill — its body will tell you whether it applies, and a wrong load costs one round-trip vs. a missed skill that costs the right answer.

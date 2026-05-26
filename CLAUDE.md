@@ -47,7 +47,7 @@ Most contributions land in `packages/opencode/`. See `.claude/playbook.md` for t
 
 ## Things not to do
 
-- Don't read `packages/opencode/src/project/agents-template.txt` for style guidance — that's a product template for the end-user agent, not for you as a contributor.
+- Don't read `packages/opencode/src/project/agent-fragments/` for style guidance — those fragments compose the end-user agent's `AGENTS.md` (the product prompt, not contributor guidance). If you do edit a fragment, the snapshot test in `test/project/agents-template.test.ts` will flag the resulting `AGENTS.md` diff for review. The `prompt-blocks/` subfolder is consumed by downstream products (the Serac Portal), not the TUI — see that folder's `README.md`.
 - Don't rename packages or modules as a side effect of another change.
 - Don't add dependencies without justification in the PR body.
 - Don't `git push --force` to any shared branch.
