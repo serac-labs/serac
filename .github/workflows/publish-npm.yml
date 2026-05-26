@@ -271,6 +271,26 @@ jobs:
 
           ls -la *.tar.gz 2>/dev/null || echo "No tarballs created"
 
+      - name: Generate binary checksums (provenance-covered)
+        # SHA-256 of every platform tarball, written INTO the package so
+        # `npm publish --provenance` signs it. postinstall.cjs verifies the
+        # binary it downloads from the GitHub release against this before
+        # extracting — closing the gap between the signed npm package and
+        # the separately-downloaded, otherwise-unverified executable.
+        run: |
+          cd packages/opencode/dist
+          node -e '
+            const fs = require("fs");
+            const crypto = require("crypto");
+            const out = {};
+            for (const f of fs.readdirSync(".").filter((x) => x.endsWith(".tar.gz")).sort()) {
+              out[f] = crypto.createHash("sha256").update(fs.readFileSync(f)).digest("hex");
+            }
+            fs.writeFileSync("../checksums.json", JSON.stringify(out, null, 2) + "\n");
+          '
+          echo "Wrote packages/opencode/checksums.json:"
+          cat ../checksums.json
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
         with:
