@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-25T10:20:19.747Z",
+  "generatedAt": "2026-05-27T20:28:31.301Z",
   "count": 429,
   "groups": [
     {
@@ -18955,7 +18955,7 @@
               },
               "eventName": {
                 "type": "string",
-                "description": "Event name to listen for"
+                "description": "Registered event NAME to listen for, e.g. 'incident.commented' or 'x_app.my_event' — the 'event_name' string from sysevent_register. This is NOT the sys_id and NOT a reference: a Script Action matches fired events by name, so a 32-char hex sys_id will store but never fire. Use snow_discover_events to find the name."
               },
               "condition": {
                 "type": "string",
