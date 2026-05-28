@@ -1,7 +1,8 @@
-<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" width="512" height="512"><svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect width="512" height="512" fill="#131010"></rect>
-<path d="M320 224V352H192V224H320Z" fill="#5A5858"></path>
-<path fill-rule="evenodd" clip-rule="evenodd" d="M384 416H128V96H384V416ZM320 160H192V352H320V160Z" fill="white"></path>
-</svg><style>@media (prefers-color-scheme: light) { :root { filter: none; } }
-@media (prefers-color-scheme: dark) { :root { filter: none; } }
-</style></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none">
+  <!-- Favicon — strata variant (the only Serac glyph). Glacial cyan
+       that reads on both dark and light browser chrome. The viewBox is
+       24×24 so dimensions scale freely from 16px upward. -->
+  <path d="M8 5 L16 5 L17.5 8 L6.5 8 Z" fill="#3DB1D2" fill-opacity="0.95"/>
+  <path d="M6 9 L18 9 L19.5 13 L4.5 13 Z" fill="#3DB1D2" fill-opacity="0.7"/>
+  <path d="M4 14 L20 14 L22 19 L2 19 Z" fill="#3DB1D2" fill-opacity="0.45"/>
+</svg>
