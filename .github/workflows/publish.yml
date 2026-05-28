@@ -33,7 +33,7 @@ jobs:
     runs-on: blacksmith-4vcpu-ubuntu-2404
     if: github.repository == 'serac-labs/serac'
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
 
@@ -46,19 +46,19 @@ jobs:
         run: bun i -g snow-code@latest
 
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
+        uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
@@ -80,7 +80,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.SST_GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: false
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: snow-code-cli
           path: packages/opencode/dist
@@ -109,12 +109,12 @@ jobs:
             target: aarch64-unknown-linux-gnu
     runs-on: ${{ matrix.settings.host }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           ref: ${{ needs.publish.outputs.tag }}
 
-      - uses: apple-actions/import-codesign-certs@v2
+      - uses: apple-actions/import-codesign-certs@8f3fb608891dd2244cdab3d69cd68c0d37a7fe93 # v2
         if: ${{ runner.os == 'macOS' }}
         with:
           keychain: build
@@ -145,11 +145,11 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@29eef336d9b2848a0b548edc03f92a220660cdb8 # stable
         with:
           targets: ${{ matrix.settings.target }}
 
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: packages/desktop/src-tauri
           shared-key: ${{ matrix.settings.target }}
@@ -177,7 +177,7 @@ jobs:
           cargo tauri --version
 
       - name: Build and upload artifacts
-        uses: Wandalen/wretry.action@v3
+        uses: Wandalen/wretry.action@e68c23e6309f2871ca8ae4763e7629b9c258e1ea # v3
         timeout-minutes: 60
         with:
           attempt_limit: 3
@@ -212,7 +212,7 @@ jobs:
     if: needs.publish.outputs.tag
     runs-on: blacksmith-4vcpu-ubuntu-2404
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           fetch-depth: 0
           ref: ${{ needs.publish.outputs.tag }}
