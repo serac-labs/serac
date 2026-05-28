@@ -17,7 +17,7 @@ export const config = {
   // Social links
   social: {
     twitter: "https://x.com/snowflowdev",
-    discord: "https://discord.gg/snow-flow",
+    discord: "https://discord.gg/uGGrWj9KsT",
   },
 
   // Static stats (used on landing page)
