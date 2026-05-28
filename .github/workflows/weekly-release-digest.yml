@@ -1,0 +1,80 @@
+name: Weekly Release Digest
+
+# Posts a digest of the previous week's GitHub releases to the Serac
+# community Discord (#releases). Quiet weeks → no post.
+
+on:
+  schedule:
+    - cron: "0 9 * * 1" # Monday 09:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  digest:
+    runs-on: blacksmith-4vcpu-ubuntu-2404
+    steps:
+      - name: Build digest payload
+        id: build
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          SINCE_TS=$(date -u -d '7 days ago' +%s)
+
+          # Newest 30 releases, then keep the ones published in the last 7 days
+          # (drafts skipped, pre-releases kept). Limited to 10 because Discord
+          # accepts at most 10 embeds per message.
+          RELEASES=$(gh api "/repos/${{ github.repository }}/releases?per_page=30" \
+            --jq "[.[]
+                    | select(.draft == false)
+                    | select((.published_at | fromdateiso8601) > ${SINCE_TS})]
+                  | sort_by(.published_at)
+                  | reverse
+                  | .[0:10]")
+          COUNT=$(jq 'length' <<<"$RELEASES")
+          echo "count=${COUNT}" >> "$GITHUB_OUTPUT"
+
+          if [ "$COUNT" -eq 0 ]; then
+            echo "No releases in the last 7 days — skipping post."
+            exit 0
+          fi
+
+          # Body: trim to 400 chars + "full notes" link; color = #3DB1D2 (4042706).
+          EMBEDS=$(jq '[.[] | {
+            title: ((.name // .tag_name) | .[0:255]),
+            url: .html_url,
+            description: (
+              (.body // "_No release notes._") as $b
+              | if ($b | length) > 400
+                then ($b[0:400] + "...\n\n[Full notes →](" + .html_url + ")")
+                else $b
+                end
+            ),
+            color: 4042706,
+            timestamp: .published_at
+          }]' <<<"$RELEASES")
+
+          NOUN=$([ "$COUNT" -eq 1 ] && echo "release" || echo "releases")
+          CONTENT="**${COUNT} new ${NOUN} this week**"
+
+          jq -n --arg content "$CONTENT" --argjson embeds "$EMBEDS" \
+            '{content: $content, embeds: $embeds, allowed_mentions: {parse: []}}' \
+            > /tmp/payload.json
+
+          echo "payload_file=/tmp/payload.json" >> "$GITHUB_OUTPUT"
+
+      - name: Post to Discord
+        if: steps.build.outputs.count != '0'
+        env:
+          WEBHOOK: ${{ secrets.DISCORD_RELEASES_WEBHOOK }}
+        run: |
+          set -euo pipefail
+          if [ -z "${WEBHOOK}" ]; then
+            echo "DISCORD_RELEASES_WEBHOOK is not set — skipping."
+            exit 0
+          fi
+          curl -fsS -X POST -H "Content-Type: application/json" \
+               --data-binary @/tmp/payload.json "${WEBHOOK}" > /dev/null
+          echo "Posted ${{ steps.build.outputs.count }} release(s) to Discord."
