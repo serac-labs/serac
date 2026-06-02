@@ -1,6 +1,5 @@
 import { createSignal, createMemo, onMount, Show } from "solid-js"
 import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
-import { DialogPrompt } from "@tui/ui/dialog-prompt"
 import { useDialog } from "@tui/ui/dialog"
 import { useToast } from "@tui/ui/toast"
 import { useTheme } from "@tui/context/theme"
@@ -15,7 +14,6 @@ import {
 import { isRemoteEnvironment } from "@/auth/servicenow-oauth"
 import { Clipboard } from "@tui/util/clipboard"
 import { tryOpenBrowser } from "@tui/util/browser"
-import { DialogAuthServiceNowLLM } from "./dialog-servicenow-llm"
 
 /**
  * Fetch active integrations from enterprise portal
@@ -230,14 +228,7 @@ async function connectSnInstance(creds: { instanceUrl: string; clientId: string;
   })
 }
 
-type AuthMethod =
-  | "servicenow-oauth"
-  | "servicenow-basic"
-  | "enterprise-portal"
-  | "enterprise-license"
-  | "enterprise-combined"
-  | "servicenow-llm"
-  | "select-sn-instance"
+type AuthMethod = "servicenow-oauth" | "servicenow-basic" | "enterprise-portal" | "select-sn-instance"
 
 interface AuthCredentials {
   servicenow?: {
@@ -267,7 +258,6 @@ export function DialogAuth() {
   const dialog = useDialog()
   const toast = useToast()
   const [credentials, setCredentials] = createSignal<AuthCredentials>({})
-  const [llmConfigured, setLlmConfigured] = createSignal(false)
 
   // Load existing credentials on mount
   onMount(async () => {
@@ -301,24 +291,11 @@ export function DialogAuth() {
         setCredentials((prev) => ({
           ...prev,
           enterprise: {
-            subdomain: entAuth.enterpriseUrl?.replace(/^https?:\/\//, "").replace(/\.snow-flow\.dev\/?$/, ""),
             licenseKey: entAuth.licenseKey,
             token: entAuth.token,
             role: entAuth.role,
           },
         }))
-      }
-
-      // Check if servicenow-llm provider is configured
-      try {
-        const { Config } = await import("@/config/config")
-        const config = await Config.get()
-        const llmProvider = config.provider?.["servicenow-llm"]
-        if (llmProvider && Object.keys((llmProvider as any)?.models || {}).length > 0) {
-          setLlmConfigured(true)
-        }
-      } catch {
-        // Config not available
       }
     } catch {
       // Auth module not available
@@ -340,10 +317,30 @@ export function DialogAuth() {
 
   const allOptions: DialogSelectOption<AuthMethod>[] = [
     {
+      title: "Serac dashboard",
+      value: "enterprise-portal",
+      description: isEnterpriseConfigured() ? "Connected" : undefined,
+      category: "Serac dashboard",
+      footer: "Log in — loads your ServiceNow, Jira & other credentials",
+      onSelect: () => {
+        dialog.replace(() => <DialogAuthEnterprise />)
+      },
+    },
+    {
+      title: "Select ServiceNow Instance",
+      value: "select-sn-instance",
+      description: isServiceNowConfigured() ? "Connected" : undefined,
+      category: "Serac dashboard",
+      footer: "Switch instance from your dashboard",
+      onSelect: () => {
+        dialog.replace(() => <DialogAuthSelectInstance />)
+      },
+    },
+    {
       title: "ServiceNow OAuth",
       value: "servicenow-oauth",
       description: isServiceNowConfigured() ? "Connected" : undefined,
-      category: "ServiceNow",
+      category: "ServiceNow (manual)",
       footer: "OAuth2 + PKCE",
       onSelect: () => {
         dialog.replace(() => <DialogAuthServiceNowOAuth />)
@@ -353,55 +350,15 @@ export function DialogAuth() {
       title: "ServiceNow Basic Auth",
       value: "servicenow-basic",
       description: credentials().servicenowBasic ? "Configured" : undefined,
-      category: "ServiceNow",
-      footer: "Username/Password",
+      category: "ServiceNow (manual)",
+      footer: "Username / Password",
       onSelect: () => {
         dialog.replace(() => <DialogAuthServiceNowBasic />)
       },
     },
-    {
-      title: "ServiceNow LLM",
-      value: "servicenow-llm",
-      description: llmConfigured() ? "Configured" : undefined,
-      category: "ServiceNow",
-      footer: "MID Server LLM",
-      onSelect: () => {
-        dialog.replace(() => <DialogAuthServiceNowLLM />)
-      },
-    },
-    {
-      title: "Serac Portal",
-      value: "enterprise-portal",
-      description: isEnterpriseConfigured() ? "Connected" : undefined,
-      category: "Portal",
-      footer: "Individual, Teams & Enterprise",
-      onSelect: () => {
-        dialog.replace(() => <DialogAuthEnterprise />)
-      },
-    },
-    {
-      title: "Select ServiceNow Instance",
-      value: "select-sn-instance",
-      description: isServiceNowConfigured() ? "Connected" : undefined,
-      category: "Portal",
-      footer: "Switch instance via portal",
-      onSelect: () => {
-        dialog.replace(() => <DialogAuthSelectInstance />)
-      },
-    },
-    {
-      title: "Portal + ServiceNow",
-      value: "enterprise-combined",
-      description: isEnterpriseConfigured() && isServiceNowConfigured() ? "Both connected" : undefined,
-      category: "Combined",
-      footer: "Complete setup in one flow",
-      onSelect: () => {
-        dialog.replace(() => <DialogAuthEnterpriseCombined />)
-      },
-    },
   ]
 
-  return <DialogSelect title="ServiceNow Authentication" options={allOptions} />
+  return <DialogSelect title="Serac Authentication" options={allOptions} />
 }
 
 /**
@@ -1032,69 +989,41 @@ function DialogAuthEnterprise() {
   const toast = useToast()
   const { theme } = useTheme()
 
-  const [step, setStep] = createSignal<
-    "plan-type" | "subdomain" | "code" | "verifying" | "sn-choice" | "select-sn-instance"
-  >("plan-type")
-  const [planType, setPlanType] = createSignal<"individual-teams" | "enterprise" | "">("")
-  const [subdomain, setSubdomain] = createSignal("")
+  const [step, setStep] = createSignal<"starting" | "code" | "verifying" | "sn-choice" | "select-sn-instance">(
+    "starting",
+  )
   const [sessionId, setSessionId] = createSignal("")
   const [authCode, setAuthCode] = createSignal("")
   const [verificationUrl, setVerificationUrl] = createSignal("")
   const [portalUrl, setPortalUrl] = createSignal("")
   const [snInstances, setSnInstances] = createSignal<SnInstance[]>([])
   const [entToken, setEntToken] = createSignal("")
+  const [deviceError, setDeviceError] = createSignal("")
 
-  let subdomainInput: TextareaRenderable
+  const PORTAL_URL = "https://dashboard.serac.build"
+
   let codeInput: TextareaRenderable
 
-  // Load saved subdomain from existing enterprise config
-  onMount(async () => {
-    try {
-      const { Auth } = await import("@/auth")
-      const entAuth = await Auth.get("enterprise")
-      if (entAuth?.type === "enterprise" && entAuth.enterpriseUrl) {
-        // Extract subdomain from URL like https://acme.serac.build
-        const match = entAuth.enterpriseUrl.match(/https?:\/\/([^.]+)\.snow-flow\.dev/)
-        if (match) {
-          setSubdomain(match[1])
-        }
-      }
-    } catch {
-      // Auth module not available
-    }
+  // Single managed dashboard — start device authorization immediately.
+  onMount(() => {
+    startDeviceAuth()
   })
 
   useKeyboard((evt) => {
     if (evt.name === "escape") {
       const currentStep = step()
-      if (currentStep === "plan-type") {
+      if (currentStep === "starting" || currentStep === "code" || currentStep === "verifying") {
         dialog.replace(() => <DialogAuth />)
-      } else if (currentStep === "subdomain") {
-        setStep("plan-type")
-        setPlanType("")
-      } else if (currentStep === "code") {
-        if (planType() === "individual-teams") {
-          setStep("plan-type")
-          setPlanType("")
-        } else {
-          setStep("subdomain")
-        }
-        setSessionId("")
-        setAuthCode("")
-        setTimeout(() => subdomainInput?.focus(), 10)
       } else if (currentStep === "sn-choice" || currentStep === "select-sn-instance") {
-        // Enterprise auth is already saved, just close dialog
+        // Dashboard auth is already saved, just close dialog
         dialog.clear()
       }
     }
 
-    // Handle 1/2 keypresses for plan type selection
-    if (step() === "plan-type") {
-      if (evt.name === "1") {
-        selectPlanType("individual-teams")
-      } else if (evt.name === "2") {
-        selectPlanType("enterprise")
-      }
+    // Retry the device request if it failed
+    if (step() === "starting" && deviceError() && evt.name === "r") {
+      setDeviceError("")
+      startDeviceAuth()
     }
 
     // Handle 1/2/3 keypresses for ServiceNow choice
@@ -1111,37 +1040,10 @@ function DialogAuthEnterprise() {
     }
   })
 
-  const selectPlanType = (type: "individual-teams" | "enterprise") => {
-    setPlanType(type)
-    if (type === "individual-teams") {
-      setSubdomain("portal")
-      startDeviceAuth()
-    } else {
-      if (subdomain() === "portal") setSubdomain("")
-      setStep("subdomain")
-      setTimeout(() => subdomainInput?.focus(), 10)
-    }
-  }
-
   const startDeviceAuth = async () => {
-    const sub = subdomain().trim().toLowerCase()
-    if (!sub) {
-      toast.show({ variant: "error", message: "Please enter your organization subdomain" })
-      return
-    }
-
-    // Validate subdomain format (alphanumeric with optional hyphens, no leading/trailing hyphen)
-    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(sub) && sub.length > 1) {
-      toast.show({ variant: "error", message: "Invalid subdomain format" })
-      return
-    }
-    // Single character subdomain is also valid
-    if (sub.length === 1 && !/^[a-z0-9]$/.test(sub)) {
-      toast.show({ variant: "error", message: "Invalid subdomain format" })
-      return
-    }
-
-    const portalUrl = `https://${sub}.serac.build`
+    setStep("starting")
+    setDeviceError("")
+    const portalUrl = PORTAL_URL
 
     try {
       // Get machine info
@@ -1176,7 +1078,9 @@ function DialogAuthEnterprise() {
       setStep("code")
       setTimeout(() => codeInput?.focus(), 10)
     } catch (e) {
-      toast.show({ variant: "error", message: e instanceof Error ? e.message : "Failed to start auth" })
+      const msg = e instanceof Error ? e.message : "Failed to reach your Serac dashboard"
+      setDeviceError(msg)
+      toast.show({ variant: "error", message: msg, duration: 5000 })
     }
   }
 
@@ -1188,8 +1092,7 @@ function DialogAuthEnterprise() {
     }
 
     setStep("verifying")
-    const sub = subdomain().trim().toLowerCase()
-    const resolvedPortalUrl = `https://${sub}.serac.build`
+    const resolvedPortalUrl = PORTAL_URL
 
     try {
       // Retry up to 5 times with 2s delay — handles race condition where
@@ -1267,7 +1170,7 @@ function DialogAuthEnterprise() {
           enterpriseJsonPath,
           JSON.stringify(
             {
-              subdomain: sub,
+              subdomain: "dashboard",
               token: data.token,
             },
             null,
@@ -1398,7 +1301,7 @@ function DialogAuthEnterprise() {
           if (daysLeft <= 0) {
             toast.show({
               variant: "error",
-              message: "Trial ended — visit portal.serac.build/portal/billing to activate features",
+              message: "Trial ended — visit dashboard.serac.build/portal/billing to activate features",
               duration: 8000,
             })
           } else if (daysLeft <= 3) {
@@ -1417,7 +1320,7 @@ function DialogAuthEnterprise() {
         } else if (subStatus === "past_due") {
           toast.show({
             variant: "error",
-            message: "Trial ended — visit portal.serac.build/portal/billing to activate features",
+            message: "Trial ended — visit dashboard.serac.build/portal/billing to activate features",
             duration: 8000,
           })
         } else if (subStatus === "active" && featureCount > 0) {
@@ -1446,68 +1349,34 @@ function DialogAuthEnterprise() {
     <box paddingLeft={2} paddingRight={2} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
         <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          Serac Portal
+          Serac dashboard
         </text>
         <text fg={theme.textMuted}>esc</text>
       </box>
 
-      <Show when={step() === "plan-type"}>
+      <Show when={step() === "starting"}>
         <box gap={1}>
-          <text fg={theme.textMuted}>What type of plan do you have?</text>
-          <box paddingTop={1} gap={1}>
-            <box
-              flexDirection="row"
-              gap={2}
-              borderStyle="single"
-              borderColor={theme.border}
-              paddingLeft={1}
-              paddingRight={1}
-            >
-              <text fg={theme.text}>[1] Individual / Teams</text>
-              <text fg={theme.textMuted}>- Login via portal.serac.build</text>
+          <Show when={!deviceError()}>
+            <text fg={theme.primary} attributes={TextAttributes.BOLD}>
+              Connecting to your Serac dashboard…
+            </text>
+            <text fg={theme.textMuted}>
+              Opening dashboard.serac.build to authorize this device. Your ServiceNow, Jira and other credentials
+              are loaded from your dashboard account.
+            </text>
+          </Show>
+          <Show when={deviceError()}>
+            <text fg={theme.warning} attributes={TextAttributes.BOLD}>
+              Could not reach your Serac dashboard
+            </text>
+            <text fg={theme.textMuted}>{deviceError()}</text>
+            <box paddingTop={1} flexDirection="row">
+              <text fg={theme.text}>r </text>
+              <text fg={theme.textMuted}>retry</text>
+              <text fg={theme.text}> esc </text>
+              <text fg={theme.textMuted}>back</text>
             </box>
-            <box
-              flexDirection="row"
-              gap={2}
-              borderStyle="single"
-              borderColor={theme.border}
-              paddingLeft={1}
-              paddingRight={1}
-            >
-              <text fg={theme.text}>[2] Enterprise</text>
-              <text fg={theme.textMuted}>- Login via your organization subdomain</text>
-            </box>
-          </box>
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>1 </text>
-            <text fg={theme.textMuted}>Individual / Teams</text>
-            <text fg={theme.text}> 2 </text>
-            <text fg={theme.textMuted}>Enterprise</text>
-          </box>
-        </box>
-      </Show>
-
-      <Show when={step() === "subdomain"}>
-        <box gap={1}>
-          <text fg={theme.textMuted}>Enter your organization subdomain (e.g., "acme" for acme.serac.build)</text>
-          <textarea
-            ref={(val: TextareaRenderable) => (subdomainInput = val)}
-            height={3}
-            initialValue={subdomain()}
-            placeholder="your-org"
-            textColor={theme.text}
-            focusedTextColor={theme.text}
-            cursorColor={theme.text}
-            keyBindings={[{ name: "return", action: "submit" }]}
-            onSubmit={() => {
-              setSubdomain(subdomainInput.plainText)
-              startDeviceAuth()
-            }}
-          />
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>enter </text>
-            <text fg={theme.textMuted}>continue</text>
-          </box>
+          </Show>
         </box>
       </Show>
 
@@ -1541,7 +1410,7 @@ function DialogAuthEnterprise() {
               verifyAuthCode()
             }}
           />
-          <text fg={theme.textMuted}>Portal: https://{subdomain()}.serac.build</text>
+          <text fg={theme.textMuted}>Dashboard: dashboard.serac.build</text>
           <box paddingTop={1} flexDirection="row">
             <text fg={theme.text}>enter </text>
             <text fg={theme.textMuted}>verify</text>
@@ -1554,7 +1423,7 @@ function DialogAuthEnterprise() {
           <text fg={theme.primary} attributes={TextAttributes.BOLD}>
             Verifying...
           </text>
-          <text fg={theme.textMuted}>Validating authorization code with {subdomain()}.serac.build</text>
+          <text fg={theme.textMuted}>Validating authorization code with dashboard.serac.build</text>
         </box>
       </Show>
 
@@ -1735,9 +1604,7 @@ export function DialogAuthSelectInstance() {
             Enterprise feature
           </text>
           <text fg={theme.textMuted}>This feature requires an active Enterprise Portal connection.</text>
-          <text fg={theme.textMuted}>
-            Please authenticate via "Enterprise Portal" or "Enterprise + ServiceNow" first.
-          </text>
+          <text fg={theme.textMuted}>Please authenticate via "Serac dashboard" first.</text>
           <box paddingTop={1} flexDirection="row">
             <text fg={theme.text}>esc </text>
             <text fg={theme.textMuted}>back</text>
@@ -1781,989 +1648,6 @@ export function DialogAuthSelectInstance() {
             Connecting to ServiceNow...
           </text>
           <text fg={theme.textMuted}>Setting up credentials and starting MCP server</text>
-        </box>
-      </Show>
-    </box>
-  )
-}
-
-/**
- * Enterprise + ServiceNow Combined Auth dialog
- * Sequentially authenticates both Enterprise and ServiceNow in one flow
- */
-function DialogAuthEnterpriseCombined() {
-  const dialog = useDialog()
-  const toast = useToast()
-  const { theme } = useTheme()
-
-  type CombinedStep =
-    | "plan-type"
-    | "subdomain"
-    | "code"
-    | "verifying-enterprise"
-    | "checking-portal-sn"
-    | "select-sn-instance"
-    | "sn-method"
-    | "sn-instance"
-    | "sn-oauth-clientid"
-    | "sn-oauth-secret"
-    | "sn-basic-username"
-    | "sn-basic-password"
-    | "completing"
-
-  const [step, setStep] = createSignal<CombinedStep>("plan-type")
-  const [planType, setPlanType] = createSignal<"individual-teams" | "enterprise" | "">("")
-  const [subdomain, setSubdomain] = createSignal("")
-  const [sessionId, setSessionId] = createSignal("")
-  const [authCode, setAuthCode] = createSignal("")
-  const [verificationUrl, setVerificationUrl] = createSignal("")
-  const [enterpriseData, setEnterpriseData] = createSignal<{
-    token?: string
-    user?: { username?: string; email?: string; role?: string }
-  }>({})
-
-  // ServiceNow credentials from enterprise portal (if available)
-  const [portalSnCredentials, setPortalSnCredentials] = createSignal<{
-    instanceUrl?: string
-    clientId?: string
-    clientSecret?: string
-  } | null>(null)
-
-  // ServiceNow instances from enterprise portal (for multi-instance selection)
-  const [snInstances, setSnInstances] = createSignal<
-    Array<{
-      id: number
-      instanceName: string
-      instanceUrl: string
-      environmentType: string
-      isDefault: boolean
-      enabled: boolean
-    }>
-  >([])
-
-  // ServiceNow state
-  const [snMethod, setSnMethod] = createSignal<"oauth" | "basic">("oauth")
-  const [snInstance, setSnInstance] = createSignal("")
-  const [snClientId, setSnClientId] = createSignal("")
-  const [snClientSecret, setSnClientSecret] = createSignal("")
-  const [snUsername, setSnUsername] = createSignal("")
-  const [snPassword, setSnPassword] = createSignal("")
-
-  let subdomainInput: TextareaRenderable
-  let codeInput: TextareaRenderable
-  let snInstanceInput: TextareaRenderable
-  let snClientIdInput: TextareaRenderable
-  let snSecretInput: TextareaRenderable
-  let snUsernameInput: TextareaRenderable
-  let snPasswordInput: TextareaRenderable
-
-  // Load saved credentials
-  onMount(async () => {
-    try {
-      const { Auth } = await import("@/auth")
-
-      // Load enterprise subdomain
-      const entAuth = await Auth.get("enterprise")
-      if (entAuth?.type === "enterprise" && entAuth.enterpriseUrl) {
-        const match = entAuth.enterpriseUrl.match(/https?:\/\/([^.]+)\.snow-flow\.dev/)
-        if (match) {
-          setSubdomain(match[1])
-        }
-      }
-
-      // Load ServiceNow credentials
-      const snAuth = await Auth.get("servicenow")
-      if (snAuth?.type === "servicenow-oauth") {
-        setSnInstance(snAuth.instance)
-        setSnClientId(snAuth.clientId)
-        setSnClientSecret(snAuth.clientSecret)
-        setSnMethod("oauth")
-      } else if (snAuth?.type === "servicenow-basic") {
-        setSnInstance(snAuth.instance)
-        setSnUsername(snAuth.username)
-        setSnMethod("basic")
-      }
-    } catch {
-      // Auth module not available
-    }
-  })
-
-  const selectCombinedPlanType = (type: "individual-teams" | "enterprise") => {
-    setPlanType(type)
-    if (type === "individual-teams") {
-      setSubdomain("portal")
-      startDeviceAuth()
-    } else {
-      if (subdomain() === "portal") setSubdomain("")
-      setStep("subdomain")
-      setTimeout(() => subdomainInput?.focus(), 10)
-    }
-  }
-
-  useKeyboard((evt) => {
-    const currentStep = step()
-
-    // Handle escape key for navigation
-    if (evt.name === "escape") {
-      if (currentStep === "plan-type") {
-        dialog.replace(() => <DialogAuth />)
-      } else if (currentStep === "subdomain") {
-        setStep("plan-type")
-        setPlanType("")
-      } else if (currentStep === "code") {
-        if (planType() === "individual-teams") {
-          setStep("plan-type")
-          setPlanType("")
-        } else {
-          setStep("subdomain")
-        }
-        setSessionId("")
-        setAuthCode("")
-        setTimeout(() => subdomainInput?.focus(), 10)
-      } else if (currentStep === "select-sn-instance") {
-        // Can't re-do enterprise auth, go back to main auth menu
-        dialog.replace(() => <DialogAuth />)
-      } else if (currentStep === "sn-method") {
-        // Can't go back to enterprise flow, go to main menu
-        dialog.replace(() => <DialogAuth />)
-      } else if (currentStep === "sn-instance") {
-        setStep("sn-method")
-      } else if (currentStep === "sn-oauth-clientid") {
-        setStep("sn-instance")
-        setTimeout(() => snInstanceInput?.focus(), 10)
-      } else if (currentStep === "sn-oauth-secret") {
-        setStep("sn-oauth-clientid")
-        setTimeout(() => snClientIdInput?.focus(), 10)
-      } else if (currentStep === "sn-basic-username") {
-        setStep("sn-instance")
-        setTimeout(() => snInstanceInput?.focus(), 10)
-      } else if (currentStep === "sn-basic-password") {
-        setStep("sn-basic-username")
-        setTimeout(() => snUsernameInput?.focus(), 10)
-      }
-    }
-
-    // Handle 1/2 keypresses for plan type selection
-    if (currentStep === "plan-type") {
-      if (evt.name === "1") {
-        selectCombinedPlanType("individual-teams")
-      } else if (evt.name === "2") {
-        selectCombinedPlanType("enterprise")
-      }
-    }
-
-    // Handle 1/2 keypresses for ServiceNow method selection
-    if (currentStep === "sn-method") {
-      if (evt.name === "1") {
-        selectSnMethod("oauth")
-      } else if (evt.name === "2") {
-        selectSnMethod("basic")
-      }
-    }
-  })
-
-  // === Enterprise Auth Functions ===
-
-  const startDeviceAuth = async () => {
-    const sub = subdomain().trim().toLowerCase()
-    if (!sub) {
-      toast.show({ variant: "error", message: "Please enter your organization subdomain" })
-      return
-    }
-
-    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(sub) && sub.length > 1) {
-      toast.show({ variant: "error", message: "Invalid subdomain format" })
-      return
-    }
-    if (sub.length === 1 && !/^[a-z0-9]$/.test(sub)) {
-      toast.show({ variant: "error", message: "Invalid subdomain format" })
-      return
-    }
-
-    const portalUrl = `https://${sub}.serac.build`
-
-    try {
-      const os = await import("os")
-      const machineInfo = `${os.hostname()} (${os.platform()} ${os.arch()})`
-
-      const response = await fetch(`${portalUrl}/api/auth/device/request`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ machineInfo }),
-      })
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        throw new Error(err.error || "Failed to start device authorization")
-      }
-
-      const data = await response.json()
-      setSessionId(data.sessionId)
-
-      // Open browser with verification URL (works in Codespaces via xdg-open)
-      const url = data.verificationUrl
-      setVerificationUrl(url)
-      tryOpenBrowser(url).then((opened) => {
-        if (opened) {
-          toast.show({ variant: "info", message: "Browser opened for verification", duration: 3000 })
-        }
-      })
-      Clipboard.copy(url).catch(() => {})
-
-      setStep("code")
-      setTimeout(() => codeInput?.focus(), 10)
-    } catch (e) {
-      toast.show({ variant: "error", message: e instanceof Error ? e.message : "Failed to start auth" })
-    }
-  }
-
-  const verifyEnterpriseAuth = async () => {
-    const code = authCode().trim().toUpperCase()
-    if (!code) {
-      toast.show({ variant: "error", message: "Please enter the authorization code" })
-      return
-    }
-
-    setStep("verifying-enterprise")
-    const sub = subdomain().trim().toLowerCase()
-    const portalUrl = `https://${sub}.serac.build`
-
-    try {
-      const response = await fetch(`${portalUrl}/api/auth/device/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: sessionId(),
-          authCode: code,
-        }),
-      })
-
-      if (!response.ok) {
-        const err = await response.json().catch(() => ({}))
-        if (err.billingUrl) {
-          toast.show({
-            variant: "error",
-            message: err.message || err.error || "Subscription required",
-            duration: 8000,
-          })
-          toast.show({
-            variant: "info",
-            message: "Opening billing page...",
-            duration: 4000,
-          })
-          tryOpenBrowser(err.billingUrl)
-          setStep("code")
-          return
-        }
-        throw new Error(err.error || "Verification failed")
-      }
-
-      const data = await response.json()
-
-      // Save enterprise auth
-      const { Auth } = await import("@/auth")
-      await Auth.set("enterprise", {
-        type: "enterprise",
-        token: data.token,
-        enterpriseUrl: portalUrl,
-        username: data.user?.username || data.user?.email,
-        email: data.user?.email,
-        role: data.user?.role,
-      })
-
-      // Also save to ~/.snow-code/enterprise.json for the enterprise proxy
-      // This is the primary token source used by the MCP server
-      try {
-        const os = await import("os")
-        const enterpriseJsonDir = path.join(os.homedir(), ".snow-code")
-        const enterpriseJsonPath = path.join(enterpriseJsonDir, "enterprise.json")
-        await fs.mkdir(enterpriseJsonDir, { recursive: true })
-        await fs.writeFile(
-          enterpriseJsonPath,
-          JSON.stringify(
-            {
-              subdomain: sub,
-              token: data.token,
-            },
-            null,
-            2,
-          ),
-          "utf-8",
-        )
-        console.error("[Enterprise] Saved JWT token to ~/.snow-code/enterprise.json")
-      } catch (saveErr) {
-        console.error("[Enterprise] Could not save enterprise.json:", saveErr)
-      }
-
-      setEnterpriseData({
-        token: data.token,
-        user: data.user,
-      })
-
-      toast.show({
-        variant: "info",
-        message: `Enterprise connected as ${data.user?.username || data.user?.email || "user"}!`,
-        duration: 3000,
-      })
-
-      // Check if enterprise portal has ServiceNow instances
-      setStep("checking-portal-sn")
-      const instances = await fetchSnInstances(portalUrl, data.token)
-
-      if (instances.length === 0) {
-        // No instances — manual setup
-        toast.show({
-          variant: "info",
-          message: "No ServiceNow instances found on portal. Please configure manually.",
-          duration: 3000,
-        })
-        setStep("sn-method")
-      } else {
-        // Show instance selection — always let user see and confirm
-        setSnInstances(instances)
-        toast.show({
-          variant: "info",
-          message: `${instances.length} ServiceNow instance${instances.length > 1 ? "s" : ""} found. Please select one.`,
-          duration: 3000,
-        })
-        setStep("select-sn-instance")
-      }
-    } catch (e) {
-      toast.show({ variant: "error", message: e instanceof Error ? e.message : "Verification failed" })
-      setStep("code")
-      setTimeout(() => codeInput?.focus(), 10)
-    }
-  }
-
-  // === Portal ServiceNow Credentials ===
-
-  const startBothMcpServersWithPortalCreds = async (
-    portalUrl: string,
-    token: string,
-    snCreds: { instanceUrl: string; clientId: string; clientSecret: string },
-    user?: { username?: string; email?: string; role?: string },
-  ) => {
-    setStep("completing")
-    try {
-      const { MCP } = await import("@/mcp")
-      const { Config } = await import("@/config/config")
-
-      // Start enterprise MCP server
-      await MCP.add("serac-enterprise", {
-        type: "local",
-        command: Config.getMcpServerCommand("enterprise-proxy"),
-        environment: {
-          SNOW_PORTAL_URL: portalUrl,
-          SNOW_LICENSE_KEY: token,
-        },
-        enabled: true,
-      })
-
-      // Start ServiceNow MCP server with portal credentials
-      await MCP.add("servicenow-unified", {
-        type: "local",
-        command: Config.getMcpServerCommand("servicenow-unified"),
-        environment: {
-          SERVICENOW_INSTANCE_URL: snCreds.instanceUrl,
-          SERVICENOW_CLIENT_ID: snCreds.clientId,
-          SERVICENOW_CLIENT_SECRET: snCreds.clientSecret,
-        },
-        enabled: true,
-      })
-
-      const userName = user?.username || user?.email || "user"
-      toast.show({
-        variant: "info",
-        message: `Setup complete! Connected as ${userName}. Both MCP servers are now active.`,
-        duration: 5000,
-      })
-
-      // Update documentation with enterprise instructions (only for active integrations)
-      try {
-        const activeFeatures = await fetchActiveIntegrations(portalUrl, token)
-        const userRole = user?.role || "developer"
-        await updateDocumentationWithEnterprise(activeFeatures, userRole)
-      } catch (docError) {
-        console.error("[Enterprise] Failed to update documentation:", docError)
-      }
-
-      dialog.clear()
-    } catch {
-      toast.show({
-        variant: "info",
-        message: "Credentials saved! MCP servers will be available on next restart.",
-        duration: 5000,
-      })
-
-      // Update documentation with enterprise instructions even if MCP server failed (only for active integrations)
-      try {
-        const activeFeatures = await fetchActiveIntegrations(portalUrl, token)
-        const userRole = user?.role || "developer"
-        await updateDocumentationWithEnterprise(activeFeatures, userRole)
-      } catch (docError) {
-        console.error("[Enterprise] Failed to update documentation:", docError)
-      }
-
-      dialog.clear()
-    }
-  }
-
-  // === ServiceNow Auth Functions ===
-
-  const selectSnMethod = (method: "oauth" | "basic") => {
-    setSnMethod(method)
-    setStep("sn-instance")
-    setTimeout(() => snInstanceInput?.focus(), 10)
-  }
-
-  const handleSnInstanceSubmit = () => {
-    setSnInstance(snInstanceInput.plainText)
-    if (snMethod() === "oauth") {
-      setStep("sn-oauth-clientid")
-      setTimeout(() => snClientIdInput?.focus(), 10)
-    } else {
-      setStep("sn-basic-username")
-      setTimeout(() => snUsernameInput?.focus(), 10)
-    }
-  }
-
-  const completeOAuthSetup = async () => {
-    if (!snInstance() || !snClientId() || !snClientSecret()) {
-      toast.show({ variant: "error", message: "Please fill in all fields" })
-      return
-    }
-
-    setStep("completing")
-    try {
-      const { ServiceNowOAuth } = await import("@/auth/servicenow-oauth")
-      const oauth = new ServiceNowOAuth()
-      const result = await oauth.authenticate({
-        instance: snInstance(),
-        clientId: snClientId(),
-        clientSecret: snClientSecret(),
-      })
-
-      if (!result.success) {
-        throw new Error(result.error ?? "Authentication failed")
-      }
-
-      await startBothMcpServers()
-    } catch (e) {
-      toast.show({
-        variant: "error",
-        message: e instanceof Error ? e.message : "ServiceNow authentication failed",
-        duration: 5000,
-      })
-      setStep("sn-oauth-secret")
-      setTimeout(() => snSecretInput?.focus(), 10)
-    }
-  }
-
-  const completeBasicSetup = async () => {
-    if (!snInstance() || !snUsername() || !snPassword()) {
-      toast.show({ variant: "error", message: "Please fill in all fields" })
-      return
-    }
-
-    setStep("completing")
-    try {
-      const { Auth } = await import("@/auth")
-
-      // Normalize instance URL
-      let normalizedInstance = snInstance().replace(/\/+$/, "")
-      if (!normalizedInstance.startsWith("http://") && !normalizedInstance.startsWith("https://")) {
-        normalizedInstance = `https://${normalizedInstance}`
-      }
-      try {
-        const host = new URL(normalizedInstance).hostname
-        if (!host.endsWith(".service-now.com") && host !== "localhost") {
-          normalizedInstance = `https://${snInstance().replace(/\/+$/, "")}.service-now.com`
-        }
-      } catch {
-        normalizedInstance = `https://${snInstance().replace(/\/+$/, "")}.service-now.com`
-      }
-
-      await Auth.set("servicenow", {
-        type: "servicenow-basic",
-        instance: normalizedInstance,
-        username: snUsername(),
-        password: snPassword(),
-      })
-
-      setSnInstance(normalizedInstance)
-      await startBothMcpServers()
-    } catch (e) {
-      toast.show({
-        variant: "error",
-        message: e instanceof Error ? e.message : "Failed to save credentials",
-        duration: 5000,
-      })
-      setStep("sn-basic-password")
-      setTimeout(() => snPasswordInput?.focus(), 10)
-    }
-  }
-
-  const startBothMcpServers = async () => {
-    try {
-      const { MCP } = await import("@/mcp")
-      const { Config } = await import("@/config/config")
-      const { Auth } = await import("@/auth")
-
-      const sub = subdomain().trim().toLowerCase()
-      const portalUrl = `https://${sub}.serac.build`
-      const entData = enterpriseData()
-
-      // Start enterprise MCP server
-      await MCP.add("serac-enterprise", {
-        type: "local",
-        command: Config.getMcpServerCommand("enterprise-proxy"),
-        environment: {
-          SNOW_PORTAL_URL: portalUrl,
-          SNOW_LICENSE_KEY: entData.token ?? "",
-        },
-        enabled: true,
-      })
-
-      // Start ServiceNow MCP server
-      const snAuth = await Auth.get("servicenow")
-      if (snAuth?.type === "servicenow-oauth" || snAuth?.type === "servicenow-basic") {
-        const snEnv: Record<string, string> = {
-          SERVICENOW_INSTANCE_URL: snAuth.instance,
-        }
-        if (snAuth.type === "servicenow-oauth") {
-          snEnv.SERVICENOW_CLIENT_ID = snAuth.clientId
-          snEnv.SERVICENOW_CLIENT_SECRET = snAuth.clientSecret ?? ""
-          if (snAuth.accessToken) snEnv.SERVICENOW_ACCESS_TOKEN = snAuth.accessToken
-          if (snAuth.refreshToken) snEnv.SERVICENOW_REFRESH_TOKEN = snAuth.refreshToken
-        } else {
-          snEnv.SERVICENOW_USERNAME = snAuth.username
-          snEnv.SERVICENOW_PASSWORD = snAuth.password ?? ""
-        }
-
-        await MCP.add("servicenow-unified", {
-          type: "local",
-          command: Config.getMcpServerCommand("servicenow-unified"),
-          environment: snEnv,
-          enabled: true,
-        })
-      }
-
-      const userName = entData.user?.username || entData.user?.email || "user"
-      toast.show({
-        variant: "info",
-        message: `Setup complete! Connected as ${userName}. Both MCP servers are now active.`,
-        duration: 5000,
-      })
-
-      // Update documentation with enterprise instructions (only for active integrations)
-      try {
-        const activeFeatures = await fetchActiveIntegrations(portalUrl, entData.token ?? "")
-        const userRole = entData.user?.role || "developer"
-        await updateDocumentationWithEnterprise(activeFeatures, userRole)
-      } catch (docError) {
-        console.error("[Enterprise] Failed to update documentation:", docError)
-      }
-
-      dialog.clear()
-    } catch (e) {
-      toast.show({
-        variant: "info",
-        message: "Credentials saved! MCP servers will be available on next restart.",
-        duration: 5000,
-      })
-
-      // Update documentation with enterprise instructions even if MCP server failed (only for active integrations)
-      try {
-        const sub = subdomain().trim().toLowerCase()
-        const activeFeatures = await fetchActiveIntegrations(
-          `https://${sub}.serac.build`,
-          enterpriseData().token ?? "",
-        )
-        const userRole = enterpriseData().user?.role || "developer"
-        await updateDocumentationWithEnterprise(activeFeatures, userRole)
-      } catch (docError) {
-        console.error("[Enterprise] Failed to update documentation:", docError)
-      }
-
-      dialog.clear()
-    }
-  }
-
-  return (
-    <box paddingLeft={2} paddingRight={2} gap={1}>
-      <box flexDirection="row" justifyContent="space-between">
-        <text attributes={TextAttributes.BOLD} fg={theme.text}>
-          Portal + ServiceNow Setup
-        </text>
-        <text fg={theme.textMuted}>esc</text>
-      </box>
-
-      {/* Plan type selection */}
-      <Show when={step() === "plan-type"}>
-        <box gap={1}>
-          <text fg={theme.textMuted}>What type of plan do you have?</text>
-          <box paddingTop={1} gap={1}>
-            <box
-              flexDirection="row"
-              gap={2}
-              borderStyle="single"
-              borderColor={theme.border}
-              paddingLeft={1}
-              paddingRight={1}
-            >
-              <text fg={theme.text}>[1] Individual / Teams</text>
-              <text fg={theme.textMuted}>- Login via portal.serac.build</text>
-            </box>
-            <box
-              flexDirection="row"
-              gap={2}
-              borderStyle="single"
-              borderColor={theme.border}
-              paddingLeft={1}
-              paddingRight={1}
-            >
-              <text fg={theme.text}>[2] Enterprise</text>
-              <text fg={theme.textMuted}>- Login via your organization subdomain</text>
-            </box>
-          </box>
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>1 </text>
-            <text fg={theme.textMuted}>Individual / Teams</text>
-            <text fg={theme.text}> 2 </text>
-            <text fg={theme.textMuted}>Enterprise</text>
-          </box>
-        </box>
-      </Show>
-
-      {/* Step 1: Enterprise subdomain */}
-      <Show when={step() === "subdomain"}>
-        <box gap={1}>
-          <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-            Step 1 of 2: Enterprise Portal
-          </text>
-          <text fg={theme.textMuted}>Enter your organization subdomain (e.g., "acme" for acme.serac.build)</text>
-          <textarea
-            ref={(val: TextareaRenderable) => (subdomainInput = val)}
-            height={3}
-            initialValue={subdomain()}
-            placeholder="your-org"
-            textColor={theme.text}
-            focusedTextColor={theme.text}
-            cursorColor={theme.text}
-            keyBindings={[{ name: "return", action: "submit" }]}
-            onSubmit={() => {
-              setSubdomain(subdomainInput.plainText)
-              startDeviceAuth()
-            }}
-          />
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>enter </text>
-            <text fg={theme.textMuted}>continue</text>
-          </box>
-        </box>
-      </Show>
-
-      {/* Step 2: Verify in browser + enter auth code */}
-      <Show when={step() === "code"}>
-        <box gap={1}>
-          <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-            Step 1 of 2: Portal Login
-          </text>
-          <Show when={verificationUrl()}>
-            <text fg={theme.text}>Open this URL to authorize this device:</text>
-            <text fg={theme.primary}>{verificationUrl()}</text>
-            <box paddingTop={1}>
-              <text fg={theme.text}>After logging in on the portal:</text>
-              <text fg={theme.textMuted}> 1. Click "Approve" to authorize this device</text>
-              <text fg={theme.textMuted}> 2. Copy the authorization code shown</text>
-              <text fg={theme.textMuted}> 3. Paste it below and press Enter</text>
-            </box>
-          </Show>
-          <text fg={theme.textMuted}>Enter the authorization code from the portal</text>
-          <textarea
-            ref={(val: TextareaRenderable) => (codeInput = val)}
-            height={3}
-            initialValue={authCode()}
-            placeholder="ABC-DEF-12"
-            textColor={theme.text}
-            focusedTextColor={theme.text}
-            cursorColor={theme.text}
-            keyBindings={[{ name: "return", action: "submit" }]}
-            onSubmit={() => {
-              setAuthCode(codeInput.plainText)
-              verifyEnterpriseAuth()
-            }}
-          />
-          <text fg={theme.textMuted}>Portal: https://{subdomain()}.serac.build</text>
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>enter </text>
-            <text fg={theme.textMuted}>verify</text>
-          </box>
-        </box>
-      </Show>
-
-      {/* Step 4: Verifying enterprise */}
-      <Show when={step() === "verifying-enterprise"}>
-        <box gap={1}>
-          <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-            Verifying Enterprise...
-          </text>
-          <text fg={theme.textMuted}>Validating authorization code with {subdomain()}.serac.build</text>
-        </box>
-      </Show>
-
-      {/* Step 4b: Checking portal for ServiceNow credentials */}
-      <Show when={step() === "checking-portal-sn"}>
-        <box gap={1}>
-          <text fg={theme.success}>✓ Enterprise connected!</text>
-          <box paddingTop={1}>
-            <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-              Checking for ServiceNow credentials...
-            </text>
-          </box>
-          <text fg={theme.textMuted}>Looking up ServiceNow configuration in enterprise portal</text>
-        </box>
-      </Show>
-
-      {/* Step 4c: Select ServiceNow instance */}
-      <Show when={step() === "select-sn-instance"}>
-        <DialogSelect
-          title="Select ServiceNow Instance"
-          options={snInstances().map((inst) => ({
-            title: inst.instanceName,
-            value: String(inst.id),
-            description: inst.instanceUrl,
-            footer: inst.environmentType + (inst.isDefault ? " (default)" : ""),
-            category: "ServiceNow Instances",
-            onSelect: async () => {
-              setStep("completing")
-              const portalUrl = `https://${subdomain().trim().toLowerCase()}.serac.build`
-              const token = enterpriseData().token!
-              const creds = await fetchSnInstanceById(portalUrl, token, inst.id)
-              if (creds) {
-                setPortalSnCredentials(creds)
-                await startBothMcpServersWithPortalCreds(portalUrl, token, creds, enterpriseData().user)
-              } else {
-                toast.show({ variant: "error", message: "Failed to fetch instance credentials.", duration: 3000 })
-                setStep("sn-method")
-              }
-            },
-          }))}
-        />
-      </Show>
-
-      {/* Step 5: Choose ServiceNow method */}
-      <Show when={step() === "sn-method"}>
-        <box gap={1}>
-          <text fg={theme.success}>✓ Enterprise connected!</text>
-          <box paddingTop={1}>
-            <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-              Step 2 of 2: ServiceNow Authentication
-            </text>
-          </box>
-          <text fg={theme.textMuted}>Choose your ServiceNow authentication method:</text>
-          <box paddingTop={1} gap={1}>
-            <box
-              flexDirection="row"
-              gap={2}
-              borderStyle="single"
-              borderColor={theme.border}
-              paddingLeft={1}
-              paddingRight={1}
-            >
-              <text fg={theme.text}>[1] OAuth (Recommended)</text>
-              <text fg={theme.textMuted}>- OAuth2 + PKCE</text>
-            </box>
-            <box
-              flexDirection="row"
-              gap={2}
-              borderStyle="single"
-              borderColor={theme.border}
-              paddingLeft={1}
-              paddingRight={1}
-            >
-              <text fg={theme.text}>[2] Basic Auth</text>
-              <text fg={theme.textMuted}>- Username/Password</text>
-            </box>
-          </box>
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>1 </text>
-            <text fg={theme.textMuted}>OAuth</text>
-            <text fg={theme.text}> 2 </text>
-            <text fg={theme.textMuted}>Basic Auth</text>
-          </box>
-        </box>
-      </Show>
-
-      {/* Step 6: ServiceNow instance */}
-      <Show when={step() === "sn-instance"}>
-        <box gap={1}>
-          <text fg={theme.success}>✓ Enterprise connected!</text>
-          <box paddingTop={1}>
-            <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-              Step 2 of 2: ServiceNow {snMethod() === "oauth" ? "OAuth" : "Basic Auth"}
-            </text>
-          </box>
-          <text fg={theme.textMuted}>
-            Enter your ServiceNow instance URL (e.g., dev12345 or dev12345.service-now.com)
-          </text>
-          <textarea
-            ref={(val: TextareaRenderable) => (snInstanceInput = val)}
-            height={3}
-            initialValue={snInstance()}
-            placeholder="dev12345.service-now.com"
-            textColor={theme.text}
-            focusedTextColor={theme.text}
-            cursorColor={theme.text}
-            keyBindings={[{ name: "return", action: "submit" }]}
-            onSubmit={handleSnInstanceSubmit}
-          />
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>enter </text>
-            <text fg={theme.textMuted}>continue</text>
-          </box>
-        </box>
-      </Show>
-
-      {/* OAuth: Client ID */}
-      <Show when={step() === "sn-oauth-clientid"}>
-        <box gap={1}>
-          <text fg={theme.success}>✓ Enterprise connected!</text>
-          <box paddingTop={1}>
-            <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-              Step 2 of 2: ServiceNow OAuth
-            </text>
-          </box>
-          <text fg={theme.textMuted}>OAuth Client ID from ServiceNow: System OAuth {">"} Application Registry</text>
-          <textarea
-            ref={(val: TextareaRenderable) => (snClientIdInput = val)}
-            height={3}
-            initialValue={snClientId()}
-            placeholder="Enter OAuth Client ID"
-            textColor={theme.text}
-            focusedTextColor={theme.text}
-            cursorColor={theme.text}
-            keyBindings={[{ name: "return", action: "submit" }]}
-            onSubmit={() => {
-              setSnClientId(snClientIdInput.plainText)
-              setStep("sn-oauth-secret")
-              setTimeout(() => snSecretInput?.focus(), 10)
-            }}
-          />
-          <text fg={theme.textMuted}>Instance: {snInstance()}</text>
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>enter </text>
-            <text fg={theme.textMuted}>continue</text>
-          </box>
-        </box>
-      </Show>
-
-      {/* OAuth: Client Secret */}
-      <Show when={step() === "sn-oauth-secret"}>
-        <box gap={1}>
-          <text fg={theme.success}>✓ Enterprise connected!</text>
-          <box paddingTop={1}>
-            <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-              Step 2 of 2: ServiceNow OAuth
-            </text>
-          </box>
-          <text fg={theme.textMuted}>The client secret from your OAuth application</text>
-          <textarea
-            ref={(val: TextareaRenderable) => (snSecretInput = val)}
-            height={3}
-            initialValue={snClientSecret()}
-            placeholder="Enter OAuth Client Secret"
-            textColor={theme.text}
-            focusedTextColor={theme.text}
-            cursorColor={theme.text}
-            keyBindings={[{ name: "return", action: "submit" }]}
-            onSubmit={() => {
-              setSnClientSecret(snSecretInput.plainText)
-              completeOAuthSetup()
-            }}
-          />
-          <text fg={theme.textMuted}>Instance: {snInstance()}</text>
-          <text fg={theme.textMuted}>Client ID: {snClientId()}</text>
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>enter </text>
-            <text fg={theme.textMuted}>authenticate</text>
-          </box>
-        </box>
-      </Show>
-
-      {/* Basic: Username */}
-      <Show when={step() === "sn-basic-username"}>
-        <box gap={1}>
-          <text fg={theme.success}>✓ Enterprise connected!</text>
-          <box paddingTop={1}>
-            <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-              Step 2 of 2: ServiceNow Basic Auth
-            </text>
-          </box>
-          <text fg={theme.textMuted}>ServiceNow username</text>
-          <textarea
-            ref={(val: TextareaRenderable) => (snUsernameInput = val)}
-            height={3}
-            initialValue={snUsername()}
-            placeholder="admin"
-            textColor={theme.text}
-            focusedTextColor={theme.text}
-            cursorColor={theme.text}
-            keyBindings={[{ name: "return", action: "submit" }]}
-            onSubmit={() => {
-              setSnUsername(snUsernameInput.plainText)
-              setStep("sn-basic-password")
-              setTimeout(() => snPasswordInput?.focus(), 10)
-            }}
-          />
-          <text fg={theme.textMuted}>Instance: {snInstance()}</text>
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>enter </text>
-            <text fg={theme.textMuted}>continue</text>
-          </box>
-        </box>
-      </Show>
-
-      {/* Basic: Password */}
-      <Show when={step() === "sn-basic-password"}>
-        <box gap={1}>
-          <text fg={theme.success}>✓ Enterprise connected!</text>
-          <box paddingTop={1}>
-            <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-              Step 2 of 2: ServiceNow Basic Auth
-            </text>
-          </box>
-          <text fg={theme.textMuted}>ServiceNow password</text>
-          <textarea
-            ref={(val: TextareaRenderable) => (snPasswordInput = val)}
-            height={3}
-            initialValue={snPassword()}
-            placeholder="Enter password"
-            textColor={theme.text}
-            focusedTextColor={theme.text}
-            cursorColor={theme.text}
-            keyBindings={[{ name: "return", action: "submit" }]}
-            onSubmit={() => {
-              setSnPassword(snPasswordInput.plainText)
-              completeBasicSetup()
-            }}
-          />
-          <text fg={theme.textMuted}>Instance: {snInstance()}</text>
-          <text fg={theme.textMuted}>Username: {snUsername()}</text>
-          <box paddingTop={1} flexDirection="row">
-            <text fg={theme.text}>enter </text>
-            <text fg={theme.textMuted}>save and connect</text>
-          </box>
-        </box>
-      </Show>
-
-      {/* Completing */}
-      <Show when={step() === "completing"}>
-        <box gap={1}>
-          <text fg={theme.primary} attributes={TextAttributes.BOLD}>
-            Completing Setup...
-          </text>
-          <text fg={theme.textMuted}>Starting Enterprise and ServiceNow MCP servers...</text>
         </box>
       </Show>
     </box>

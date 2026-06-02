@@ -5,6 +5,7 @@ import { map, pipe, flatMap, entries, filter, sortBy, take } from "remeda"
 import { DialogSelect, type DialogSelectRef } from "@tui/ui/dialog-select"
 import { useDialog } from "@tui/ui/dialog"
 import { createDialogProviderOptions, DialogProvider } from "./dialog-provider"
+import { DialogAuthServiceNowLLM } from "./dialog-servicenow-llm"
 import { useKeybind } from "../context/keybind"
 import * as fuzzysort from "fuzzysort"
 
@@ -192,7 +193,25 @@ export function DialogModel(props: { providerID?: string }) {
       return [...filteredProviders, ...filteredPopular]
     }
 
-    return [...favoriteOptions, ...recentOptions, ...providerOptions, ...popularProviders]
+    // ServiceNow LLM (MID Server) — configure the servicenow-llm provider.
+    // Moved here from /auth: it's a model/provider concern, not authentication.
+    const servicenowLlmOption = {
+      value: { providerID: "servicenow-llm", modelID: "__configure__" },
+      title: "Configure ServiceNow LLM (MID Server)",
+      description: "Route models through your ServiceNow MID Server",
+      category: "ServiceNow LLM",
+      onSelect: () => {
+        dialog.replace(() => <DialogAuthServiceNowLLM />)
+      },
+    }
+
+    return [
+      ...favoriteOptions,
+      ...recentOptions,
+      ...providerOptions,
+      ...popularProviders,
+      ...(props.providerID ? [] : [servicenowLlmOption]),
+    ]
   })
 
   const provider = createMemo(() =>
