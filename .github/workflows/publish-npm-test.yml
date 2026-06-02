@@ -144,12 +144,10 @@ jobs:
               url: 'https://github.com/serac-labs/serac'
             };
 
-            // Update bin commands - keep legacy names for compatibility
+            // Bin commands - test channel mirrors the published bins.
             pkg.bin = {
               'serac-test': './bin/serac',
-              'serac': './bin/serac',
-              'snow-code': './bin/serac',
-              'snow-flow': './bin/serac'
+              'serac': './bin/serac'
             };
 
             // Helper to resolve workspace/catalog dependencies
@@ -229,9 +227,6 @@ jobs:
             serac-test
             # or
             serac
-            # or (legacy aliases)
-            snow-code
-            snow-flow
             ```
 
             ### Supported Platforms

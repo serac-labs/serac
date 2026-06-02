@@ -205,17 +205,15 @@ jobs:
             pkg.homepage = 'https://serac.build';
             pkg.bugs = { url: 'https://github.com/serac-labs/serac/issues' };
 
-            // Bin commands - 'serac' is the primary CLI entry; the
-            // legacy snow-flow / snow-code / snowflow / snowcode names
-            // are kept so existing scripts keep working through the
-            // package rename. All names point at the same launcher.
+            // Bin commands - 'serac' is the primary CLI entry. The legacy
+            // snow-flow / snow-code / snowflow / snowcode aliases were
+            // dropped: they collided with the bins of the still-installed,
+            // now-deprecated 'snow-flow' npm package, making
+            // 'npm i -g @serac-labs/core' fail with EEXIST for users
+            // migrating from snow-flow.
             pkg.bin = {
               'serac':      './bin/serac',
-              'serac-code': './bin/serac',
-              'snow-flow':  './bin/serac',
-              'snow-code':  './bin/serac',
-              'snowcode':   './bin/serac',
-              'snowflow':   './bin/serac'
+              'serac-code': './bin/serac'
             };
 
             // Helper to resolve workspace/catalog dependencies
@@ -311,13 +309,12 @@ jobs:
 
             ```bash
             serac
-            # or, if upgrading from snow-flow:
-            snow-flow
             ```
 
-            > Coming from `snow-flow`? The package is now `@serac-labs/core`.
-            > The `snow-flow` and `snow-code` commands keep working as
-            > aliases so existing scripts don't break.
+            > Coming from `snow-flow`? The package is now `@serac-labs/core`
+            > and the command is `serac`. Uninstall the old package first so
+            > the install doesn't collide:
+            > `npm un -g snow-flow && npm i -g @serac-labs/core`.
 
             ## What's New
 
