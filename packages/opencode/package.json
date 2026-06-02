@@ -18,11 +18,7 @@
   },
   "bin": {
     "serac": "./bin/serac",
-    "serac-code": "./bin/serac",
-    "snow-flow": "./bin/serac",
-    "snow-code": "./bin/serac",
-    "snowcode": "./bin/serac",
-    "snowflow": "./bin/serac"
+    "serac-code": "./bin/serac"
   },
   "exports": {
     "./*": "./src/*.ts"
