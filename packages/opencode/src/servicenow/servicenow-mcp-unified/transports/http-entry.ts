@@ -11,6 +11,7 @@
  *   MCP_RESOLVER_URL      — full URL of the downstream resolver endpoint
  *   MCP_INTERNAL_TOKEN    — shared secret sent on `X-Internal-Auth`
  *   MCP_HTTP_PORT         — listen port (default 8082)
+ *   MCP_HTTP_IDLE_TIMEOUT — Bun.serve idle timeout in seconds (default 240, max 255)
  *
  * Intended runtime: Bun. The image is built from `Dockerfile.mcp-http`
  * and published as `ghcr.io/serac-labs/serac-mcp-http`. Callers that
@@ -46,6 +47,12 @@ async function main(): Promise<void> {
   const resolverUrl = process.env.MCP_RESOLVER_URL
   const internalToken = process.env.MCP_INTERNAL_TOKEN
   const port = Number(process.env.MCP_HTTP_PORT ?? 8082)
+  // Bun.serve defaults idleTimeout to 10s, which kills any tool call that
+  // takes longer than that (cold credential resolution, heavier ServiceNow
+  // round-trips, Flow Designer publish) — the client then sees an opaque
+  // `fetch failed`. Tool calls are request/response over a single connection,
+  // so we raise this to Bun's maximum (255s). Configurable via env.
+  const idleTimeout = Math.min(255, Number(process.env.MCP_HTTP_IDLE_TIMEOUT ?? 240))
 
   if (!resolverUrl || !internalToken) {
     throw new Error(
@@ -96,7 +103,9 @@ async function main(): Promise<void> {
 
   // Bun's native server. Runs on Node too via `@hono/node-server`, but the
   // published image is Bun-based so we use the built-in server here.
-  const server = (globalThis as any).Bun?.serve?.({ fetch: app.fetch, port })
+  // idleTimeout is raised from Bun's 10s default (see above) so long-running
+  // tool calls aren't severed mid-flight.
+  const server = (globalThis as any).Bun?.serve?.({ fetch: app.fetch, port, idleTimeout })
   if (!server) {
     throw new Error(
       "Bun.serve is not available. This entry point is intended for the Bun runtime " +
