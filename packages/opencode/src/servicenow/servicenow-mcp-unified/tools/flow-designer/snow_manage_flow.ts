@@ -886,6 +886,63 @@ async function verifyFlowEditingLock(
 }
 
 /**
+ * Read the committed state of a flow after a publish/activate call and report
+ * whether it is genuinely active AND has a compiled snapshot.
+ *
+ * The versioning API (and the REST fallback) can return HTTP 200 while the
+ * server-side compilation never finishes, leaving the flow active=false /
+ * status=draft with an empty master_snapshot. In that state the flow does NOT
+ * trigger. This is the source of truth the publish handler trusts instead of
+ * the API status code. A flow is publish-OK only when active === true AND a
+ * snapshot reference exists (master_snapshot or latest_snapshot).
+ */
+async function verifyFlowActivation(
+  client: any,
+  flowId: string,
+): Promise<{ active: boolean; status: string; hasSnapshot: boolean; snapshot: string }> {
+  try {
+    var resp = await client.get("/api/now/table/sys_hub_flow/" + flowId, {
+      params: {
+        sysparm_fields: "active,status,master_snapshot,latest_snapshot",
+        sysparm_exclude_reference_link: "true",
+      },
+    })
+    var rec = resp.data?.result || {}
+    var active = rec.active === "true" || rec.active === true
+    var status = (rec.status || "unknown") + ""
+    // Reference fields come back as { value: "..." } unless flattened; handle both.
+    var master = typeof rec.master_snapshot === "object" ? rec.master_snapshot?.value : rec.master_snapshot
+    var latest = typeof rec.latest_snapshot === "object" ? rec.latest_snapshot?.value : rec.latest_snapshot
+    var snapshot = master || latest || ""
+    return { active: active, status: status, hasSnapshot: !!snapshot, snapshot: snapshot }
+  } catch (e: any) {
+    console.warn("[snow_manage_flow] verifyFlowActivation failed for flow=" + flowId + ": " + (e.message || ""))
+    return { active: false, status: "verify_failed", hasSnapshot: false, snapshot: "" }
+  }
+}
+
+/**
+ * Best-effort attempt to force the server to recompile and publish a flow whose
+ * snapshot did not materialize after the first publish call. Re-issues the
+ * versioning "Activate/Publish" request, which re-runs the compile pipeline.
+ * Returns true if the underlying call did not throw (caller re-verifies state).
+ */
+async function forceFlowCompile(client: any, flowId: string): Promise<boolean> {
+  try {
+    await client.post("/api/now/processflow/versioning/create_version?sysparm_transaction_scope=global", {
+      item_sys_id: flowId,
+      type: "Activate/Publish",
+      annotation: "auto-recompile",
+      favorite: false,
+    })
+    return true
+  } catch (e: any) {
+    console.warn("[snow_manage_flow] forceFlowCompile failed for flow=" + flowId + ": " + (e.message || ""))
+    return false
+  }
+}
+
+/**
  * Ensure an editing lock exists for the given flow, re-acquiring if necessary.
  * Call this before every GraphQL element mutation.
  */
@@ -7148,50 +7205,88 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       case "publish": {
         var activateSysId = await resolveFlowId(client, args.flow_id)
         var activateSummary = summary()
-        var publishSuccess = false
 
         // Primary: use processflow versioning API (same as Flow Designer UI).
-        // This properly handles the editing lock lifecycle.
+        // NOTE: a 200 here does NOT mean the flow compiled — the server can
+        // accept the request and still fail compilation, leaving the flow in
+        // draft with no snapshot. We verify the committed state below and only
+        // report success once a compiled snapshot actually exists.
         try {
           var versionResp = await client.post(
             "/api/now/processflow/versioning/create_version?sysparm_transaction_scope=global",
             { item_sys_id: activateSysId, type: "Activate/Publish", annotation: "", favorite: false },
           )
           var versionResult = versionResp.data?.result || versionResp.data
-          publishSuccess = true
-          activateSummary.success("Flow published via versioning API").field("sys_id", activateSysId)
           if (versionResult?.version) activateSummary.field("version", versionResult.version)
         } catch (publishErr: any) {
-          // Fallback: direct REST PATCH (older instances without processflow versioning)
+          // Fallback: direct REST PATCH (older instances without processflow
+          // versioning). This only flips the flags — the verification step below
+          // is what decides success, so a flagged-but-uncompiled flow still fails.
           try {
             await client.patch("/api/now/table/sys_hub_flow/" + activateSysId, {
               active: true,
               status: "published",
             })
-            publishSuccess = true
-            activateSummary
-              .warning("Published via REST fallback (versioning API unavailable)")
-              .field("sys_id", activateSysId)
+            activateSummary.warning("Versioning API unavailable — used REST fallback")
           } catch (fallbackErr: any) {
-            activateSummary
-              .error("Publish failed: " + (fallbackErr.message || fallbackErr))
-              .field("sys_id", activateSysId)
+            return createErrorResult(
+              new SnowFlowError(ErrorType.UNKNOWN_ERROR, "Flow publish failed: " + (fallbackErr.message || fallbackErr), {
+                details: { flow_id: activateSysId },
+              }),
+            )
           }
         }
 
-        // Safety: release any lingering editing lock after publish
-        await releaseFlowEditingLock(client, activateSysId)
+        // Releasing the editing lock is what triggers server-side compilation;
+        // capture any compilation error it surfaces.
+        var releaseResult = await releaseFlowEditingLock(client, activateSysId)
+
+        // Source of truth: re-read the flow. Recompile once if the snapshot
+        // didn't materialize, then re-verify.
+        var activation = await verifyFlowActivation(client, activateSysId)
+        if (!activation.active || !activation.hasSnapshot) {
+          await forceFlowCompile(client, activateSysId)
+          await releaseFlowEditingLock(client, activateSysId)
+          activation = await verifyFlowActivation(client, activateSysId)
+        }
+
+        if (!activation.active || !activation.hasSnapshot) {
+          var why = releaseResult?.compilationError
+            ? "Compilation error: " + releaseResult.compilationError
+            : (activation.active ? "active but has no compiled snapshot" : "not active") +
+              " (status=" + activation.status + ")"
+          return createErrorResult(
+            new SnowFlowError(
+              ErrorType.UNKNOWN_ERROR,
+              "Flow publish did not complete — the flow will NOT trigger. " + why + ".",
+              {
+                retryable: true,
+                details: {
+                  flow_id: activateSysId,
+                  active: activation.active,
+                  status: activation.status,
+                  has_snapshot: activation.hasSnapshot,
+                  compilation_error: releaseResult?.compilationError || null,
+                },
+              },
+            ),
+          )
+        }
+
+        activateSummary
+          .success("Flow published and verified (active with a compiled snapshot)")
+          .field("sys_id", activateSysId)
+          .field("status", activation.status)
 
         var publishData: any = {
           action: action,
           flow_id: activateSysId,
-          active: publishSuccess,
-          status: publishSuccess ? "published" : "failed",
-          message: publishSuccess ? "Flow activated and published" : "Publish failed",
-        }
-        if (publishSuccess) {
-          publishData.next_step =
-            "Use action='check_execution' with flow_id='" + activateSysId + "' to verify execution after trigger."
+          active: true,
+          status: activation.status,
+          snapshot: activation.snapshot,
+          message: "Flow activated, published, and verified (compiled snapshot present)",
+          next_step:
+            "Use action='check_execution' with flow_id='" + activateSysId + "' to verify execution after trigger.",
         }
 
         return createSuccessResult(publishData, {}, activateSummary.build())
