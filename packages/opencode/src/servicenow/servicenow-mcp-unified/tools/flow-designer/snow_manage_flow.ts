@@ -2812,6 +2812,7 @@ async function addActionViaGraphQL(
   order?: number,
   spoke?: string,
   annotation?: string,
+  displayText?: string,
 ): Promise<{
   success: boolean
   actionId?: string
@@ -3221,6 +3222,7 @@ async function addActionViaGraphQL(
           parentUiId: parentUiId || "",
           inputs: insertInputs,
           comment: annotation || "",
+          ...(displayText ? { displayText: displayText } : {}),
           ...(nestedCatchUuid ? { connectedTo: nestedCatchUuid } : {}),
         },
       ],
@@ -6047,6 +6049,11 @@ export const toolDefinition: MCPToolDefinition = {
         description:
           'Key-value pairs for action inputs (also accepted as "action_config", "action_field_values", "inputs", or "config"). Keys are fuzzy-matched to ServiceNow parameter element names — you can use short names like "to" instead of "ah_to", "subject" instead of "ah_subject", "table" instead of "table_name", "message" instead of "log_message". Use `next_order` from the previous response for sequential ordering. Example: {to: "admin@example.com", subject: "Alert", body: "Incident created"}',
       },
+      display_text: {
+        type: "string",
+        description:
+          'Optional custom label for an action step, shown on the Flow Designer canvas (for add_action). Defaults to the action type name when omitted. Example: "Log high priority".',
+      },
       update_fields: {
         type: "object",
         description: "Fields to update (for update action)",
@@ -7699,6 +7706,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
           args.order,
           args.spoke,
           args.annotation,
+          args.display_text,
         )
 
         var addActSummary = summary()
