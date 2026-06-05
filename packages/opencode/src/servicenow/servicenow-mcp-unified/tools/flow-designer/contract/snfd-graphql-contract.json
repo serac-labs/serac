@@ -1,0 +1,5895 @@
+{
+  "global_snFlowDesigner_FlowPatch": {
+    "name": "global_snFlowDesigner_FlowPatch",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "flowId",
+        "type": {
+          "kind": "NON_NULL",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "properties",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowPropertiesInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "aliasOverride",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_AliasOverrideMappingsInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowVariables",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowVariableInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "pharmacy",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_PharmacyInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "labelCache",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_LabelCacheInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "triggerInstances",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_TriggerInstanceInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "stages",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowStageInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "actions",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_ActionInstanceInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowLogics",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowLogicInstanceInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "subflows",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_SubflowInstanceInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowDesignParameterInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "outputs",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowVariableInput",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_SafeEditInput": {
+    "name": "global_snFlowDesigner_SafeEditInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "upsert",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_SafeEditUpsertInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "read",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowPropertiesInput": {
+    "name": "global_snFlowDesigner_FlowPropertiesInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowProperties",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_AliasOverrideMappingsInput": {
+    "name": "global_snFlowDesigner_AliasOverrideMappingsInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_AliasOverrideMappingInput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_AliasOverrideMappingInput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowVariableInput": {
+    "name": "global_snFlowDesigner_FlowVariableInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_PharmacyInput": {
+    "name": "global_snFlowDesigner_PharmacyInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_PharmacyCompound",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_PharmacyCompound",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_LabelCacheInput": {
+    "name": "global_snFlowDesigner_LabelCacheInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_LabelCache",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_LabelCache",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_TriggerInstanceInput": {
+    "name": "global_snFlowDesigner_TriggerInstanceInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_TriggerInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_TriggerInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "NON_NULL",
+            "name": null,
+            "ofType": {
+              "kind": "SCALAR",
+              "name": "String"
+            }
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowStageInput": {
+    "name": "global_snFlowDesigner_FlowStageInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowStage",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowStage",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_ActionInstanceInput": {
+    "name": "global_snFlowDesigner_ActionInstanceInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ActionInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ActionInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowLogicInstanceInput": {
+    "name": "global_snFlowDesigner_FlowLogicInstanceInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowLogicInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowLogicInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_SubflowInstanceInput": {
+    "name": "global_snFlowDesigner_SubflowInstanceInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SubflowInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SubflowInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowDesignParameterInput": {
+    "name": "global_snFlowDesigner_FlowDesignParameterInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "insert",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "update",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "delete",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_SafeEditUpsertInput": {
+    "name": "global_snFlowDesigner_SafeEditUpsertInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "flowId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "lastUpdated",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowProperties": {
+    "name": "global_snFlowDesigner_FlowProperties",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_AliasOverrideMappingInput": {
+    "name": "global_snFlowDesigner_AliasOverrideMappingInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "sourceTable",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "sourceID",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "sourceAlias",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "targetAlias",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowDesignVariable": {
+    "name": "global_snFlowDesigner_FlowDesignVariable",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type_label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "hint",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "extended",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "mandatory",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "readonly",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "maxsize",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "data_structure",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reference",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reference_display",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "ref_qual",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "choices",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SimpleChoice",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "defaultChoices",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SimpleChoice",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "choiceOption",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "table",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "columnName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "defaultValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "defaultDisplayValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "use_dependent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "dependent_on",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "show_ref_finder",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "local",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "searchField",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "sys_class_name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "comments",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiDisplayType",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiDisplayTypeLabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "dynamic",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InputActionInstance",
+          "ofType": null
+        }
+      },
+      {
+        "name": "internal_link",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "children",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ComplexObjectParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "placeholder",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "complexObjectValue",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptAsJsonString",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "display_value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptActive",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "script",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ScriptInput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "uiType",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiTypeLabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_PharmacyCompound": {
+    "name": "global_snFlowDesigner_PharmacyCompound",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "sourceUiId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "prescription",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "transformDefinitionId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "compositions",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_TransformComposition",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "scopeId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attachedTo",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "extraInfo",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_LabelCache": {
+    "name": "global_snFlowDesigner_LabelCache",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reference",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reference_display",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "base_type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parent_table_name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "column_name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "choices",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SimpleChoice",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "usedInstances",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_LabelCacheUsage",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_TriggerInstance": {
+    "name": "global_snFlowDesigner_TriggerInstance",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "comment",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "deleted",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayText",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_TriggerInstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "outputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_TriggerInstanceOutput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "remoteSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "triggerType",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "triggerDefinitionId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "hasDynamicOutputs",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "triggerDefinition",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_TriggerDefinition",
+          "ofType": null
+        }
+      },
+      {
+        "name": "publishedVersion",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "metadata",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowVersion",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowStage": {
+    "name": "global_snFlowDesigner_FlowStage",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "stageId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "componentIndexes",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "Int",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "duration",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "ancestorStageId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "ancestorCompId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "ancestralIfElseLogic",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "ancestorArrPos",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "states",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowStageState",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "flow",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "alwaysShow",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_ActionInstance": {
+    "name": "global_snFlowDesigner_ActionInstance",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "actionType",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_ActionTypeDefinition",
+          "ofType": null
+        }
+      },
+      {
+        "name": "actionTypeSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "aliasIds",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "aliasOverride",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_AliasOverrideInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "comment",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "compiledSnapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "deleted",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "metadata",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayText",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "domainId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowBlock",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ComponentInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "generationSource",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ActionInstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "outputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "parent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parentActionTypeSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "pharmacy",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_Pharmacy",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scope",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "snapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "status",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiUniqueIdentifier",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "copiedFrom",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parentActionTypeId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowVersion",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiComponentIndex",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parentUiId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "internalName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowLogicInstance": {
+    "name": "global_snFlowDesigner_FlowLogicInstance",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayText",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiUniqueIdentifier",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "deleted",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "snapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "metadata",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "domainId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "comment",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scope",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "copiedFrom",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_InstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "status",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "compiledSnapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "pharmacy",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_Pharmacy",
+          "ofType": null
+        }
+      },
+      {
+        "name": "outputsToAssign",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_InstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "variables",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_InstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "flowBlockId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowBlock",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ComponentInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "generationSource",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "connectedTo",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "quiescence",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "definitionId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "workflowReference",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "workflowInputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_InstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "workflowInformation",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "decisionTableReference",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "decisionTableInputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_InstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "dynamicInputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "dynamicOutputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "decisionTableInformation",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_DecisionTableInformation",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowVariables",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_InstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "flowLogicDefinition",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowLogicDefinition",
+          "ofType": null
+        }
+      },
+      {
+        "name": "childBlockDefinition",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowLogicDefinition",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowVersion",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiComponentIndex",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parentUiId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "afterTopLevelCatch",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "internalName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_SubflowInstance": {
+    "name": "global_snFlowDesigner_SubflowInstance",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "aliasIds",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "SCALAR",
+            "name": "String",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "comment",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "copiedFrom",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "deleted",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "metadata",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayText",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowBlock",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ComponentInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "generationSource",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SubflowInstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "outputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scope",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "snapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "compiledSnapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parentSubFlowId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "aliasOverride",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_AliasOverrideInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "subflowSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiUniqueIdentifier",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "waitForCompletion",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowDesignVariable",
+          "ofType": null
+        }
+      },
+      {
+        "name": "subFlow",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_Flow",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowVersion",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiComponentIndex",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parentUiId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "domainId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "contextRecord",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "showStages",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowDesignVariable",
+          "ofType": null
+        }
+      },
+      {
+        "name": "internalName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowDesignParameter": {
+    "name": "global_snFlowDesigner_FlowDesignParameter",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type_label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "hint",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "extended",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "mandatory",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "readonly",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "maxsize",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "data_structure",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reference",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reference_display",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "ref_qual",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "choices",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SimpleChoice",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "defaultChoices",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SimpleChoice",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "choiceOption",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "table",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "columnName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "defaultValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "defaultDisplayValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "use_dependent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "dependent_on",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "internal_link",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "show_ref_finder",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "local",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "searchField",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "sys_class_name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "comments",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiDisplayType",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiDisplayTypeLabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "dynamic",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InputActionInstance",
+          "ofType": null
+        }
+      },
+      {
+        "name": "children",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ComplexObjectParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "placeholder",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiType",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiTypeLabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_SimpleChoice": {
+    "name": "global_snFlowDesigner_SimpleChoice",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_InputActionInstance": {
+    "name": "global_snFlowDesigner_InputActionInstance",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "inputId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "actionId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "actionInternalName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "actionScope",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_ComplexObjectParameter": {
+    "name": "global_snFlowDesigner_ComplexObjectParameter",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type_label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "hint",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "extended",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "mandatory",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "readonly",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "maxsize",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "data_structure",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reference",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reference_display",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "ref_qual",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "choices",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SimpleChoice",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "defaultChoices",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SimpleChoice",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "choiceOption",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "table",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "columnName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "defaultValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "defaultDisplayValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "use_dependent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "dependent_on",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "show_ref_finder",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "local",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "searchField",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "sys_class_name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "comments",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiDisplayType",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiDisplayTypeLabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "dynamic",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InputActionInstance",
+          "ofType": null
+        }
+      },
+      {
+        "name": "internal_link",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "children",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ComplexObjectParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "placeholder",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "complexObjectValue",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptAsJsonString",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "display_value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptActive",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "script",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ScriptInput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "parent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "fieldFacetMap",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiType",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiTypeLabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_InstanceValue": {
+    "name": "global_snFlowDesigner_InstanceValue",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayField",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceInputValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayValue",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceInputValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "children",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_InstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "parameter",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowDesignParameter",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptActive",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "script",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ScriptInput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "scriptAsJsonString",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_ScriptInput": {
+    "name": "global_snFlowDesigner_ScriptInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "inputName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptActive",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "showScript",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "encodedScript",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_TransformComposition": {
+    "name": "global_snFlowDesigner_TransformComposition",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "transformType",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "transformDefinition",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parameters",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_TransformParameters",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_LabelCacheUsage": {
+    "name": "global_snFlowDesigner_LabelCacheUsage",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "uiUniqueIdentifier",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_TriggerInstanceValue": {
+    "name": "global_snFlowDesigner_TriggerInstanceValue",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceInputValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayValue",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceInputValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parameter",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowDesignParameter",
+          "ofType": null
+        }
+      },
+      {
+        "name": "children",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_InstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "displayField",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptActive",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "script",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ScriptInput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "triggerInstanceSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "internalType",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "dependent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "choiceList",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_GlideChoice",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "mandatory",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "fromTemplate",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "templateValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "valueSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "field_name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptAsJsonString",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_TriggerInstanceOutput": {
+    "name": "global_snFlowDesigner_TriggerInstanceOutput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "children",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_InstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "parameter",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowDesignParameter",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayField",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptActive",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "script",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ScriptInput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "dependent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "enumValues": null
+  },
+  "global_snFlowDesigner_TriggerDefinition": {
+    "name": "global_snFlowDesigner_TriggerDefinition",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "description",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scope",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopeName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopeLabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopeLogo",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "active",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "outputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "category",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowStageState": {
+    "name": "global_snFlowDesigner_FlowStageState",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_ActionTypeDefinition": {
+    "name": "global_snFlowDesigner_ActionTypeDefinition",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "access",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "action_template",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "active",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "annotation",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "authored_version",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "callable_by_client_api",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "category",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "category_order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "compiler_build",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "copied_from",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "description",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "domainName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "engine_major_version",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "entitled",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flow_priority",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "ih_action",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "internal_name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "is_snapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "latest_snapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "master",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "natlang",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "outputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "parent_action",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "pharmacy",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_Pharmacy",
+          "ofType": null
+        }
+      },
+      {
+        "name": "protection",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "quiescence",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scope",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopelabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopelogo",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopename",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopeProtectionPolicyReadOnly",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "security",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_Security",
+          "ofType": null
+        }
+      },
+      {
+        "name": "state",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "system",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "userCanRead",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "labelCacheAsJsonString",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_AliasOverrideInput": {
+    "name": "global_snFlowDesigner_AliasOverrideInput",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "aliasOverrideMappings",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_AliasOverrideMappingInput",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_ComponentInstance": {
+    "name": "global_snFlowDesigner_ComponentInstance",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayText",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiUniqueIdentifier",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "deleted",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "metadata",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "snapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parentUiId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parent",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "domainId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "comment",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scope",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowBlock",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ComponentInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "copiedFrom",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "generationSource",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowVersion",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "uiComponentIndex",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "internalName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_ActionInstanceValue": {
+    "name": "global_snFlowDesigner_ActionInstanceValue",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "actionInstanceSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceInputValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayValue",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceInputValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "children",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ActionInstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "parameter",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowDesignParameter",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayField",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptActive",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "script",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ScriptInput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "scriptAsJsonString",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_Pharmacy": {
+    "name": "global_snFlowDesigner_Pharmacy",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "pharmacyCompound",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_PharmacyCompound",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_DecisionTableInformation": {
+    "name": "global_snFlowDesigner_DecisionTableInformation",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "display_value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "decision_answers",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_DecisionAnswer",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "active",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowLogicDefinition": {
+    "name": "global_snFlowDesigner_FlowLogicDefinition",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "description",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "connectedTo",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "quiescence",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "compilationClass",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "variables",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "visible",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "userCanRead",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "category",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_SubflowInstanceValue": {
+    "name": "global_snFlowDesigner_SubflowInstanceValue",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "subFlowInstanceId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayValue",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceInputValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parameter",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowDesignParameter",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scriptActive",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_InstanceInputValue",
+          "ofType": null
+        }
+      },
+      {
+        "name": "children",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SubflowInstanceValue",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "displayField",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "script",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ScriptInput",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "scriptAsJsonString",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_Flow": {
+    "name": "global_snFlowDesigner_Flow",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "access",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "actionInstances",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ActionInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "active",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "aliasOverride",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_AliasOverrideInput",
+          "ofType": null
+        }
+      },
+      {
+        "name": "annotation",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "authoredOnReleaseVersion",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "canWriteProtection",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "category",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "clientCallable",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "clientSessionId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "compilerBuild",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "copiedFrom",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "created",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "deleted",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "deletedActions",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_ActionInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "deletedFlowLogics",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowLogicInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "description",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "domainId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "domainName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowCatalogVariableModelId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowCatalogVariables",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "flowEngineVersion",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowLogicInstances",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowLogicInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "flowPriority",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "flowVariables",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "inputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignParameter",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "internalName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "isFlowEntitled",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "isPublished",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "jsonSnapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label_cache",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_LabelCache",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "labelCacheAsJsonString",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "latestSnapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "masterSnapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "natlang",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "outputs",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowDesignVariable",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "pharmacy",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_Pharmacy",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parentFlow",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "protection",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "remoteTriggerSysId",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "runAs",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "runWithRoles",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_FlowRoles",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scope",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopeDisplayName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopeLogo",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopeName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "scopeProtectionPolicyReadOnly",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "security",
+        "type": {
+          "kind": "INPUT_OBJECT",
+          "name": "global_snFlowDesigner_Security",
+          "ofType": null
+        }
+      },
+      {
+        "name": "serviceCatalogCallable",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "snapshot",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "stages",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_FlowStage",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "status",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "startingIndexOfErrorHandlingInstances",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "subflowInstances",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SubflowInstance",
+            "ofType": null
+          }
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "updated",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "updatedBy",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "userCanRead",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "userHasRolesAssignedToFlow",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_InstanceInputValue": {
+    "name": "global_snFlowDesigner_InstanceInputValue",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "schemaless",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "schemalessValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_TransformParameters": {
+    "name": "global_snFlowDesigner_TransformParameters",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "id",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "name",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "order",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Int",
+          "ofType": null
+        }
+      },
+      {
+        "name": "attributes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "defaultValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "typeLabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "mandatory",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "choices",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_SimpleChoice",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_GlideChoice": {
+    "name": "global_snFlowDesigner_GlideChoice",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "image",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "missing",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "parameters",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "rawLabel",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reference",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "selected",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "used",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_Security": {
+    "name": "global_snFlowDesigner_Security",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "can_read",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "can_write",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "reason",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "valid_delegated_developer_data",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "delegated_developer_in_flow_designer",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "delegated_developer_access_scopes",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "has_recommendations_access",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "can_cancel_execution",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_DecisionAnswer": {
+    "name": "global_snFlowDesigner_DecisionAnswer",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "table",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "multipleAnswerRecord",
+        "type": {
+          "kind": "SCALAR",
+          "name": "Boolean",
+          "ofType": null
+        }
+      },
+      {
+        "name": "answerElementValues",
+        "type": {
+          "kind": "LIST",
+          "name": null,
+          "ofType": {
+            "kind": "INPUT_OBJECT",
+            "name": "global_snFlowDesigner_AnswerElementValue",
+            "ofType": null
+          }
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_FlowRoles": {
+    "name": "global_snFlowDesigner_FlowRoles",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "displayValue",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  },
+  "global_snFlowDesigner_AnswerElementValue": {
+    "name": "global_snFlowDesigner_AnswerElementValue",
+    "kind": "INPUT_OBJECT",
+    "inputFields": [
+      {
+        "name": "value",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "table",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "label",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "type",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      },
+      {
+        "name": "answerElementName",
+        "type": {
+          "kind": "SCALAR",
+          "name": "String",
+          "ofType": null
+        }
+      }
+    ],
+    "fields": null,
+    "enumValues": null
+  }
+}

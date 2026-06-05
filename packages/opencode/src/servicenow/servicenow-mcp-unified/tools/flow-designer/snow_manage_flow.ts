@@ -886,6 +886,79 @@ async function verifyFlowEditingLock(
 }
 
 /**
+ * Read the committed state of a flow after a publish/activate call and report
+ * whether it is genuinely active AND has a compiled snapshot.
+ *
+ * The versioning API (and the REST fallback) can return HTTP 200 while the
+ * server-side compilation never finishes, leaving the flow active=false /
+ * status=draft with an empty master_snapshot. In that state the flow does NOT
+ * trigger. This is the source of truth the publish handler trusts instead of
+ * the API status code. A flow is publish-OK only when active === true AND a
+ * snapshot reference exists (master_snapshot or latest_snapshot).
+ */
+async function verifyFlowActivation(
+  client: any,
+  flowId: string,
+): Promise<{ active: boolean; status: string; hasSnapshot: boolean; snapshot: string }> {
+  try {
+    var resp = await client.get("/api/now/table/sys_hub_flow/" + flowId, {
+      params: {
+        sysparm_fields: "active,status,master_snapshot,latest_snapshot",
+        sysparm_exclude_reference_link: "true",
+      },
+    })
+    var rec = resp.data?.result || {}
+    var active = rec.active === "true" || rec.active === true
+    var status = (rec.status || "unknown") + ""
+    // Reference fields come back as { value: "..." } unless flattened; handle both.
+    var master = typeof rec.master_snapshot === "object" ? rec.master_snapshot?.value : rec.master_snapshot
+    var latest = typeof rec.latest_snapshot === "object" ? rec.latest_snapshot?.value : rec.latest_snapshot
+    var snapshot = master || latest || ""
+    return { active: active, status: status, hasSnapshot: !!snapshot, snapshot: snapshot }
+  } catch (e: any) {
+    console.warn("[snow_manage_flow] verifyFlowActivation failed for flow=" + flowId + ": " + (e.message || ""))
+    return { active: false, status: "verify_failed", hasSnapshot: false, snapshot: "" }
+  }
+}
+
+/**
+ * Compile + publish a flow's working copy into a master snapshot.
+ *
+ * This is the step the Flow Designer UI performs on Activate that the tool
+ * historically skipped: it POSTs the full working-copy definition (read back
+ * from processflow/flow/{id}) to processflow/flow/{id}/snapshot. That endpoint
+ * compiles the flow, flips it active/published, and returns the new
+ * masterSnapshotId. Without it, create_version has nothing to snapshot and the
+ * flow stays draft with an empty master_snapshot — the long-standing
+ * "publish reports success but the flow never triggers" bug.
+ *
+ * Returns the new masterSnapshotId on success, or "" on failure.
+ */
+async function compileFlowSnapshot(client: any, flowId: string): Promise<string> {
+  try {
+    var defResp = await client.get("/api/now/processflow/flow/" + flowId)
+    var def = defResp.data?.result?.data
+    if (!def || !def.id) return ""
+    // The UI tags every snapshot post with a fresh client session id.
+    def.clientSessionId = generateUUID()
+    // Triggered flows compile via .../snapshot; subflows use .../subflow
+    // (the .../snapshot endpoint 500s for type=subflow). Server-side
+    // compilation can take well over the default 60s client timeout on large
+    // flows / busy instances, so give this call room.
+    var endpoint = def.type === "subflow" ? "/subflow" : "/snapshot"
+    var snapResp = await client.post(
+      "/api/now/processflow/flow/" + flowId + endpoint + "?sysparm_transaction_scope=global",
+      def,
+      { timeout: 180000 },
+    )
+    return snapResp.data?.result?.data?.masterSnapshotId || ""
+  } catch (e: any) {
+    console.warn("[snow_manage_flow] compileFlowSnapshot failed for flow=" + flowId + ": " + (e.message || ""))
+    return ""
+  }
+}
+
+/**
  * Ensure an editing lock exists for the given flow, re-acquiring if necessary.
  * Call this before every GraphQL element mutation.
  */
@@ -7148,50 +7221,74 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       case "publish": {
         var activateSysId = await resolveFlowId(client, args.flow_id)
         var activateSummary = summary()
-        var publishSuccess = false
 
-        // Primary: use processflow versioning API (same as Flow Designer UI).
-        // This properly handles the editing lock lifecycle.
+        // Publish the way the Flow Designer UI does: FIRST compile the working
+        // copy into a master snapshot (POST .../snapshot — the step the tool used
+        // to skip, which is why flows stayed draft and never triggered), THEN
+        // record a published version. Verification below is the gate, so a failed
+        // compile surfaces as a real error instead of a false "published".
+        var snapshotId = await compileFlowSnapshot(client, activateSysId)
+        if (snapshotId) activateSummary.field("snapshot", snapshotId)
+
         try {
-          var versionResp = await client.post(
+          await client.post(
             "/api/now/processflow/versioning/create_version?sysparm_transaction_scope=global",
             { item_sys_id: activateSysId, type: "Activate/Publish", annotation: "", favorite: false },
           )
-          var versionResult = versionResp.data?.result || versionResp.data
-          publishSuccess = true
-          activateSummary.success("Flow published via versioning API").field("sys_id", activateSysId)
-          if (versionResult?.version) activateSummary.field("version", versionResult.version)
-        } catch (publishErr: any) {
-          // Fallback: direct REST PATCH (older instances without processflow versioning)
-          try {
-            await client.patch("/api/now/table/sys_hub_flow/" + activateSysId, {
-              active: true,
-              status: "published",
-            })
-            publishSuccess = true
-            activateSummary
-              .warning("Published via REST fallback (versioning API unavailable)")
-              .field("sys_id", activateSysId)
-          } catch (fallbackErr: any) {
-            activateSummary
-              .error("Publish failed: " + (fallbackErr.message || fallbackErr))
-              .field("sys_id", activateSysId)
-          }
+        } catch (_) {
+          // The version record is non-fatal bookkeeping; the snapshot above is
+          // what activates the flow, and verification decides success.
         }
 
-        // Safety: release any lingering editing lock after publish
-        await releaseFlowEditingLock(client, activateSysId)
+        // Releasing the editing lock cleans up the safe-edit session; capture any
+        // compilation error it surfaces.
+        var releaseResult = await releaseFlowEditingLock(client, activateSysId)
+
+        // Source of truth: re-read the flow. Recompile once if the snapshot
+        // didn't materialize, then re-verify.
+        var activation = await verifyFlowActivation(client, activateSysId)
+        if (!activation.active || !activation.hasSnapshot) {
+          await compileFlowSnapshot(client, activateSysId)
+          activation = await verifyFlowActivation(client, activateSysId)
+        }
+
+        if (!activation.active || !activation.hasSnapshot) {
+          var why = releaseResult?.compilationError
+            ? "Compilation error: " + releaseResult.compilationError
+            : (activation.active ? "active but has no compiled snapshot" : "not active") +
+              " (status=" + activation.status + ")"
+          return createErrorResult(
+            new SnowFlowError(
+              ErrorType.UNKNOWN_ERROR,
+              "Flow publish did not complete — the flow will NOT trigger. " + why + ".",
+              {
+                retryable: true,
+                details: {
+                  flow_id: activateSysId,
+                  active: activation.active,
+                  status: activation.status,
+                  has_snapshot: activation.hasSnapshot,
+                  compilation_error: releaseResult?.compilationError || null,
+                },
+              },
+            ),
+          )
+        }
+
+        activateSummary
+          .success("Flow published and verified (active with a compiled snapshot)")
+          .field("sys_id", activateSysId)
+          .field("status", activation.status)
 
         var publishData: any = {
           action: action,
           flow_id: activateSysId,
-          active: publishSuccess,
-          status: publishSuccess ? "published" : "failed",
-          message: publishSuccess ? "Flow activated and published" : "Publish failed",
-        }
-        if (publishSuccess) {
-          publishData.next_step =
-            "Use action='check_execution' with flow_id='" + activateSysId + "' to verify execution after trigger."
+          active: true,
+          status: activation.status,
+          snapshot: activation.snapshot,
+          message: "Flow activated, published, and verified (compiled snapshot present)",
+          next_step:
+            "Use action='check_execution' with flow_id='" + activateSysId + "' to verify execution after trigger.",
         }
 
         return createSuccessResult(publishData, {}, activateSummary.build())
