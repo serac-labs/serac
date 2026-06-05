@@ -922,23 +922,36 @@ async function verifyFlowActivation(
 }
 
 /**
- * Best-effort attempt to force the server to recompile and publish a flow whose
- * snapshot did not materialize after the first publish call. Re-issues the
- * versioning "Activate/Publish" request, which re-runs the compile pipeline.
- * Returns true if the underlying call did not throw (caller re-verifies state).
+ * Compile + publish a flow's working copy into a master snapshot.
+ *
+ * This is the step the Flow Designer UI performs on Activate that the tool
+ * historically skipped: it POSTs the full working-copy definition (read back
+ * from processflow/flow/{id}) to processflow/flow/{id}/snapshot. That endpoint
+ * compiles the flow, flips it active/published, and returns the new
+ * masterSnapshotId. Without it, create_version has nothing to snapshot and the
+ * flow stays draft with an empty master_snapshot — the long-standing
+ * "publish reports success but the flow never triggers" bug.
+ *
+ * Returns the new masterSnapshotId on success, or "" on failure.
  */
-async function forceFlowCompile(client: any, flowId: string): Promise<boolean> {
+async function compileFlowSnapshot(client: any, flowId: string): Promise<string> {
   try {
-    await client.post("/api/now/processflow/versioning/create_version?sysparm_transaction_scope=global", {
-      item_sys_id: flowId,
-      type: "Activate/Publish",
-      annotation: "auto-recompile",
-      favorite: false,
-    })
-    return true
+    var defResp = await client.get("/api/now/processflow/flow/" + flowId)
+    var def = defResp.data?.result?.data
+    if (!def || !def.id) return ""
+    // The UI tags every snapshot post with a fresh client session id.
+    def.clientSessionId = generateUUID()
+    // Server-side compilation can take well over the default 60s client
+    // timeout on large flows / busy instances, so give this call room.
+    var snapResp = await client.post(
+      "/api/now/processflow/flow/" + flowId + "/snapshot?sysparm_transaction_scope=global",
+      def,
+      { timeout: 180000 },
+    )
+    return snapResp.data?.result?.data?.masterSnapshotId || ""
   } catch (e: any) {
-    console.warn("[snow_manage_flow] forceFlowCompile failed for flow=" + flowId + ": " + (e.message || ""))
-    return false
+    console.warn("[snow_manage_flow] compileFlowSnapshot failed for flow=" + flowId + ": " + (e.message || ""))
+    return ""
   }
 }
 
@@ -7206,47 +7219,33 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
         var activateSysId = await resolveFlowId(client, args.flow_id)
         var activateSummary = summary()
 
-        // Primary: use processflow versioning API (same as Flow Designer UI).
-        // NOTE: a 200 here does NOT mean the flow compiled — the server can
-        // accept the request and still fail compilation, leaving the flow in
-        // draft with no snapshot. We verify the committed state below and only
-        // report success once a compiled snapshot actually exists.
+        // Publish the way the Flow Designer UI does: FIRST compile the working
+        // copy into a master snapshot (POST .../snapshot — the step the tool used
+        // to skip, which is why flows stayed draft and never triggered), THEN
+        // record a published version. Verification below is the gate, so a failed
+        // compile surfaces as a real error instead of a false "published".
+        var snapshotId = await compileFlowSnapshot(client, activateSysId)
+        if (snapshotId) activateSummary.field("snapshot", snapshotId)
+
         try {
-          var versionResp = await client.post(
+          await client.post(
             "/api/now/processflow/versioning/create_version?sysparm_transaction_scope=global",
             { item_sys_id: activateSysId, type: "Activate/Publish", annotation: "", favorite: false },
           )
-          var versionResult = versionResp.data?.result || versionResp.data
-          if (versionResult?.version) activateSummary.field("version", versionResult.version)
-        } catch (publishErr: any) {
-          // Fallback: direct REST PATCH (older instances without processflow
-          // versioning). This only flips the flags — the verification step below
-          // is what decides success, so a flagged-but-uncompiled flow still fails.
-          try {
-            await client.patch("/api/now/table/sys_hub_flow/" + activateSysId, {
-              active: true,
-              status: "published",
-            })
-            activateSummary.warning("Versioning API unavailable — used REST fallback")
-          } catch (fallbackErr: any) {
-            return createErrorResult(
-              new SnowFlowError(ErrorType.UNKNOWN_ERROR, "Flow publish failed: " + (fallbackErr.message || fallbackErr), {
-                details: { flow_id: activateSysId },
-              }),
-            )
-          }
+        } catch (_) {
+          // The version record is non-fatal bookkeeping; the snapshot above is
+          // what activates the flow, and verification decides success.
         }
 
-        // Releasing the editing lock is what triggers server-side compilation;
-        // capture any compilation error it surfaces.
+        // Releasing the editing lock cleans up the safe-edit session; capture any
+        // compilation error it surfaces.
         var releaseResult = await releaseFlowEditingLock(client, activateSysId)
 
         // Source of truth: re-read the flow. Recompile once if the snapshot
         // didn't materialize, then re-verify.
         var activation = await verifyFlowActivation(client, activateSysId)
         if (!activation.active || !activation.hasSnapshot) {
-          await forceFlowCompile(client, activateSysId)
-          await releaseFlowEditingLock(client, activateSysId)
+          await compileFlowSnapshot(client, activateSysId)
           activation = await verifyFlowActivation(client, activateSysId)
         }
 
