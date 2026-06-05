@@ -941,10 +941,13 @@ async function compileFlowSnapshot(client: any, flowId: string): Promise<string>
     if (!def || !def.id) return ""
     // The UI tags every snapshot post with a fresh client session id.
     def.clientSessionId = generateUUID()
-    // Server-side compilation can take well over the default 60s client
-    // timeout on large flows / busy instances, so give this call room.
+    // Triggered flows compile via .../snapshot; subflows use .../subflow
+    // (the .../snapshot endpoint 500s for type=subflow). Server-side
+    // compilation can take well over the default 60s client timeout on large
+    // flows / busy instances, so give this call room.
+    var endpoint = def.type === "subflow" ? "/subflow" : "/snapshot"
     var snapResp = await client.post(
-      "/api/now/processflow/flow/" + flowId + "/snapshot?sysparm_transaction_scope=global",
+      "/api/now/processflow/flow/" + flowId + endpoint + "?sysparm_transaction_scope=global",
       def,
       { timeout: 180000 },
     )
