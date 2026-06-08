@@ -15,6 +15,7 @@ import { isConsoleManagedProvider } from "../util/provider-origin"
 import { useConnected } from "./use-connected"
 import { useBindings } from "../keymap"
 import { useClipboard } from "../context/clipboard"
+import open from "open"
 
 const PROVIDER_PRIORITY: Record<string, number> = {
   opencode: 0,
@@ -98,7 +99,7 @@ type ProviderAuthContext = {
  * ServiceNow `/auth` command) without it having to first appear in the provider
  * list — which only happens for AuthHook providers after a credential exists.
  */
-export async function runProviderAuth(ctx: ProviderAuthContext, providerID: string) {
+export async function runProviderAuth(ctx: ProviderAuthContext, providerID: string, methodIndex?: number) {
   const { sync, dialog, sdk, toast } = ctx
   const methods = sync.data.provider_auth[providerID] ?? [
     {
@@ -107,7 +108,11 @@ export async function runProviderAuth(ctx: ProviderAuthContext, providerID: stri
     },
   ]
   let index: number | null = 0
-  if (methods.length > 1) {
+  // A caller can pre-select a specific method (e.g. the Serac `/auth` menu lands
+  // straight on ServiceNow OAuth vs Basic) to skip the method picker below.
+  if (methodIndex != null && methodIndex >= 0 && methodIndex < methods.length) {
+    index = methodIndex
+  } else if (methods.length > 1) {
     index = await new Promise<number | null>((resolve) => {
       dialog.replace(
         () => (
@@ -149,6 +154,13 @@ export async function runProviderAuth(ctx: ProviderAuthContext, providerID: stri
       })
       dialog.clear()
       return
+    }
+    // Auto-open the authorization URL in the browser. The dialog still renders
+    // the URL as a clickable link as a fallback, but for device-auth flows (the
+    // Serac dashboard) and ServiceNow OAuth the user expects the browser to pop
+    // open on its own — opencode's generic flow only renders the link.
+    if (result.data?.url) {
+      open(result.data.url).catch(() => {})
     }
     if (result.data?.method === "code") {
       dialog.replace(() => (
