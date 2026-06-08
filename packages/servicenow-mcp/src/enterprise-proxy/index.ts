@@ -172,36 +172,32 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 })
 
 /**
- * Start MCP Server with stdio transport
+ * Start MCP Server with stdio transport.
+ *
+ * Exposed as an importable function (not auto-run on import) so the opencode
+ * CLI can launch the proxy in-process from the `x-servicenow-enterprise` hidden
+ * subcommand inside the compiled serac binary — mirroring how `startStdio`
+ * (transports/stdio.ts) is consumed by `x-servicenow-mcp`. The standalone bin
+ * path below still calls it directly.
  */
-async function main() {
-  try {
-    mcpDebug("[Enterprise Proxy] Starting Enterprise Proxy MCP Server", {
-      version: VERSION,
-      enterpriseUrl: process.env.SNOW_ENTERPRISE_URL || "https://enterprise.serac.build",
-      licenseKeyConfigured: !!process.env.SNOW_LICENSE_KEY,
-      cwd: process.cwd(),
-    })
+export async function startEnterpriseProxy(): Promise<void> {
+  mcpDebug("[Enterprise Proxy] Starting Enterprise Proxy MCP Server", {
+    version: VERSION,
+    enterpriseUrl: process.env.SNOW_ENTERPRISE_URL || "https://enterprise.serac.build",
+    licenseKeyConfigured: !!process.env.SNOW_LICENSE_KEY,
+    cwd: process.cwd(),
+  })
 
-    const transport = new StdioServerTransport()
-    await server.connect(transport)
+  const transport = new StdioServerTransport()
+  await server.connect(transport)
 
-    // Log to stderr (stdout is reserved for MCP protocol)
-    mcpDebug("[Enterprise Proxy] Serac Enterprise MCP Proxy started")
-    mcpDebug(`[Enterprise Proxy] Version: ${VERSION}`)
-    mcpDebug(
-      `[Enterprise Proxy] Enterprise URL: ${process.env.SNOW_ENTERPRISE_URL || "https://enterprise.serac.build"}`,
-    )
-    mcpDebug(`[Enterprise Proxy] License Key: ${process.env.SNOW_LICENSE_KEY ? "✓ Configured" : "✗ Not configured"}`)
+  // Log to stderr (stdout is reserved for MCP protocol)
+  mcpDebug("[Enterprise Proxy] Serac Enterprise MCP Proxy started")
+  mcpDebug(`[Enterprise Proxy] Version: ${VERSION}`)
+  mcpDebug(`[Enterprise Proxy] Enterprise URL: ${process.env.SNOW_ENTERPRISE_URL || "https://enterprise.serac.build"}`)
+  mcpDebug(`[Enterprise Proxy] License Key: ${process.env.SNOW_LICENSE_KEY ? "✓ Configured" : "✗ Not configured"}`)
 
-    mcpDebug("[Enterprise Proxy] Enterprise Proxy successfully started and ready for requests")
-  } catch (error) {
-    mcpDebug("[Enterprise Proxy] Fatal startup error", {
-      error: error instanceof Error ? error.message : String(error),
-    })
-    mcpDebug("[Enterprise Proxy] Fatal error:", error instanceof Error ? error.message : String(error))
-    process.exit(1)
-  }
+  mcpDebug("[Enterprise Proxy] Enterprise Proxy successfully started and ready for requests")
 }
 
 // Handle process signals
@@ -215,8 +211,12 @@ process.on("SIGTERM", () => {
   process.exit(0)
 })
 
-// Start server
-main().catch((error) => {
-  mcpDebug("[Enterprise Proxy] Startup failed:", error instanceof Error ? error.message : String(error))
-  process.exit(1)
-})
+// Standalone entry: when this module is the process entrypoint (the package's
+// own bin), start immediately. When imported (e.g. by the opencode CLI), the
+// caller invokes startEnterpriseProxy() itself and keeps the process alive.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  startEnterpriseProxy().catch((error) => {
+    mcpDebug("[Enterprise Proxy] Startup failed:", error instanceof Error ? error.message : String(error))
+    process.exit(1)
+  })
+}

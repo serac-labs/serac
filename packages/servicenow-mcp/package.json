@@ -20,6 +20,7 @@
     "./server": "./src/servicenow-mcp-unified/shared/server-factory.ts",
     "./http": "./src/servicenow-mcp-unified/transports/http.ts",
     "./stdio": "./src/servicenow-mcp-unified/transports/stdio.ts",
+    "./enterprise-proxy": "./src/enterprise-proxy/index.ts",
     "./blast-radius": "./src/servicenow-mcp-unified/tools/blast-radius/index.ts",
     "./types": "./src/servicenow-mcp-unified/shared/types.ts",
     "./auth": "./src/servicenow-mcp-unified/shared/auth.ts",
@@ -29,7 +30,8 @@
     "./cli/enterprise-docs-generator": "./src/cli/enterprise-docs-generator.ts"
   },
   "bin": {
-    "servicenow-mcp-stdio": "./src/servicenow-mcp-unified/index.ts"
+    "servicenow-mcp-stdio": "./src/servicenow-mcp-unified/index.ts",
+    "servicenow-mcp-enterprise-proxy": "./src/enterprise-proxy/index.ts"
   },
   "scripts": {
     "typecheck": "tsgo --project tsconfig.json --noEmit",

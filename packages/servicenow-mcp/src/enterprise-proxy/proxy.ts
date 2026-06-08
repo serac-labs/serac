@@ -41,24 +41,32 @@ const VERSION = (process.env.SERAC_VERSION || process.env.SNOW_FLOW_VERSION) || 
  * .mcp.json files that may contain stale tokens.
  */
 function getConfiguredLicenseKey(): string | undefined {
-  // 1. First try to read from enterprise.json (most recent device auth)
-  const enterpriseJsonPath = path.join(os.homedir(), ".snow-code", "enterprise.json")
-  try {
-    if (fs.existsSync(enterpriseJsonPath)) {
-      const content = fs.readFileSync(enterpriseJsonPath, "utf-8")
-      const config = JSON.parse(content)
-      if (config.token) {
-        mcpDebug("[Enterprise Proxy] Using token from ~/.snow-code/enterprise.json (device auth)", {
-          tokenLength: config.token.length,
-          subdomain: config.subdomain || "unknown",
-        })
-        return config.token.trim()
+  // 1. First try to read from enterprise.json (most recent device auth). The
+  //    Serac dashboard /auth flow writes ~/.serac/enterprise.json; the legacy
+  //    pre-rebrand path was ~/.snow-code/enterprise.json — read whichever
+  //    exists, preferring the new one, so existing installs keep working.
+  const candidates = [
+    path.join(os.homedir(), ".serac", "enterprise.json"),
+    path.join(os.homedir(), ".snow-code", "enterprise.json"),
+  ]
+  for (const enterpriseJsonPath of candidates) {
+    try {
+      if (fs.existsSync(enterpriseJsonPath)) {
+        const content = fs.readFileSync(enterpriseJsonPath, "utf-8")
+        const config = JSON.parse(content)
+        if (config.token) {
+          mcpDebug(`[Enterprise Proxy] Using token from ${enterpriseJsonPath} (device auth)`, {
+            tokenLength: config.token.length,
+            subdomain: config.subdomain || "unknown",
+          })
+          return config.token.trim()
+        }
       }
+    } catch (err) {
+      mcpDebug(`[Enterprise Proxy] Could not read ${enterpriseJsonPath}, trying next source`, {
+        error: err instanceof Error ? err.message : String(err),
+      })
     }
-  } catch (err) {
-    mcpDebug("[Enterprise Proxy] Could not read enterprise.json, falling back to env var", {
-      error: err instanceof Error ? err.message : String(err),
-    })
   }
 
   // 2. Fall back to environment variable (from .mcp.json)

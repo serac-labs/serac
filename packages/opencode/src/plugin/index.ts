@@ -21,6 +21,7 @@ import { DigitalOceanAuthPlugin } from "./digitalocean"
 import { XaiAuthPlugin } from "./xai"
 import { ServiceNowAuthPlugin } from "./servicenow/auth"
 import { ServiceNowLLMPlugin } from "./servicenow/provider"
+import { SeracDashboardAuthPlugin } from "./serac/auth"
 import { Effect, Layer, Context } from "effect"
 import { EffectBridge } from "@/effect/bridge"
 import { InstanceState } from "@/effect/instance-state"
@@ -80,6 +81,7 @@ function internalPlugins(flags: RuntimeFlags.Info): PluginInstance[] {
     AzureAuthPlugin,
     DigitalOceanAuthPlugin,
     XaiAuthPlugin,
+    SeracDashboardAuthPlugin,
     ServiceNowAuthPlugin,
     ServiceNowLLMPlugin,
   ]
