@@ -3,7 +3,7 @@
   "version": "1.0.23",
   "name": "@serac-labs/core",
   "description": "Serac - agentic AI for ServiceNow developers. Bring your own keys, observable runs, deterministic traces.",
-  "license": "Elastic-2.0",
+  "license": "Apache-2.0",
   "private": false,
   "scripts": {
     "typecheck": "tsgo --noEmit",

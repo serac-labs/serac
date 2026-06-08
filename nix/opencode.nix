@@ -89,7 +89,7 @@ stdenvNoCC.mkDerivation (finalAttrs: {
   meta = {
     description = "The autonomous ServiceNow development agent";
     homepage = "https://serac.build/";
-    license = lib.licenses.elastic20;
+    license = lib.licenses.asl20;
     mainProgram = "snow-code";
     inherit (node_modules.meta) platforms;
   };

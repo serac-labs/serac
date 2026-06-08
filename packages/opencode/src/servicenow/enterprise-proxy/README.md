@@ -385,5 +385,5 @@ npm run test:integration
 
 ## License
 
-Open Source (Elastic License v2)
+Apache License 2.0
 Part of the Serac platform
