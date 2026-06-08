@@ -355,6 +355,34 @@ jobs:
             npm publish --access public --tag "$NPM_TAG" --provenance
           fi
 
+      - name: Publish @serac-labs/servicenow-mcp to npm (OIDC)
+        # Separate npm package (ServiceNow MCP server). Unlike core (which
+        # ships .ts source), this ships a built dist/, so build + rewrite
+        # exports/bin from ./src/*.ts to ./dist/*.js first. Publishes via the
+        # same OIDC trusted-publisher path as core (the .npmrc above already
+        # put npm in OIDC mode). REQUIRES a Trusted Publisher to be configured
+        # on npm for @serac-labs/servicenow-mcp pointing at this repo +
+        # workflow; the package must already exist (one-time token bootstrap).
+        #
+        # continue-on-error keeps a not-yet-configured trusted publisher (401)
+        # from failing the whole release (and the core publish above) during
+        # bootstrap. REMOVE it in a follow-up once the trusted publisher is
+        # live and the first OIDC publish is confirmed green.
+        continue-on-error: true
+        run: |
+          cd packages/servicenow-mcp
+          VERSION="${{ steps.version.outputs.version }}"
+          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" package.json
+          bun run script/build-for-publish.ts
+          test -f dist/index.js || { echo "build produced no dist/index.js — aborting publish"; exit 1; }
+          NPM_TAG="${{ steps.channel.outputs.npm_tag }}"
+          echo "Publishing @serac-labs/servicenow-mcp@$VERSION with tag: $NPM_TAG (OIDC, signed provenance)"
+          if [ "$NPM_TAG" = "latest" ]; then
+            npm publish --access public --provenance
+          else
+            npm publish --access public --tag "$NPM_TAG" --provenance
+          fi
+
       - name: Bump source pkg.json for next publish
         # The "Get version" step publishes source verbatim. To make the
         # *next* push publish a new version (and not 403 with "version

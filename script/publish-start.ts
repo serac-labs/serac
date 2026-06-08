@@ -74,8 +74,10 @@ await import(`../packages/sdk/js/script/publish.ts`)
 console.log("\n=== plugin ===\n")
 await import(`../packages/plugin/script/publish.ts`)
 
-console.log("\n=== servicenow-mcp ===\n")
-await import(`../packages/servicenow-mcp/script/publish.ts`)
+// NOTE: @serac-labs/servicenow-mcp is published separately via OIDC
+// (signed provenance) in .github/workflows/publish-npm.yml, not here —
+// see that workflow's "Publish @serac-labs/servicenow-mcp to npm (OIDC)"
+// step. Its version is still bumped by the glob loop above.
 
 const dir = new URL("..", import.meta.url).pathname
 process.chdir(dir)
