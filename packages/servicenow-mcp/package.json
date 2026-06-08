@@ -30,7 +30,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.26.0",
-    "axios": "1.13.5",
+    "axios": "1.16.0",
     "dotenv": "17.2.3",
     "form-data": "4.0.5",
     "hono": "4.12.12",
