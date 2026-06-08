@@ -12,7 +12,7 @@ on:
     branches:
       - main
     paths:
-      - "packages/opencode/src/servicenow/servicenow-mcp-unified/tools/**"
+      - "packages/servicenow-mcp/src/servicenow-mcp-unified/tools/**"
       - "packages/opencode/script/generate-tools-json.ts"
       - ".github/workflows/generate-tools-json.yml"
   workflow_dispatch:

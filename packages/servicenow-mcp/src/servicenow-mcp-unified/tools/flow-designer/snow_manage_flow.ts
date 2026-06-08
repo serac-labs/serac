@@ -1478,7 +1478,7 @@ async function buildActionInputsForInsert(
       }
       // Set displayValue for valid table
       if (tblCheck.tableLabel) {
-        tblInput.displayValue = { schemaless: false, schemalessValue: "", value: tblCheck.tableLabel }
+        tblInput.displayValue = { value: tblCheck.tableLabel }
       }
     }
   }
@@ -2861,6 +2861,7 @@ async function addActionViaGraphQL(
   resolvedOrder?: number
   steps?: any
   error?: string
+  valid_table_options?: string[]
 }> {
   const steps: any = {}
 

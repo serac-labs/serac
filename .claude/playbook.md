@@ -13,7 +13,7 @@ All paths are relative to the repo root. The package that holds the core CLI/TUI
 ### Where it lives
 
 ```
-packages/opencode/src/servicenow/servicenow-mcp-unified/
+packages/servicenow-mcp/src/servicenow-mcp-unified/
 ├── tools/
 │   └── <domain>/
 │       ├── snow_your_tool.ts        # ← new file
@@ -28,7 +28,7 @@ Existing domains include: `operations/`, `deployment/`, `cmdb/`, `knowledge/`, `
 
 ### Existing example to read before you write
 
-`packages/opencode/src/servicenow/servicenow-mcp-unified/tools/automation/snow_execute_script.ts`
+`packages/servicenow-mcp/src/servicenow-mcp-unified/tools/automation/snow_execute_script.ts`
 
 It demonstrates: shared types import, `toolDefinition` export with all metadata fields, `execute` async function, `getAuthenticatedClient(context)` usage, `createSuccessResult`/`createErrorResult`, ES5 validation of script input (ServiceNow runs Rhino), and the SnowFlowError wrapping pattern. Read the first 150 lines; you don't need the specific Rhino bits unless your tool executes scripts.
 
@@ -96,7 +96,7 @@ The main `tools/index.ts` already does `export * from "./<domain>/index.js"` for
 
 ### Tests
 
-- Type check: `cd packages/opencode && bun typecheck` — uses `tsgo`, not `tsc`. Note that `src/servicenow/**/*` is excluded from the main typecheck (see `tsconfig.servicenow.json`), but `tsgo` will still surface obvious import errors.
+- Type check: ServiceNow tools now live in their own package — run `cd packages/servicenow-mcp && bun typecheck` (uses `tsgo`). For opencode itself: `cd packages/opencode && bun typecheck`.
 - Smoke: `bun dev serve` and make sure the server boots without complaining about your new tool.
 - If you added unit tests: `cd packages/opencode && bun test path/to/test`
 

@@ -3,7 +3,7 @@
  * Generate tools.json — a single, self-describing manifest of every
  * public ServiceNow MCP tool defined in this package.
  *
- * Walks `src/servicenow/servicenow-mcp-unified/tools/`, dynamic-imports
+ * Walks `packages/servicenow-mcp/src/servicenow-mcp-unified/tools/`, dynamic-imports
  * each .ts tool file, reads the exported `toolDefinition`, and writes
  * `packages/opencode/tools.json` grouped by subcategory.
  *
@@ -18,7 +18,7 @@ import { join, basename, dirname } from "path"
 import { fileURLToPath } from "url"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const TOOLS_DIR = join(HERE, "..", "src", "servicenow", "servicenow-mcp-unified", "tools")
+const TOOLS_DIR = join(HERE, "..", "..", "servicenow-mcp", "src", "servicenow-mcp-unified", "tools")
 const OUT_PATH = join(HERE, "..", "tools.json")
 
 interface ToolEntry {
@@ -40,7 +40,10 @@ async function walk(dir: string): Promise<string[]> {
   for (const entry of await readdir(dir, { withFileTypes: true })) {
     const path = join(dir, entry.name)
     if (entry.isDirectory()) {
-      if (entry.name === "__tests__") continue
+      // Skip non-tool helper dirs. These hold dev/CI scripts (not tool
+      // definitions) and some run top-level `process.exit(...)` at import,
+      // which would otherwise abort this whole generator when swept in.
+      if (entry.name === "__tests__" || entry.name === "__harness__" || entry.name === "contract") continue
       out.push(...(await walk(path)))
     } else if (entry.isFile() && path.endsWith(".ts") && entry.name !== "index.ts") {
       out.push(path)

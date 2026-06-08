@@ -41,7 +41,7 @@ Most contributions land in `packages/opencode/`. See `.claude/playbook.md` for t
 
 ## Auto-generated artifacts (do not hand-edit)
 
-- **`packages/opencode/tools.json`** — manifest of every public ServiceNow MCP tool (name, description, subcategory, permission, deprecated flag). Consumed by `docs.serac.build` to render the Complete Tool Reference table. Regenerated automatically by `.github/workflows/generate-tools-json.yml` on every push to `main` whenever `packages/opencode/src/servicenow/servicenow-mcp-unified/tools/**` changes; the workflow runs `bun packages/opencode/script/generate-tools-json.ts` and commits the result with `[skip ci]`. Run locally with the same command if you want to preview before pushing.
+- **`packages/opencode/tools.json`** — manifest of every public ServiceNow MCP tool (name, description, subcategory, permission, deprecated flag). Consumed by `docs.serac.build` to render the Complete Tool Reference table. Regenerated automatically by `.github/workflows/generate-tools-json.yml` on every push to `main` whenever `packages/servicenow-mcp/src/servicenow-mcp-unified/tools/**` changes; the workflow runs `bun packages/opencode/script/generate-tools-json.ts` and commits the result with `[skip ci]`. Run locally with the same command if you want to preview before pushing.
 
   When you add/edit/remove a tool: change only the `.ts` file in `tools/`. Don't edit `tools.json` directly — your edit will be overwritten on the next workflow run, and the description there is authoritative-by-source-of-truth, not authoritative-by-edit.
 

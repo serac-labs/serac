@@ -16,10 +16,10 @@
  *      it couldn't be deployed).
  */
 
-import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types"
-import { getAuthenticatedClient } from "../../shared/auth"
-import { createSuccessResult, createErrorResult } from "../../shared/error-handler"
-import { ensureEndpointDiagnosed, resetEndpointCache } from "../../shared/scripted-exec"
+import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { getAuthenticatedClient } from "../../shared/auth.js"
+import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
+import { ensureEndpointDiagnosed, resetEndpointCache } from "../../shared/scripted-exec.js"
 
 const ENDPOINT_SERVICE_ID = "snow_flow_exec"
 

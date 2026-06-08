@@ -12,8 +12,8 @@ on:
     branches:
       - main
     paths:
-      - 'packages/opencode/src/servicenow/servicenow-mcp-unified/**'
-      - 'packages/opencode/Dockerfile.mcp-http'
+      - 'packages/servicenow-mcp/src/servicenow-mcp-unified/**'
+      - 'packages/servicenow-mcp/Dockerfile.mcp-http'
       - '.github/workflows/publish-mcp-http-image.yml'
   workflow_dispatch:
     inputs:
@@ -49,8 +49,8 @@ jobs:
       - name: Build + push
         uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
         with:
-          context: packages/opencode
-          file: packages/opencode/Dockerfile.mcp-http
+          context: packages/servicenow-mcp
+          file: packages/servicenow-mcp/Dockerfile.mcp-http
           push: true
           tags: |
             ghcr.io/serac-labs/serac-mcp-http:${{ github.event.inputs.tag || 'latest' }}

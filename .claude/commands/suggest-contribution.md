@@ -17,7 +17,7 @@ Optional `$ARGUMENTS`: a focus area like `servicenow`, `skills`, `docs`, `bug`, 
       - If `$ARGUMENTS` specifies a focus area, bias the selection toward issues that match it.
 
    b. **Missing ServiceNow tool coverage** — if focus is `servicenow` or empty:
-      - List `packages/opencode/src/servicenow/servicenow-mcp-unified/tools/` to see existing domains.
+      - List `packages/servicenow-mcp/src/servicenow-mcp-unified/tools/` to see existing domains.
       - Pick 1–2 domains and list files in them. Look for notable *gaps*: obvious CRUD operations that are missing (e.g. a domain has `create` and `get` but no `update` or `delete`), or common ServiceNow endpoints that aren't wrapped yet. Be concrete. Don't invent gaps.
       - Cross-reference with the unified server README (`servicenow-mcp-unified/README.md`) section "Tool Count by Category" to sanity-check coverage.
 
@@ -52,7 +52,7 @@ Optional `$ARGUMENTS`: a focus area like `servicenow`, `skills`, `docs`, `bug`, 
 ## Cross-references
 
 - `.claude/playbook.md` — contribution types
-- `packages/opencode/src/servicenow/servicenow-mcp-unified/README.md` — tool domain structure and count
+- `packages/servicenow-mcp/src/servicenow-mcp-unified/README.md` — tool domain structure and count
 - `CONTRIBUTING.md` — Issue-First Policy and the Type 3 design review rule
 
 ## Output format

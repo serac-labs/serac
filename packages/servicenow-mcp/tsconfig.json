@@ -11,10 +11,7 @@
     "skipLibCheck": true,
     "types": ["bun-types"],
     "noUncheckedIndexedAccess": false,
-    "customConditions": ["browser"],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    "customConditions": ["browser"]
   },
-  "include": ["src/servicenow/**/*"]
+  "include": ["src/**/*"]
 }

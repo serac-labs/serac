@@ -17,9 +17,9 @@
  * session-level gate is also enforced.
  */
 
-import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types"
-import { createSuccessResult, createErrorResult } from "../../shared/error-handler"
-import { executeServerScript } from "../../shared/scripted-exec"
+import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
+import { executeServerScript } from "../../shared/scripted-exec.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_elevate_role",

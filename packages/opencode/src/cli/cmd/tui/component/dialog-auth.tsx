@@ -10,7 +10,7 @@ import * as fs from "fs/promises"
 import {
   generateEnterpriseInstructions,
   generateStakeholderDocumentation,
-} from "../../../../servicenow/cli/enterprise-docs-generator.js"
+} from "@serac-labs/servicenow-mcp/cli/enterprise-docs-generator"
 import { isRemoteEnvironment } from "@/auth/servicenow-oauth"
 import { Clipboard } from "@tui/util/clipboard"
 import { tryOpenBrowser } from "@tui/util/browser"

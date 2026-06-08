@@ -17,8 +17,8 @@ import * as fs from "fs/promises"
 import * as path from "path"
 import * as crypto from "node:crypto"
 import * as os from "node:os"
-import { seracHomePath } from "./serac-home"
-import { ServiceNowContext, OAuthTokenResponse, EnterpriseLicense } from "./types"
+import { seracHomePath } from "./serac-home.js"
+import { ServiceNowContext, OAuthTokenResponse, EnterpriseLicense } from "./types.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 
 /**
@@ -82,37 +82,9 @@ export class ServiceNowAuthManager {
    * Load and validate enterprise license (from enterprise package if available)
    */
   private loadEnterpriseLicense(): void {
-    try {
-      // Try to load enterprise features (only available in enterprise edition)
-      let loadLicenseFromEnv: any
-
-      try {
-        // Attempt to import from enterprise package
-        loadLicenseFromEnv = require("../../../../enterprise/src/auth/enterprise-validator").loadLicenseFromEnv
-      } catch (err) {
-        // Enterprise package not installed - use community license
-        mcpDebug("[Auth] Enterprise features not available, using community tier")
-        ;(this as any)._enterpriseLicense = this.getCommunityLicense()
-        return
-      }
-
-      const license: EnterpriseLicense = loadLicenseFromEnv()
-
-      mcpDebug("[Auth] Enterprise License:", {
-        tier: license.tier,
-        company: license.companyName || "N/A",
-        theme: license.theme,
-        features: license.features.length,
-        expiresAt: license.expiresAt?.toISOString() || "N/A",
-      })
-
-      // Store license for context enrichment
-      ;(this as any)._enterpriseLicense = license
-    } catch (error: any) {
-      mcpDebug("[Auth] Failed to load enterprise license:", error.message)
-      // Fallback to community license
-      ;(this as any)._enterpriseLicense = this.getCommunityLicense()
-    }
+    // Enterprise license enrichment is provided by the host (opencode) at runtime,
+    // not by this standalone package. Default to community tier.
+    ;(this as any)._enterpriseLicense = this.getCommunityLicense()
   }
 
   /**
