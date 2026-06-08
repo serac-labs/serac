@@ -1,0 +1,53 @@
+# MCP HTTP Server image
+# ---------------------------------------------------------------------------
+# Builds a Bun-based container that serves the ServiceNow unified MCP
+# catalog over streamable HTTP. Ships with a generic HTTP-callback resolver
+# so tenant credential resolution stays in the deployment that owns the
+# tenant DB (see transports/http-resolver.ts + http-entry.ts).
+#
+# Env at runtime:
+#   MCP_RESOLVER_URL   — full URL of the downstream resolver endpoint
+#   MCP_INTERNAL_TOKEN — shared secret (X-Internal-Auth)
+#   MCP_HTTP_PORT      — listen port, default 8082
+#
+# Build (from repo root):
+#   docker build -f packages/servicenow-mcp/Dockerfile.mcp-http -t serac-mcp-http packages/servicenow-mcp
+#
+# Or use `.github/workflows/publish-mcp-http-image.yml` which pushes to
+# ghcr.io/serac-labs/serac-mcp-http:latest.
+
+FROM oven/bun:1.3 AS builder
+
+WORKDIR /app
+
+# bun.lockb is at the repo root in this monorepo, but the opencode package
+# has its own package.json with all the deps needed for the MCP server.
+COPY package.json ./
+COPY bunfig.toml ./bunfig.toml
+COPY tsconfig.json ./
+
+# Install only what the MCP server + its tool catalog needs.
+# `--ignore-scripts` skips snow-flow's own postinstall (which sets up the
+# CLI bin shim — not needed for the MCP-server runtime and the script file
+# isn't copied into this build stage).
+RUN bun install --production --ignore-scripts
+
+COPY src/ ./src/
+
+FROM oven/bun:1.3
+
+WORKDIR /app
+COPY --from=builder /app /app
+
+# Non-root for the runtime stage. bun base image ships a `bun` user (uid 1000).
+USER bun
+
+ENV MCP_HTTP_PORT=8082
+EXPOSE 8082
+
+# Health endpoint lives on /health — docker-compose healthcheck probes it.
+# bun is already in the image; wget is not, so we use bun's built-in fetch.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD bun -e "fetch('http://localhost:' + (process.env.MCP_HTTP_PORT || '8082') + '/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))" || exit 1
+
+CMD ["bun", "run", "src/servicenow-mcp-unified/transports/http-entry.ts"]
