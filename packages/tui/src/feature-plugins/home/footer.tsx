@@ -51,6 +51,36 @@ function Mcp(props: { api: TuiPluginApi }) {
   )
 }
 
+// Derive the connected ServiceNow instance from the resolved config: the
+// servicenow plugin injects config.mcp.servicenow (a local MCP server) with
+// the stored instance URL in environment.SERVICENOW_INSTANCE_URL. Show only
+// the first host label (dev380262 from https://dev380262.service-now.com),
+// matching the old fork's footer indicator.
+function ServiceNow(props: { api: TuiPluginApi }) {
+  const theme = () => props.api.theme.current
+  const instance = createMemo(() => {
+    const server = props.api.state.config.mcp?.["servicenow"]
+    if (!server || !("type" in server) || server.type !== "local") return
+    const url = server.environment?.["SERVICENOW_INSTANCE_URL"]
+    if (!url) return
+    const match = url.match(/https?:\/\/([^.]+)/)
+    return match?.[1]
+  })
+
+  return (
+    <Show when={instance()}>
+      {(value) => (
+        <box gap={1} flexDirection="row" flexShrink={0}>
+          <text fg={theme().text}>
+            <span style={{ fg: theme().success }}>SN</span> {value()}
+          </text>
+          <text fg={theme().textMuted}>/instance</text>
+        </box>
+      )}
+    </Show>
+  )
+}
+
 function Version(props: { api: TuiPluginApi }) {
   const theme = () => props.api.theme.current
 
@@ -75,6 +105,7 @@ function View(props: { api: TuiPluginApi }) {
     >
       <Directory api={props.api} />
       <Mcp api={props.api} />
+      <ServiceNow api={props.api} />
       <box flexGrow={1} />
       <Version api={props.api} />
     </box>
