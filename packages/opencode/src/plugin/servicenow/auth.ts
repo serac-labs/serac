@@ -4,8 +4,31 @@ import { fileURLToPath } from "url"
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import * as Log from "@opencode-ai/core/util/log"
 import { Global } from "@opencode-ai/core/global"
+import { AGENTS_TEMPLATE } from "./agents-template"
 
 const log = Log.create({ service: "plugin.servicenow" })
+
+// Serac's baked-in agent doctrine (identity, MCP discovery, the Two Hard
+// Rules, REVIEWER/INSTANCE/SKILLS conventions, anti-patterns). Composed at
+// build time from ./agent-fragments via the Bun text loader, so the content
+// is embedded in the compiled binary. Written to a stable on-disk file the
+// first time the config hook runs; config.instructions then points at it so
+// 1.16's instruction mechanism injects it into every session's system prompt.
+const DOCTRINE_FILE = path.join(Global.Path.data, "serac-agents.md")
+
+function ensureDoctrineFile(): string | undefined {
+  try {
+    const current = fs.existsSync(DOCTRINE_FILE) ? fs.readFileSync(DOCTRINE_FILE, "utf8") : undefined
+    if (current !== AGENTS_TEMPLATE) {
+      fs.mkdirSync(path.dirname(DOCTRINE_FILE), { recursive: true })
+      fs.writeFileSync(DOCTRINE_FILE, AGENTS_TEMPLATE)
+    }
+    return DOCTRINE_FILE
+  } catch (error) {
+    log.warn("failed to write serac agent doctrine", { error })
+    return undefined
+  }
+}
 
 // Read the creds stored by the auth method above (an "api" auth record with a
 // metadata string-map) straight from auth.json — the config hook runs early, so
@@ -206,6 +229,7 @@ export async function ServiceNowAuthPlugin(_input: PluginInput): Promise<Hooks> 
       const target = config as {
         mcp?: Record<string, unknown>
         skills?: { paths?: string[] }
+        instructions?: string[]
       }
 
       const here = path.dirname(fileURLToPath(import.meta.url))
@@ -213,6 +237,15 @@ export async function ServiceNowAuthPlugin(_input: PluginInput): Promise<Hooks> 
       target.skills ??= {}
       target.skills.paths ??= []
       if (!target.skills.paths.includes(skillsDir)) target.skills.paths.push(skillsDir)
+
+      // Inject Serac's agent doctrine as an instruction file so it lands in
+      // every session's system prompt (the 1.16 equivalent of the old fork
+      // composing it into a generated AGENTS.md).
+      const doctrine = ensureDoctrineFile()
+      if (doctrine) {
+        target.instructions ??= []
+        if (!target.instructions.includes(doctrine)) target.instructions.push(doctrine)
+      }
 
       target.mcp ??= {}
       if (!target.mcp["servicenow"]) {

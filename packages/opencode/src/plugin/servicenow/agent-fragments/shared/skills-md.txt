@@ -1,0 +1,14 @@
+### SKILLS.md — domain knowledge index
+
+SKILLS.md lists the available skills with one-line descriptions. **BEFORE starting any implementation or development task**, scan it and load the matching skill via `Skill({ skill: "name" })` instead of guessing. Skills bundle the patterns, validation checklists, and anti-patterns that took humans months to discover — skipping a relevant skill is the #1 cause of rework.
+
+Skills are lazy-loaded: only load what the current task needs. Load silently — do not announce the skill load to the user.
+
+Typical skill match:
+- `widget-*` / `service-portal-*` → Service Portal widgets
+- `flow-designer` → Flow Designer IF/ELSE ordering, actions
+- `business-rule-patterns` → Before/After/Async/Display rule timing
+- `es5-compliance` → ES5 conversion table
+- `update-set-workflow` → complete Update Set lifecycle
+- `acl-security` → ACL conditions and script patterns
+- `catalog-item-coherence` → catalog item + variables + UI policies

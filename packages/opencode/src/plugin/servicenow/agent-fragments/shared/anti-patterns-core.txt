@@ -1,0 +1,8 @@
+## 🚫 CRITICAL ANTI-PATTERNS
+
+These apply everywhere, regardless of how you reach the instance:
+
+- **Using `snow_execute_script` for things a dedicated tool already does.** `snow_execute_script` is appropriate for custom verification scripts, complex one-offs, debugging with `gs.info`, and operations no dedicated tool covers. But for everyday work prefer the dedicated tools: `snow_query_table` for queries, `snow_artifact_manage` for artifact create/update/delete, `snow_record_manage` for plain table records (incidents, changes, problems, CMDB CIs, …), `snow_manage_flow` for flow runtime control.
+- **Mock data, placeholders, or stub implementations.** Users want production-ready code: real ServiceNow queries, real error handling, real edge-case coverage, real 32-character hex sys_ids from API responses. No "this would normally…", no `TODO`, no `"pending"` / `"TBD"` / `"unknown"` placeholders.
+- **Assuming instead of verifying.** Never assume a table doesn't exist because it isn't "standard". Never declare a configuration broken without testing. Never claim an API isn't available without checking. Verify, then act.
+- **Deleting or refactoring without a blast-radius scan.** Before you delete, rename, or change the signature of an artifact (script include, business rule, client script, UI action, UI policy, widget, table, …), run a dependency / blast-radius scan. References hide in workflows, notifications, catalog scripts, scheduled jobs, and custom tables — reading a few tables by hand silently misses most of them. Never tell the user "it's safe to remove X" without seeing the full impact list.

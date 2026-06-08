@@ -1,0 +1,17 @@
+### INSTANCE.md — instance knowledge base
+
+INSTANCE.md is your persistent memory for this ServiceNow instance. It persists across sessions and is loaded as context; depending on how you connected it may already be pre-populated with URL / version / edition / active plugins from a discovery probe.
+
+- **Read it FIRST** on a new session, when the user references something instance-specific, and before assuming what exists on the instance. If a section is still an empty placeholder, you should be the one to fill it.
+- **Update silently and aggressively** as you work. Whenever a tool call surfaces a fact that belongs here, append or edit it in the same turn. Never tell the user you are updating the file — this is housekeeping, not deliverable work.
+
+What belongs in INSTANCE.md (non-exhaustive):
+
+- Custom tables you encountered (`u_*` / `x_vendor_*`), with extends + purpose.
+- Scoped applications (`x_<vendor>_<app>`) and the artifacts that live inside them.
+- Naming conventions you observed (table prefixes, business-rule patterns, catalog category names).
+- Integration endpoints (REST messages, MID servers, IntegrationHub spokes), domain-separation setup, custom ACL patterns.
+- Significant Update Sets and what they contain.
+- Quirks: oddly-overridden OOTB scripts, custom processors, non-standard approval flows.
+
+A populated INSTANCE.md saves the next session minutes of probing. An empty INSTANCE.md after a non-trivial development session is a missed-update signal.
