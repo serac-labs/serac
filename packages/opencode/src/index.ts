@@ -32,6 +32,7 @@ import { DbCommand } from "./cli/cmd/db"
 import { errorMessage } from "./util/error"
 import { PluginCommand } from "./cli/cmd/plug"
 import { ServiceNowCommand } from "./cli/cmd/servicenow"
+import { ServiceNowMcpStdioCommand } from "./cli/cmd/x-servicenow-mcp"
 import { Heap } from "./cli/heap"
 import { ensureProcessMetadata } from "@opencode-ai/core/util/opencode-process"
 import { isRecord } from "@/util/record"
@@ -136,6 +137,7 @@ const cli = yargs(args)
   .command(SessionCommand)
   .command(PluginCommand)
   .command(ServiceNowCommand)
+  .command(ServiceNowMcpStdioCommand)
   .command(DbCommand)
   .fail((msg, err) => {
     if (

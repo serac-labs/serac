@@ -1,6 +1,6 @@
 import path from "path"
 import fs from "fs"
-import { fileURLToPath } from "url"
+import { BUNDLED_SKILLS } from "./bundled-skills-data"
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import * as Log from "@opencode-ai/core/util/log"
 import { Global } from "@opencode-ai/core/global"
@@ -28,6 +28,41 @@ function ensureDoctrineFile(): string | undefined {
     log.warn("failed to write serac agent doctrine", { error })
     return undefined
   }
+}
+
+const SKILLS_DIR = path.join(Global.Path.data, "serac-skills")
+
+// Write the 55 embedded bundled skills to disk and return the dir for
+// config.skills.paths. They're embedded (bundled-skills-data.ts) so they
+// survive into the `bun compile` binary, where a source filesystem dir does
+// not. A fingerprint file avoids rewriting on every startup.
+function ensureSkillsDir(): string | undefined {
+  try {
+    const entries = Object.entries(BUNDLED_SKILLS)
+    const fingerprint = `${entries.length}:${entries.reduce((n, [, v]) => n + v.length, 0)}`
+    const versionFile = path.join(SKILLS_DIR, ".serac-version")
+    const current = fs.existsSync(versionFile) ? fs.readFileSync(versionFile, "utf8") : undefined
+    if (current !== fingerprint) {
+      for (const [rel, content] of entries) {
+        const dest = path.join(SKILLS_DIR, rel)
+        fs.mkdirSync(path.dirname(dest), { recursive: true })
+        fs.writeFileSync(dest, content)
+      }
+      fs.writeFileSync(versionFile, fingerprint)
+    }
+    return SKILLS_DIR
+  } catch (error) {
+    log.warn("failed to write bundled skills", { error })
+    return undefined
+  }
+}
+
+// True when running as a bun-compiled single-file binary (execPath is the serac
+// binary, not the bun/node runtime) — used to pick how the bundled MCP server
+// is launched.
+function isCompiledBinary(): boolean {
+  const base = path.basename(process.execPath)
+  return base !== "bun" && base !== "node"
 }
 
 // Read the creds stored by the auth method above (an "api" auth record with a
@@ -232,11 +267,12 @@ export async function ServiceNowAuthPlugin(_input: PluginInput): Promise<Hooks> 
         instructions?: string[]
       }
 
-      const here = path.dirname(fileURLToPath(import.meta.url))
-      const skillsDir = path.join(here, "..", "..", "bundled-skills")
-      target.skills ??= {}
-      target.skills.paths ??= []
-      if (!target.skills.paths.includes(skillsDir)) target.skills.paths.push(skillsDir)
+      const skillsDir = ensureSkillsDir()
+      if (skillsDir) {
+        target.skills ??= {}
+        target.skills.paths ??= []
+        if (!target.skills.paths.includes(skillsDir)) target.skills.paths.push(skillsDir)
+      }
 
       // Inject Serac's agent doctrine as an instruction file so it lands in
       // every session's system prompt (the 1.16 equivalent of the old fork
@@ -258,7 +294,7 @@ export async function ServiceNowAuthPlugin(_input: PluginInput): Promise<Hooks> 
         if (creds?.password) environment["SERVICENOW_PASSWORD"] = creds.password
         target.mcp["servicenow"] = {
           type: "local",
-          command: ["servicenow-mcp-stdio"],
+          command: isCompiledBinary() ? [process.execPath, "x-servicenow-mcp"] : ["servicenow-mcp-stdio"],
           environment,
           enabled: true,
         }
