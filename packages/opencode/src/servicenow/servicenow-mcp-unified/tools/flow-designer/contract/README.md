@@ -43,8 +43,13 @@ Introspection requires the `graphql_schema_admin` role on the requesting user.
 
 ## Intended use
 
-- **Drift detection**: re-introspect after a ServiceNow upgrade and diff against
-  this snapshot to catch breaking changes to `snFlowDesigner` before they
-  silently break flow authoring/publishing.
+- **Drift detection** — `drift-check.ts` re-introspects the live schema and diffs
+  it against this fixture, so a ServiceNow upgrade that changes `snFlowDesigner`
+  is caught before it silently breaks flow authoring/publishing:
+  ```bash
+  SN_INSTANCE=… SN_CLIENT_ID=… SN_CLIENT_SECRET=… bun run drift-check.ts
+  ```
+  Needs introspection enabled (see above); exits non-zero on drift. It's a
+  maintenance tool (introspection is slow), not a CI gate.
 - **Field reference**: the source of truth for which fields each
   `flow(flowPatch)` element accepts when extending `snow_manage_flow.ts`.
