@@ -35,6 +35,37 @@ interface TelemetryPingPayload {
   timestamp: number
   exitReason?: "normal" | "error" | "interrupt"
   exitErrorMessage?: string
+  // Aggregate, content-free signals (end pings only): how many tool calls
+  // ran per category, and which LLM provider family the session used.
+  toolCounts?: Record<string, number>
+  provider?: string
+}
+
+// Categorise a tool by name without sending the name itself: builtin coding
+// tools vs the ServiceNow/Serac product tools vs any other MCP tool.
+const BUILTIN_TOOLS = new Set([
+  "Read",
+  "Write",
+  "Edit",
+  "Bash",
+  "Glob",
+  "Grep",
+  "Task",
+  "WebFetch",
+  "WebSearch",
+  "Skill",
+  "TodoRead",
+  "TodoWrite",
+  "NotebookEdit",
+  "AskUserQuestion",
+  "EnterPlanMode",
+  "ExitPlanMode",
+])
+
+function toolCategory(tool: string): "builtin" | "servicenow" | "mcp" {
+  if (BUILTIN_TOOLS.has(tool)) return "builtin"
+  if (/^(snow|serac)_/i.test(tool)) return "servicenow"
+  return "mcp"
 }
 
 function isDisabled(): boolean {
@@ -142,21 +173,30 @@ export namespace AnonymousTelemetry {
       let exitErrorMessage: string | undefined
       let configDisabled = false
       let endPingSent = false
+      let provider: string | undefined
+      const toolCounts: Record<string, number> = {}
       const startTime = Date.now()
       const sessionId = crypto.randomUUID()
       const installMethod = detectInstallMethod()
 
       const unsubs = [
         Bus.subscribe(MessageV2.Event.Updated, (event) => {
-          if (event.properties.info.role === "user") messageCount++
+          const info = event.properties.info
+          if (info.role === "user") messageCount++
+          // Capture the LLM provider family (e.g. "anthropic", "openai",
+          // "github-copilot", "ollama") — no model, no key, no content.
+          else if (info.role === "assistant" && info.providerID) provider = info.providerID
+        }),
+        Bus.subscribe(MessageV2.Event.PartUpdated, (event) => {
+          const part = event.properties.part
+          if (part.type !== "tool") return
+          if (part.state.status !== "completed" && part.state.status !== "error") return
+          const category = toolCategory(part.tool)
+          toolCounts[category] = (toolCounts[category] || 0) + 1
         }),
       ]
 
-      const flushEndPing = async (
-        reason?: "normal" | "error" | "interrupt",
-        errorMessage?: string,
-        options?: { persist?: boolean },
-      ) => {
+      const flushEndPing = async (reason?: "normal" | "error" | "interrupt", errorMessage?: string) => {
         if (configDisabled || endPingSent) return
         if (reason) exitReason = reason
         if (errorMessage) exitErrorMessage = errorMessage.slice(0, 500)
@@ -170,10 +210,15 @@ export namespace AnonymousTelemetry {
           sessionDurationSec: Math.round((Date.now() - startTime) / 1000),
           messageCount,
           timestamp: Date.now(),
+          ...(Object.keys(toolCounts).length > 0 ? { toolCounts } : {}),
+          ...(provider ? { provider } : {}),
         }
 
-        if (options?.persist) writePendingEndPing(payload)
-
+        // Always persist before sending: process exit (even a normal one) can
+        // tear down the event loop before the 3s fetch resolves, which is why
+        // ~2/3 of sessions historically never delivered an end ping. The next
+        // launch's flushPendingEndPing() retries; we clear only on success.
+        writePendingEndPing(payload)
         const sent = await sendPing(payload)
         if (sent) clearPendingEndPing()
       }
@@ -184,11 +229,11 @@ export namespace AnonymousTelemetry {
         if (err instanceof Error) exitErrorMessage = `${err.name}: ${err.message}`.slice(0, 500)
         else if (typeof err === "string") exitErrorMessage = err.slice(0, 500)
         else exitErrorMessage = String(err).slice(0, 500)
-        void flushEndPing("error", exitErrorMessage, { persist: true })
+        void flushEndPing("error", exitErrorMessage)
       }
       const onInterrupt = () => {
         exitReason = "interrupt"
-        void flushEndPing("interrupt", undefined, { persist: true })
+        void flushEndPing("interrupt", undefined)
       }
       process.on("uncaughtException", onError)
       process.on("unhandledRejection", onError)
