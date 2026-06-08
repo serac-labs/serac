@@ -42,7 +42,7 @@ async function token(): Promise<string> {
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({ grant_type: "client_credentials", client_id: CLIENT_ID!, client_secret: CLIENT_SECRET! }),
   })
-  const j = await res.json()
+  const j = (await res.json()) as { access_token?: string }
   if (!j.access_token) throw new Error("token failed: " + JSON.stringify(j).slice(0, 120))
   return j.access_token
 }
@@ -69,7 +69,7 @@ async function introspect(tok: string, name: string, tries = 3): Promise<any | n
         body: JSON.stringify({ query }),
         signal: AbortSignal.timeout(120000),
       })
-      const j = await res.json()
+      const j = (await res.json()) as { data?: any; errors?: any }
       const errs = JSON.stringify(j.errors || "")
       if (errs.toLowerCase().includes("introspection is disabled")) {
         console.error("Introspection is disabled on this instance — enable glide.graphql.introspection_enabled (see header).")
