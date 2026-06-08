@@ -5711,9 +5711,13 @@ async function createFlowViaProcessFlowAPI(
         protection: "",
         runAs: params.runAs || "user",
         runWithRoles: { value: "", displayValue: "" },
+        // sys_scope is resolved server-side from scopeName — leaving it empty
+        // (the old behaviour for the default app) created the flow with scope
+        // "None" instead of Global. Mirror what the Flow Designer UI sends for a
+        // Global flow: scope/scopeName = "global", scopeDisplayName = "Global".
         scope: params.scope || "global",
-        scopeDisplayName: "",
-        scopeName: params.scope && params.scope !== "global" ? params.scope : "",
+        scopeName: params.scope || "global",
+        scopeDisplayName: (params.scope || "global") === "global" ? "Global" : "",
         security: { can_read: true, can_write: true },
         status: "draft",
         type: params.isSubflow ? "subflow" : "flow",
