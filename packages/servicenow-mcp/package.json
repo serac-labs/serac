@@ -3,7 +3,7 @@
   "name": "@serac-labs/servicenow-mcp",
   "version": "0.1.0",
   "description": "Unified ServiceNow MCP server (~426 snow_* tools), blast-radius analysis, stdio + HTTP transports.",
-  "license": "Elastic-2.0",
+  "license": "Apache-2.0",
   "type": "module",
   "private": false,
   "files": ["dist"],
