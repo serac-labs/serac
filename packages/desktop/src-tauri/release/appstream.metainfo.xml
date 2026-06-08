@@ -3,7 +3,7 @@
   <id>dev.snow-flow.snow-code</id>
 
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>Elastic-2.0</project_license>
+  <project_license>Apache-2.0</project_license>
 
   <name>Serac</name>
   <summary>The autonomous ServiceNow development agent</summary>

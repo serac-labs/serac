@@ -14,17 +14,12 @@
         "aarch64-darwin"
         "x86_64-darwin"
       ];
-      # serac's own packages (snow-code, snow-code-desktop) carry the
-      # Elastic-2.0 license, which nixpkgs classifies as unfree — so the
-      # default legacyPackages refuse to evaluate them ("has an unfree
-      # license, refusing to evaluate"). Import nixpkgs per-system with a
-      # SCOPED allowUnfreePredicate that permits only our own packages,
-      # rather than blanket-allowing unfree across the whole package set.
+      # serac's own packages (snow-code, snow-code-desktop) are licensed
+      # under Apache-2.0, which nixpkgs treats as a free license, so a plain
+      # nixpkgs import evaluates them without any allowUnfree handling.
       forEachSystem = f: nixpkgs.lib.genAttrs systems (
         system: f (import nixpkgs {
           inherit system;
-          config.allowUnfreePredicate =
-            pkg: builtins.elem (nixpkgs.lib.getName pkg) [ "snow-code" "snow-code-desktop" ];
         })
       );
       rev = self.shortRev or self.dirtyShortRev or "dirty";

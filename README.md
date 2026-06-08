@@ -9,10 +9,10 @@
 </pre>
 </p>
 
-<h3 align="center">The autonomous ServiceNow development agent.</h3>
+<h3 align="center">The terminal-native AI agent for ServiceNow developers and consultants.</h3>
 
 <p align="center">
-  AI-powered &bull; Multi-agent &bull; Multi-provider &bull; 200+ MCP tools
+  Your terminal &bull; your keys (BYOK, 20+ providers) &bull; every instance &bull; 429 ServiceNow MCP tools
 </p>
 
 <p align="center">
@@ -20,7 +20,7 @@
   <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="Downloads" src="https://img.shields.io/npm/dw/@serac-labs/core?style=for-the-badge&logo=npm&logoColor=white&label=downloads&color=CB3837" /></a>&nbsp;
   <a href="https://github.com/serac-labs/serac/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/serac-labs/serac?style=for-the-badge&logo=github&color=yellow" /></a>&nbsp;
   <a href="https://github.com/serac-labs/serac"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" /></a>&nbsp;
-  <a href="https://github.com/serac-labs/serac/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Elastic--2.0-blue?style=for-the-badge" /></a>
+  <a href="https://github.com/serac-labs/serac/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge" /></a>
 </p>
 
 <p align="center">
@@ -43,7 +43,7 @@
 
 <br>
 
-Serac is an AI-powered, multi-agent development framework built specifically for **ServiceNow**. It combines a powerful terminal UI with 200+ ServiceNow MCP tools, 55 bundled domain skills, and support for 20+ AI providers to give you an autonomous coding agent that understands your ServiceNow instance.
+Serac is a terminal-native AI development agent purpose-built for **ServiceNow**. It brings 429 ServiceNow MCP tools, 55 bundled domain skills (including Blast Radius impact analysis), and 20+ AI providers into your own terminal — your editor, your keys (BYOK), and any instance you connect to. It's built for ServiceNow developers and the consultants who work across many client instances. Serac extends the open-source [opencode](https://github.com/anomalyco/opencode) agent with a deep ServiceNow domain layer.
 
 <br>
 
@@ -52,7 +52,7 @@ Serac is an AI-powered, multi-agent development framework built specifically for
 <td width="33%" valign="top">
 
 **ServiceNow-Native**<br>
-<sub>200+ MCP tools and 55 domain skills (including Blast Radius impact analysis) purpose-built for ServiceNow development, deployment, and automation.</sub>
+<sub>429 MCP tools and 55 domain skills (including Blast Radius impact analysis) purpose-built for ServiceNow development, deployment, and automation.</sub>
 
 </td>
 <td width="33%" valign="top">
@@ -84,7 +84,7 @@ Serac is an AI-powered, multi-agent development framework built specifically for
 <td width="33%" valign="top">
 
 **Open Source**<br>
-<sub>Elastic License 2.0. Fully transparent. Community-driven.</sub>
+<sub>Apache License 2.0. Fully transparent. Built on opencode.</sub>
 
 </td>
 </tr>
@@ -225,7 +225,7 @@ Custom agents can be configured in `serac.jsonc` with per-agent model selection,
 
 ## ServiceNow MCP Integration
 
-The core of Serac — **200+ MCP tools** purpose-built for ServiceNow.
+The core of Serac — **429 MCP tools** purpose-built for ServiceNow.
 
 <table>
 <tr>
@@ -448,8 +448,8 @@ Serac is an autonomous ServiceNow development agent. It connects AI models to yo
 
 Serac is purpose-built for ServiceNow:
 
-- **Open source** — Elastic License 2.0, fully transparent
-- **ServiceNow-native** — 200+ MCP tools and 55 domain skills (including Blast Radius impact analysis) designed for ServiceNow
+- **Open source** — Apache License 2.0, fully transparent (built on the MIT-licensed [opencode](https://github.com/anomalyco/opencode))
+- **ServiceNow-native** — 429 MCP tools and 55 domain skills (including Blast Radius impact analysis) designed for ServiceNow
 - **Provider-agnostic** — Works with 20+ AI providers, not locked to one vendor
 - **Built-in LSP** — Language server support for intelligent code assistance
 - **Terminal-first** — A TUI built by terminal enthusiasts with SolidJS + opentui
@@ -470,7 +470,7 @@ Yes. Serac supports 20+ providers out of the box. Configure your preferred provi
 <summary><b>Does this work with my existing ServiceNow instance?</b></summary>
 <br>
 
-Yes. Serac connects to any ServiceNow instance via OAuth2 or basic authentication. Configure your instance URL and credentials in the MCP server configuration, and Serac will have access to all 200+ ServiceNow tools.
+Yes. Serac connects to any ServiceNow instance via OAuth2 or basic authentication. Configure your instance URL and credentials in the MCP server configuration, and Serac will have access to all 429 ServiceNow tools.
 
 </details>
 
@@ -484,7 +484,7 @@ Serac is an independent, open-source project and is **not affiliated with, endor
 
 This tool requires a valid ServiceNow subscription and uses your own credentials to interact with your ServiceNow instance. Some features (including Flow Designer automation) use undocumented ServiceNow APIs that may change without notice.
 
-Licensed under [Elastic License 2.0](LICENSE).
+Licensed under the [Apache License 2.0](LICENSE) — see also [`NOTICE`](NOTICE) for third-party attributions (built on the MIT-licensed [opencode](https://github.com/anomalyco/opencode)).
 
 ---
 

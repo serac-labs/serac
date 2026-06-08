@@ -19,7 +19,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:report": "playwright show-report e2e/playwright-report"
   },
-  "license": "Elastic-2.0",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@happy-dom/global-registrator": "20.0.11",
     "@playwright/test": "1.57.0",

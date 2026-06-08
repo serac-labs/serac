@@ -3,7 +3,7 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
-  "license": "Elastic-2.0",
+  "license": "Apache-2.0",
   "devDependencies": {
     "@types/bun": "catalog:"
   },

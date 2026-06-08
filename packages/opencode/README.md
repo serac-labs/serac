@@ -15,7 +15,7 @@
 
 <p align="center">
   <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" /></a>&nbsp;
-  <a href="https://github.com/serac-labs/serac/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Elastic--2.0-blue?style=for-the-badge" /></a>
+  <a href="https://github.com/serac-labs/serac/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge" /></a>
 </p>
 
 ---
@@ -261,4 +261,4 @@ Glob patterns, per-agent rulesets, and env file protection included.
 
 ## License
 
-MIT — see [LICENSE](https://github.com/serac-labs/serac/blob/main/LICENSE).
+Apache 2.0 — see [LICENSE](https://github.com/serac-labs/serac/blob/main/LICENSE) and [NOTICE](https://github.com/serac-labs/serac/blob/main/NOTICE). Built on the MIT-licensed [opencode](https://github.com/anomalyco/opencode) project.
