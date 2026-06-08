@@ -1,7 +1,33 @@
+import path from "path"
+import fs from "fs"
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import * as Log from "@opencode-ai/core/util/log"
+import { Global } from "@opencode-ai/core/global"
 
 const log = Log.create({ service: "plugin.servicenow" })
+
+// Read the creds stored by the auth method above (an "api" auth record with a
+// metadata string-map) straight from auth.json — the config hook runs early, so
+// we avoid the Effect-based Auth service and read the file directly.
+function readStoredServiceNowCreds():
+  | { instance?: string; clientId?: string; clientSecret?: string; username?: string; password?: string }
+  | undefined {
+  try {
+    const raw =
+      process.env["OPENCODE_AUTH_CONTENT"] ?? fs.readFileSync(path.join(Global.Path.data, "auth.json"), "utf8")
+    const data = JSON.parse(raw) as Record<string, { type?: string; key?: string; metadata?: Record<string, string> }>
+    const entry = data["servicenow"]
+    if (!entry || entry.type !== "api" || !entry.metadata) return undefined
+    const m = entry.metadata
+    if (m["authType"] === "basic" && entry.key) {
+      const [username, password] = Buffer.from(entry.key, "base64").toString("utf8").split(":")
+      return { instance: m["instance"], username, password }
+    }
+    return { instance: m["instance"], clientId: m["clientId"], clientSecret: m["clientSecret"] }
+  } catch {
+    return undefined
+  }
+}
 
 // ServiceNow auth as a bundled AuthHook plugin. Ported from the previous fork's
 // servicenow-oauth.ts (PKCE + oauth_auth.do/oauth_token.do) and dialog-auth.tsx
@@ -167,6 +193,31 @@ export async function ServiceNowAuthPlugin(_input: PluginInput): Promise<Hooks> 
           },
         },
       ],
+    },
+    // Bundle the servicenow-mcp stdio server so its tools are available out of
+    // the box, wired with the creds collected by the auth methods above. The
+    // env var names match what the package reads (SERVICENOW_INSTANCE_URL /
+    // _CLIENT_ID / _CLIENT_SECRET, or _USERNAME / _PASSWORD for basic).
+    // NEEDS RUNTIME VERIFICATION: the stdio bin command/PATH resolution in a
+    // packaged build, and that a plugin config hook mutating config.mcp is
+    // honored by MCP discovery.
+    config: async (config) => {
+      const target = config as { mcp?: Record<string, unknown> }
+      target.mcp ??= {}
+      if (target.mcp["servicenow"]) return
+      const creds = readStoredServiceNowCreds()
+      const environment: Record<string, string> = {}
+      if (creds?.instance) environment["SERVICENOW_INSTANCE_URL"] = creds.instance
+      if (creds?.clientId) environment["SERVICENOW_CLIENT_ID"] = creds.clientId
+      if (creds?.clientSecret) environment["SERVICENOW_CLIENT_SECRET"] = creds.clientSecret
+      if (creds?.username) environment["SERVICENOW_USERNAME"] = creds.username
+      if (creds?.password) environment["SERVICENOW_PASSWORD"] = creds.password
+      target.mcp["servicenow"] = {
+        type: "local",
+        command: ["servicenow-mcp-stdio"],
+        environment,
+        enabled: true,
+      }
     },
   }
 }
