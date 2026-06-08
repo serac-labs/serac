@@ -465,7 +465,7 @@ export default function Download() {
                 </a>{" "}
                 under the{" "}
                 <a href={`${config.github.repoUrl}?tab=License-1-ov-file#readme`} target="_blank">
-                  Elastic License 2.0
+                  Apache License 2.0
                 </a>
                 , meaning anyone can use, modify, or contribute to its development. Anyone from the community can file
                 issues, submit pull requests, and extend functionality.

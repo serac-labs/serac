@@ -2,7 +2,7 @@
   "name": "@opencode-ai/ui",
   "version": "1.1.36",
   "type": "module",
-  "license": "Elastic-2.0",
+  "license": "Apache-2.0",
   "exports": {
     "./*": "./src/components/*.tsx",
     "./i18n/*": "./src/i18n/*.ts",

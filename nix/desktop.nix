@@ -93,7 +93,7 @@ rustPlatform.buildRustPackage (finalAttrs: {
   meta = {
     description = "Serac Desktop App";
     homepage = "https://serac.build";
-    license = lib.licenses.elastic20;
+    license = lib.licenses.asl20;
     mainProgram = "snow-code-desktop";
     inherit (snow-code.meta) platforms;
   };
