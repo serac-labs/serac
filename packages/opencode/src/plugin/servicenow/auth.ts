@@ -1,5 +1,6 @@
 import path from "path"
 import fs from "fs"
+import { fileURLToPath } from "url"
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import * as Log from "@opencode-ai/core/util/log"
 import { Global } from "@opencode-ai/core/global"
@@ -194,29 +195,40 @@ export async function ServiceNowAuthPlugin(_input: PluginInput): Promise<Hooks> 
         },
       ],
     },
-    // Bundle the servicenow-mcp stdio server so its tools are available out of
-    // the box, wired with the creds collected by the auth methods above. The
-    // env var names match what the package reads (SERVICENOW_INSTANCE_URL /
-    // _CLIENT_ID / _CLIENT_SECRET, or _USERNAME / _PASSWORD for basic).
-    // NEEDS RUNTIME VERIFICATION: the stdio bin command/PATH resolution in a
-    // packaged build, and that a plugin config hook mutating config.mcp is
-    // honored by MCP discovery.
+    // Wire the bundled Serac customizations into the resolved config:
+    //  - the 55 bundled skills (ported from the old fork) via a skills path
+    //  - the servicenow-mcp stdio server, with creds collected by the auth
+    //    methods above (env names match what the package reads)
+    // NEEDS RUNTIME VERIFICATION: bundled-skills/stdio-bin path resolution in a
+    // packaged build, and that a plugin config hook is honored by skill + MCP
+    // discovery.
     config: async (config) => {
-      const target = config as { mcp?: Record<string, unknown> }
+      const target = config as {
+        mcp?: Record<string, unknown>
+        skills?: { paths?: string[] }
+      }
+
+      const here = path.dirname(fileURLToPath(import.meta.url))
+      const skillsDir = path.join(here, "..", "..", "bundled-skills")
+      target.skills ??= {}
+      target.skills.paths ??= []
+      if (!target.skills.paths.includes(skillsDir)) target.skills.paths.push(skillsDir)
+
       target.mcp ??= {}
-      if (target.mcp["servicenow"]) return
-      const creds = readStoredServiceNowCreds()
-      const environment: Record<string, string> = {}
-      if (creds?.instance) environment["SERVICENOW_INSTANCE_URL"] = creds.instance
-      if (creds?.clientId) environment["SERVICENOW_CLIENT_ID"] = creds.clientId
-      if (creds?.clientSecret) environment["SERVICENOW_CLIENT_SECRET"] = creds.clientSecret
-      if (creds?.username) environment["SERVICENOW_USERNAME"] = creds.username
-      if (creds?.password) environment["SERVICENOW_PASSWORD"] = creds.password
-      target.mcp["servicenow"] = {
-        type: "local",
-        command: ["servicenow-mcp-stdio"],
-        environment,
-        enabled: true,
+      if (!target.mcp["servicenow"]) {
+        const creds = readStoredServiceNowCreds()
+        const environment: Record<string, string> = {}
+        if (creds?.instance) environment["SERVICENOW_INSTANCE_URL"] = creds.instance
+        if (creds?.clientId) environment["SERVICENOW_CLIENT_ID"] = creds.clientId
+        if (creds?.clientSecret) environment["SERVICENOW_CLIENT_SECRET"] = creds.clientSecret
+        if (creds?.username) environment["SERVICENOW_USERNAME"] = creds.username
+        if (creds?.password) environment["SERVICENOW_PASSWORD"] = creds.password
+        target.mcp["servicenow"] = {
+          type: "local",
+          command: ["servicenow-mcp-stdio"],
+          environment,
+          enabled: true,
+        }
       }
     },
   }
