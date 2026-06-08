@@ -14,7 +14,7 @@
  */
 
 import { AxiosError } from "axios"
-import { RetryConfig, ServiceNowError, ToolResult } from "./types"
+import { RetryConfig, ServiceNowError, ToolResult } from "./types.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 
 /**

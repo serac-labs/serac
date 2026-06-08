@@ -11,7 +11,7 @@ Six slash commands that map to the concrete work a Serac contributor actually do
 | `/setup` | First-time bootstrap: verify Bun, install deps, run a smoke check, orient you in the monorepo |
 | `/pick-issue <number>` | Fetch a GitHub issue via `gh`, read the relevant code, propose an approach — and wait for your OK before changing anything |
 | `/suggest-contribution` | Proactively identify gaps (open `help wanted` / `good first issue` labels, missing ServiceNow tool coverage, TODOs, docs holes) and propose 2–3 concrete contributions with impact estimates |
-| `/add-servicenow-tool <tool_name>` | Scaffold a new tool in `packages/opencode/src/servicenow/servicenow-mcp-unified/tools/<domain>/` following the existing pattern, wired up via the domain's `index.ts` |
+| `/add-servicenow-tool <tool_name>` | Scaffold a new tool in `packages/servicenow-mcp/src/servicenow-mcp-unified/tools/<domain>/` following the existing pattern, wired up via the domain's `index.ts` |
 | `/add-skill <slug>` | Scaffold a new bundled skill in `packages/opencode/src/bundled-skills/<slug>/SKILL.md` with the right frontmatter |
 | `/verify` | Run the *right* tests/typecheck for your diff (not the full suite — just what your change actually touched) |
 | `/open-pr` | Create a PR that follows [CONTRIBUTING.md](../CONTRIBUTING.md): conventional commit title, **short** body in your own words, `Fixes #N` link, screenshot reminder for UI changes |

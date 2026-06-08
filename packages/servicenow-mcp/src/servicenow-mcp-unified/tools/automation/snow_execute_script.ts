@@ -7,9 +7,9 @@
  * ES5 only! ServiceNow runs on Rhino engine.
  */
 
-import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types"
-import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler"
-import { executeServerScript } from "../../shared/scripted-exec"
+import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
+import { executeServerScript } from "../../shared/scripted-exec.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_execute_script",

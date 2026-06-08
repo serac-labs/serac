@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@serac-labs/servicenow-mcp",
+  "version": "0.1.0",
+  "description": "Unified ServiceNow MCP server (~426 snow_* tools), blast-radius analysis, stdio + HTTP transports.",
+  "license": "Elastic-2.0",
+  "type": "module",
+  "private": false,
+  "files": ["dist"],
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/servicenow-mcp-unified/shared/server-factory.ts",
+    "./http": "./src/servicenow-mcp-unified/transports/http.ts",
+    "./stdio": "./src/servicenow-mcp-unified/transports/stdio.ts",
+    "./blast-radius": "./src/servicenow-mcp-unified/tools/blast-radius/index.ts",
+    "./types": "./src/servicenow-mcp-unified/shared/types.ts",
+    "./auth": "./src/servicenow-mcp-unified/shared/auth.ts",
+    "./error-handler": "./src/servicenow-mcp-unified/shared/error-handler.ts",
+    "./serac-home": "./src/servicenow-mcp-unified/shared/serac-home.ts",
+    "./mcp-debug": "./src/shared/mcp-debug.ts",
+    "./cli/enterprise-docs-generator": "./src/cli/enterprise-docs-generator.ts"
+  },
+  "bin": {
+    "servicenow-mcp-stdio": "./src/servicenow-mcp-unified/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsgo --project tsconfig.json --noEmit",
+    "build": "tsc --project tsconfig.build.json",
+    "test": "bun test"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.26.0",
+    "axios": "1.13.5",
+    "dotenv": "17.2.3",
+    "form-data": "4.0.5",
+    "hono": "4.12.12",
+    "node-machine-id": "1.1.12",
+    "zod": "4.1.8"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29"
+  }
+}

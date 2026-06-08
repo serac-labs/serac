@@ -12,6 +12,5 @@
       "@/*": ["./src/*"],
       "@tui/*": ["./src/cli/cmd/tui/*"]
     }
-  },
-  "exclude": ["src/servicenow/**/*"]
+  }
 }

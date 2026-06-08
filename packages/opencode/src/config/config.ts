@@ -302,8 +302,8 @@ export namespace Config {
     const devRoot = packageRoot || path.resolve(__dirname, "../..")
 
     const devPaths: Record<string, string> = {
-      "servicenow-unified": path.join(devRoot, "src/servicenow/servicenow-mcp-unified/index.ts"),
-      "enterprise-proxy": path.join(devRoot, "src/servicenow/enterprise-proxy/server.ts"),
+      "servicenow-unified": path.join(devRoot, "..", "servicenow-mcp/src/servicenow-mcp-unified/index.ts"),
+      "enterprise-proxy": path.join(devRoot, "..", "servicenow-mcp/src/enterprise-proxy/server.ts"),
     }
 
     const serverPath = devPaths[serverName]

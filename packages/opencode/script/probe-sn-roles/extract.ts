@@ -1,6 +1,6 @@
 /**
  * Static analysis: extract (table, operation) primitives from every MCP tool
- * file in `src/servicenow/servicenow-mcp-unified/tools/`.
+ * file in `packages/servicenow-mcp/src/servicenow-mcp-unified/tools/`.
  *
  * Output shape per tool:
  *   { name, file, subcategory, calls: [{ method, table, endpoint }] }
@@ -15,7 +15,7 @@ import { join, dirname, basename } from "path"
 import { fileURLToPath } from "url"
 
 const HERE = dirname(fileURLToPath(import.meta.url))
-const TOOLS_DIR = join(HERE, "..", "..", "src", "servicenow", "servicenow-mcp-unified", "tools")
+const TOOLS_DIR = join(HERE, "..", "..", "..", "servicenow-mcp", "src", "servicenow-mcp-unified", "tools")
 
 export interface Call {
   method: "GET" | "POST" | "PATCH" | "PUT" | "DELETE"

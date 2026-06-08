@@ -11,8 +11,8 @@
 
 import { randomBytes } from "crypto"
 import type { AxiosInstance } from "axios"
-import type { ServiceNowContext } from "./types"
-import { getAuthenticatedClient } from "./auth"
+import type { ServiceNowContext } from "./types.js"
+import { getAuthenticatedClient } from "./auth.js"
 
 const ENDPOINT_SERVICE_ID = "snow_flow_exec"
 const ENDPOINT_PATH = "/execute"

@@ -74,6 +74,9 @@ await import(`../packages/sdk/js/script/publish.ts`)
 console.log("\n=== plugin ===\n")
 await import(`../packages/plugin/script/publish.ts`)
 
+console.log("\n=== servicenow-mcp ===\n")
+await import(`../packages/servicenow-mcp/script/publish.ts`)
+
 const dir = new URL("..", import.meta.url).pathname
 process.chdir(dir)
 

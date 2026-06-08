@@ -7,7 +7,6 @@
   "private": false,
   "scripts": {
     "typecheck": "tsgo --noEmit",
-    "typecheck:servicenow": "tsgo --project tsconfig.servicenow.json --noEmit",
     "test": "bun test",
     "build": "bun run script/build.ts",
     "dev": "bun run --conditions=browser ./src/index.ts",
@@ -46,6 +45,7 @@
     "zod-to-json-schema": "3.25.1"
   },
   "dependencies": {
+    "@serac-labs/servicenow-mcp": "workspace:*",
     "@actions/core": "1.11.1",
     "@actions/github": "6.0.1",
     "@agentclientprotocol/sdk": "0.12.0",

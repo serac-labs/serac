@@ -15,11 +15,11 @@
  *   - "disabled" is the actual column name for "Read only" in the UI
  */
 
-import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types"
-import { getAuthenticatedClient } from "../../shared/auth"
-import { createSuccessResult, createErrorResult } from "../../shared/error-handler"
-import { executeServerScript } from "../../shared/scripted-exec"
-import { linkUiPolicyReference, verifyUiPolicyLink } from "./link-ui-policy"
+import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { getAuthenticatedClient } from "../../shared/auth.js"
+import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
+import { executeServerScript } from "../../shared/scripted-exec.js"
+import { linkUiPolicyReference, verifyUiPolicyLink } from "./link-ui-policy.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_create_ui_policy_action",

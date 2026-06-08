@@ -18,7 +18,7 @@ import {
   ToolRegistryConfig,
   ToolValidationResult,
   ToolMetadata,
-} from "./types"
+} from "./types.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 
 // Static tool imports for bundled mode

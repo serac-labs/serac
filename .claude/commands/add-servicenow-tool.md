@@ -11,9 +11,9 @@ Scaffold a new ServiceNow MCP tool in the unified server, following the existing
 2. **Validate the tool name.**
    - Must start with `snow_`
    - Must be snake_case
-   - Must not already exist. Check with: `find packages/opencode/src/servicenow/servicenow-mcp-unified/tools -name "$TOOL_NAME.ts"` or Glob equivalent. If it exists, stop and tell the user.
+   - Must not already exist. Check with: `find packages/servicenow-mcp/src/servicenow-mcp-unified/tools -name "$TOOL_NAME.ts"` or Glob equivalent. If it exists, stop and tell the user.
 
-3. **Ask the user for the domain** if they didn't specify one in the issue or the tool name. Present the existing domains from `packages/opencode/src/servicenow/servicenow-mcp-unified/tools/` (directory listing) and ask which one fits. If none fit, ask whether a new domain should be created — but warn the user that new domains should typically be discussed in an issue first.
+3. **Ask the user for the domain** if they didn't specify one in the issue or the tool name. Present the existing domains from `packages/servicenow-mcp/src/servicenow-mcp-unified/tools/` (directory listing) and ask which one fits. If none fit, ask whether a new domain should be created — but warn the user that new domains should typically be discussed in an issue first.
 
 4. **Read the most similar existing tool in the target domain.** Not to copy, but to match the structure and any domain-specific conventions (some domains have shared helpers or patterns that aren't in the generic playbook).
 
@@ -27,7 +27,7 @@ Scaffold a new ServiceNow MCP tool in the unified server, following the existing
 
    Keep this short. Don't generate these values yourself — ask.
 
-6. **Scaffold the file** at `packages/opencode/src/servicenow/servicenow-mcp-unified/tools/<domain>/<tool_name>.ts` using the minimum template from `.claude/playbook.md`. Fill in the values the user gave you in step 5. Put a clear `// TODO: implement` comment in the body of `execute` and don't try to write the ServiceNow logic — that's the user's job.
+6. **Scaffold the file** at `packages/servicenow-mcp/src/servicenow-mcp-unified/tools/<domain>/<tool_name>.ts` using the minimum template from `.claude/playbook.md`. Fill in the values the user gave you in step 5. Put a clear `// TODO: implement` comment in the body of `execute` and don't try to write the ServiceNow logic — that's the user's job.
 
 7. **Register it** by adding `export * from "./<tool_name>.js"` to `tools/<domain>/index.ts` (alphabetical order if the file uses alphabetical order). Read the file first to check the sort order.
 
@@ -50,8 +50,8 @@ Scaffold a new ServiceNow MCP tool in the unified server, following the existing
 ## Cross-references
 
 - `.claude/playbook.md` — Type 1 section, has the file template
-- `packages/opencode/src/servicenow/servicenow-mcp-unified/README.md` — unified server architecture
-- `packages/opencode/src/servicenow/servicenow-mcp-unified/tools/automation/snow_execute_script.ts` — full working example
+- `packages/servicenow-mcp/src/servicenow-mcp-unified/README.md` — unified server architecture
+- `packages/servicenow-mcp/src/servicenow-mcp-unified/tools/automation/snow_execute_script.ts` — full working example
 
 ## Output format
 
@@ -59,8 +59,8 @@ Scaffold a new ServiceNow MCP tool in the unified server, following the existing
 Scaffolded snow_your_tool in <domain>/
 
 Files:
-  + packages/opencode/src/servicenow/servicenow-mcp-unified/tools/<domain>/snow_your_tool.ts
-  M packages/opencode/src/servicenow/servicenow-mcp-unified/tools/<domain>/index.ts
+  + packages/servicenow-mcp/src/servicenow-mcp-unified/tools/<domain>/snow_your_tool.ts
+  M packages/servicenow-mcp/src/servicenow-mcp-unified/tools/<domain>/index.ts
 
 TODOs for you to fill in:
   - execute() body — implement the ServiceNow logic
