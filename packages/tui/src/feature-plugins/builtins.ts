@@ -1,6 +1,7 @@
 import type { TuiPlugin, TuiPluginModule } from "@opencode-ai/plugin/tui"
 import HomeFooter from "./home/footer"
 import HomeTips from "./home/tips"
+import ServiceNowAuth from "./servicenow/auth"
 import SessionSwitcher from "./session"
 import SidebarContext from "./sidebar/context"
 import SidebarFiles from "./sidebar/files"
@@ -35,6 +36,7 @@ export function createBuiltinPlugins(options: {
     SidebarFooter,
     Notifications,
     PluginManager,
+    ServiceNowAuth,
     WhichKey,
     DiffViewer,
     ...(options.experimentalEventSystem ? [SessionV2Debug] : []),

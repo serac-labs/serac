@@ -83,6 +83,95 @@ export function normalizeCustomProviderID(value: string) {
   return providerID
 }
 
+type ProviderAuthContext = {
+  sync: ReturnType<typeof useSync>
+  dialog: ReturnType<typeof useDialog>
+  sdk: ReturnType<typeof useSDK>
+  toast: ReturnType<typeof useToast>
+}
+
+/**
+ * Drive the plugin AuthHook flow for a single provider: pick a method (when
+ * there is more than one), collect its prompts, then run the oauth/api flow and
+ * store the credential. Shared by the provider list ({@link DialogProvider}) and
+ * by feature-plugins that want to land directly on one provider (e.g. the
+ * ServiceNow `/auth` command) without it having to first appear in the provider
+ * list — which only happens for AuthHook providers after a credential exists.
+ */
+export async function runProviderAuth(ctx: ProviderAuthContext, providerID: string) {
+  const { sync, dialog, sdk, toast } = ctx
+  const methods = sync.data.provider_auth[providerID] ?? [
+    {
+      type: "api",
+      label: "API key",
+    },
+  ]
+  let index: number | null = 0
+  if (methods.length > 1) {
+    index = await new Promise<number | null>((resolve) => {
+      dialog.replace(
+        () => (
+          <DialogSelect
+            title="Select auth method"
+            options={methods.map((x, index) => ({
+              title: x.label,
+              value: index,
+            }))}
+            onSelect={(option) => resolve(option.value)}
+          />
+        ),
+        () => resolve(null),
+      )
+    })
+  }
+  if (index == null) return
+  const method = methods[index]
+  if (method.type === "oauth") {
+    let inputs: Record<string, string> | undefined
+    if (method.prompts?.length) {
+      const value = await PromptsMethod({
+        dialog,
+        prompts: method.prompts,
+      })
+      if (!value) return
+      inputs = value
+    }
+
+    const result = await sdk.client.provider.oauth.authorize({
+      providerID,
+      method: index,
+      inputs,
+    })
+    if (result.error) {
+      toast.show({
+        variant: "error",
+        message: JSON.stringify(result.error),
+      })
+      dialog.clear()
+      return
+    }
+    if (result.data?.method === "code") {
+      dialog.replace(() => (
+        <CodeMethod providerID={providerID} title={method.label} index={index} authorization={result.data!} />
+      ))
+    }
+    if (result.data?.method === "auto") {
+      dialog.replace(() => (
+        <AutoMethod providerID={providerID} title={method.label} index={index} authorization={result.data!} />
+      ))
+    }
+  }
+  if (method.type === "api") {
+    let metadata: Record<string, string> | undefined
+    if (method.prompts?.length) {
+      const value = await PromptsMethod({ dialog, prompts: method.prompts })
+      if (!value) return
+      metadata = value
+    }
+    return dialog.replace(() => <ApiMethod providerID={providerID} title={method.label} metadata={metadata} />)
+  }
+}
+
 export function createDialogProviderOptions() {
   const sync = useSync()
   const dialog = useDialog()
@@ -144,79 +233,7 @@ export function createDialogProviderOptions() {
           gutter: connected && onboarded() ? () => <text fg={theme.success}>✓</text> : undefined,
           async onSelect() {
             if (consoleManaged) return
-
-            const methods = sync.data.provider_auth[providerID] ?? [
-              {
-                type: "api",
-                label: "API key",
-              },
-            ]
-            let index: number | null = 0
-            if (methods.length > 1) {
-              index = await new Promise<number | null>((resolve) => {
-                dialog.replace(
-                  () => (
-                    <DialogSelect
-                      title="Select auth method"
-                      options={methods.map((x, index) => ({
-                        title: x.label,
-                        value: index,
-                      }))}
-                      onSelect={(option) => resolve(option.value)}
-                    />
-                  ),
-                  () => resolve(null),
-                )
-              })
-            }
-            if (index == null) return
-            const method = methods[index]
-            if (method.type === "oauth") {
-              let inputs: Record<string, string> | undefined
-              if (method.prompts?.length) {
-                const value = await PromptsMethod({
-                  dialog,
-                  prompts: method.prompts,
-                })
-                if (!value) return
-                inputs = value
-              }
-
-              const result = await sdk.client.provider.oauth.authorize({
-                providerID,
-                method: index,
-                inputs,
-              })
-              if (result.error) {
-                toast.show({
-                  variant: "error",
-                  message: JSON.stringify(result.error),
-                })
-                dialog.clear()
-                return
-              }
-              if (result.data?.method === "code") {
-                dialog.replace(() => (
-                  <CodeMethod providerID={providerID} title={method.label} index={index} authorization={result.data!} />
-                ))
-              }
-              if (result.data?.method === "auto") {
-                dialog.replace(() => (
-                  <AutoMethod providerID={providerID} title={method.label} index={index} authorization={result.data!} />
-                ))
-              }
-            }
-            if (method.type === "api") {
-              let metadata: Record<string, string> | undefined
-              if (method.prompts?.length) {
-                const value = await PromptsMethod({ dialog, prompts: method.prompts })
-                if (!value) return
-                metadata = value
-              }
-              return dialog.replace(() => (
-                <ApiMethod providerID={providerID} title={method.label} metadata={metadata} />
-              ))
-            }
+            return runProviderAuth({ sync, dialog, sdk, toast }, providerID)
           },
         }
       }),
