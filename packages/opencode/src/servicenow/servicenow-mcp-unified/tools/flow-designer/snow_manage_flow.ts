@@ -959,6 +959,47 @@ async function compileFlowSnapshot(client: any, flowId: string): Promise<string>
 }
 
 /**
+ * Add a user flow variable to an EXISTING flow via the GraphQL
+ * flow(flowPatch: { flowVariables: { insert } }) mutation — the same path the
+ * Flow Designer UI uses. This adds to the working copy WITHOUT publishing
+ * (unlike posting the def to /snapshot, which compiles and then ignores further
+ * appends), so multiple variables can be added before close_flow/publish.
+ *
+ * Flow `inputs` are trigger-derived and can't be added this way; this is for
+ * user `flowVariables`. Returns the new variable's sysId.
+ */
+async function addFlowVariable(
+  client: any,
+  flowId: string,
+  variable: { name: string; label?: string; type?: string; order?: number },
+): Promise<{ success: boolean; sysId?: string; error?: string }> {
+  try {
+    var vtype = variable.type || "string"
+    var vlabel = TYPE_LABELS[vtype] || vtype.charAt(0).toUpperCase() + vtype.slice(1)
+    var varObj = {
+      label: variable.label || variable.name,
+      name: variable.name,
+      type: vtype,
+      type_label: vlabel,
+      order: variable.order || 1,
+      mandatory: false,
+      readonly: false,
+      attributes: "sourceUiUniqueId=,sourceType=,sourceId=,uiUniqueId=" + generateUUID() + ",",
+      uiDisplayType: vtype,
+      uiDisplayTypeLabel: vlabel,
+    }
+    var result = await executeFlowPatchMutation(
+      client,
+      { flowId: flowId, flowVariables: { insert: [varObj] } },
+      "flowVariables { inserts { sysId uiUniqueIdentifier __typename } updates deletes __typename }",
+    )
+    return { success: true, sysId: result?.flowVariables?.inserts?.[0]?.sysId }
+  } catch (e: any) {
+    return { success: false, error: e?.message || String(e) }
+  }
+}
+
+/**
  * Ensure an editing lock exists for the given flow, re-acquiring if necessary.
  * Call this before every GraphQL element mutation.
  */
@@ -2812,6 +2853,7 @@ async function addActionViaGraphQL(
   order?: number,
   spoke?: string,
   annotation?: string,
+  displayText?: string,
 ): Promise<{
   success: boolean
   actionId?: string
@@ -3221,6 +3263,7 @@ async function addActionViaGraphQL(
           parentUiId: parentUiId || "",
           inputs: insertInputs,
           comment: annotation || "",
+          ...(displayText ? { displayText: displayText } : {}),
           ...(nestedCatchUuid ? { connectedTo: nestedCatchUuid } : {}),
         },
       ],
@@ -5822,6 +5865,7 @@ export const toolDefinition: MCPToolDefinition = {
           "add_subflow",
           "update_subflow",
           "delete_subflow",
+          "add_flow_variable",
           "add_stage",
           "update_stage",
           "delete_stage",
@@ -6047,6 +6091,25 @@ export const toolDefinition: MCPToolDefinition = {
         description:
           'Key-value pairs for action inputs (also accepted as "action_config", "action_field_values", "inputs", or "config"). Keys are fuzzy-matched to ServiceNow parameter element names — you can use short names like "to" instead of "ah_to", "subject" instead of "ah_subject", "table" instead of "table_name", "message" instead of "log_message". Use `next_order` from the previous response for sequential ordering. Example: {to: "admin@example.com", subject: "Alert", body: "Incident created"}',
       },
+      display_text: {
+        type: "string",
+        description:
+          'Optional custom label for an action step, shown on the Flow Designer canvas (for add_action). Defaults to the action type name when omitted. Example: "Log high priority".',
+      },
+      variable_name: {
+        type: "string",
+        description:
+          "Name of the user flow variable to add to an existing flow (for add_flow_variable). Flow inputs are trigger-derived and cannot be added this way.",
+      },
+      variable_label: {
+        type: "string",
+        description: "Display label for the flow variable (for add_flow_variable). Defaults to variable_name.",
+      },
+      variable_type: {
+        type: "string",
+        description:
+          "Type of the flow variable (for add_flow_variable): string, integer, boolean, reference, etc. Default: string.",
+      },
       update_fields: {
         type: "object",
         description: "Fields to update (for update action)",
@@ -6182,6 +6245,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     update_flow_logic: ["flow_id", "element_id"],
     delete_flow_logic: ["flow_id", "element_id"],
     add_subflow: ["flow_id", "subflow_id"],
+    add_flow_variable: ["flow_id", "variable_name"],
     update_subflow: ["flow_id", "element_id"],
     delete_subflow: ["flow_id", "element_id"],
     add_stage: ["flow_id", "stage_label", "stage_component_indexes"],
@@ -6236,6 +6300,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       "add_subflow",
       "update_subflow",
       "delete_subflow",
+      "add_flow_variable",
       "add_stage",
       "update_stage",
       "delete_stage",
@@ -7699,6 +7764,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
           args.order,
           args.spoke,
           args.annotation,
+          args.display_text,
         )
 
         var addActSummary = summary()
@@ -7934,6 +8000,48 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
             "' first, then retry."
         }
         return createErrorResult((addLogicResult.error || "Failed to add flow logic") + addLogicLockHint)
+      }
+
+      // ────────────────────────────────────────────────────────────────
+      // ADD_FLOW_VARIABLE — add a user flow variable to an existing flow
+      // ────────────────────────────────────────────────────────────────
+      case "add_flow_variable": {
+        var fvFlowId = await resolveFlowId(client, args.flow_id)
+        var fvLock = await ensureFlowEditingLock(client, fvFlowId)
+        if (!fvLock.success) {
+          return createErrorResult("Flow is not open for editing. Call open_flow first. " + (fvLock.warning || ""))
+        }
+        var fvResult = await addFlowVariable(client, fvFlowId, {
+          name: args.variable_name,
+          label: args.variable_label,
+          type: args.variable_type,
+          order: args.order,
+        })
+        if (!fvResult.success) {
+          return createErrorResult(
+            new SnowFlowError(ErrorType.UNKNOWN_ERROR, "Failed to add flow variable: " + (fvResult.error || ""), {
+              details: { flow_id: fvFlowId, variable: args.variable_name },
+            }),
+          )
+        }
+        return createSuccessResult(
+          withUpdateSetContext(
+            {
+              action: "add_flow_variable",
+              flow_id: fvFlowId,
+              name: args.variable_name,
+              sys_id: fvResult.sysId,
+              message: "Added flow variable '" + args.variable_name + "'",
+              reminder: "Call close_flow with flow_id='" + fvFlowId + "' when you are done editing.",
+            },
+            updateSetCtx,
+          ),
+          {},
+          summary()
+            .success("Added flow variable: " + args.variable_name)
+            .field("flow", fvFlowId)
+            .build(),
+        )
       }
 
       // ────────────────────────────────────────────────────────────────
