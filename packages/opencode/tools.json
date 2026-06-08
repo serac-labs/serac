@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-05-28T10:31:40.731Z",
+  "generatedAt": "2026-06-08T17:14:40.382Z",
   "count": 429,
   "groups": [
     {
@@ -10077,6 +10077,7 @@
                   "add_subflow",
                   "update_subflow",
                   "delete_subflow",
+                  "add_flow_variable",
                   "add_stage",
                   "update_stage",
                   "delete_stage",
@@ -10295,6 +10296,22 @@
               "action_inputs": {
                 "type": "object",
                 "description": "Key-value pairs for action inputs (also accepted as \"action_config\", \"action_field_values\", \"inputs\", or \"config\"). Keys are fuzzy-matched to ServiceNow parameter element names — you can use short names like \"to\" instead of \"ah_to\", \"subject\" instead of \"ah_subject\", \"table\" instead of \"table_name\", \"message\" instead of \"log_message\". Use `next_order` from the previous response for sequential ordering. Example: {to: \"admin@example.com\", subject: \"Alert\", body: \"Incident created\"}"
+              },
+              "display_text": {
+                "type": "string",
+                "description": "Optional custom label for an action step, shown on the Flow Designer canvas (for add_action). Defaults to the action type name when omitted. Example: \"Log high priority\"."
+              },
+              "variable_name": {
+                "type": "string",
+                "description": "Name of the user flow variable to add to an existing flow (for add_flow_variable). Flow inputs are trigger-derived and cannot be added this way."
+              },
+              "variable_label": {
+                "type": "string",
+                "description": "Display label for the flow variable (for add_flow_variable). Defaults to variable_name."
+              },
+              "variable_type": {
+                "type": "string",
+                "description": "Type of the flow variable (for add_flow_variable): string, integer, boolean, reference, etc. Default: string."
               },
               "update_fields": {
                 "type": "object",
