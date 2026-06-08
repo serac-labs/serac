@@ -3804,6 +3804,40 @@ function transformConditionToDataPills(conditionValue: string, dataPillBase: str
 }
 
 /**
+ * Walk a table's class hierarchy (table → super_class → …) so fields inherited
+ * from a parent table resolve. e.g. incident.priority is defined on `task`, so a
+ * sys_dictionary query restricted to `name=incident` misses it entirely and the
+ * field falls back to type "string" — which renders the condition value as a
+ * plain text box instead of the field's real (choice/reference) widget.
+ */
+async function getTableHierarchy(client: any, table: string): Promise<string[]> {
+  var chain: string[] = []
+  var name = table
+  for (var i = 0; i < 12 && name && chain.indexOf(name) < 0; i++) {
+    chain.push(name)
+    try {
+      var resp = await client.get("/api/now/table/sys_db_object", {
+        params: { sysparm_query: "name=" + name, sysparm_fields: "super_class.name", sysparm_limit: 1 },
+      })
+      name = str(resp.data.result?.[0]?.["super_class.name"]) || ""
+    } catch (_) {
+      break
+    }
+  }
+  return chain
+}
+
+/**
+ * Map a sys_dictionary row to the Flow Designer labelCache pill type. A field
+ * with a choice list (choice 1/2/3) renders as "choice" in the condition builder
+ * even when its internal_type is integer/string (e.g. task.priority is an integer
+ * with choices) — matching what the UI persists.
+ */
+function dictPillType(internalType: string, choice: string): string {
+  return choice && choice !== "0" && choice !== "false" ? "choice" : internalType || "string"
+}
+
+/**
  * Build labelCache INSERT entries for field-level data pills used in flow logic conditions.
  *
  * Returns an array of labelCache INSERT entries with full metadata, matching the UI's exact
@@ -3869,26 +3903,37 @@ async function buildConditionLabelCache(
     }
   }
 
-  // Batch-query sys_dictionary for simple field metadata (type, label, reference)
+  // Batch-query sys_dictionary for simple field metadata (type, label, reference).
+  // Query across the table's class hierarchy so inherited fields (e.g. priority/
+  // state on the `task` parent of incident) resolve instead of falling back to
+  // "string"; pick the most-derived definition when a field is overridden.
   var fieldMeta: Record<string, { type: string; label: string; reference: string }> = {}
   if (simpleFields.length > 0) {
     try {
+      var hierarchy = await getTableHierarchy(client, table)
       var dictResp = await client.get("/api/now/table/sys_dictionary", {
         params: {
-          sysparm_query: "name=" + table + "^elementIN" + simpleFields.join(","),
-          sysparm_fields: "element,column_label,internal_type,reference",
+          sysparm_query: "elementIN" + simpleFields.join(",") + "^nameIN" + hierarchy.join(","),
+          sysparm_fields: "name,element,column_label,internal_type,reference,choice",
           sysparm_display_value: "false",
-          sysparm_limit: simpleFields.length + 5,
+          sysparm_limit: simpleFields.length * hierarchy.length + 5,
         },
       })
       var dictResults = dictResp.data.result || []
+      var bestRank: Record<string, number> = {}
       for (var d = 0; d < dictResults.length; d++) {
         var rec = dictResults[d]
         var elName = str(rec.element)
+        if (!elName) continue
+        // Prefer the most-derived table's definition (lowest hierarchy index).
+        var rank = hierarchy.indexOf(str(rec.name))
+        if (rank < 0) rank = 999
+        if (elName in bestRank && bestRank[elName] <= rank) continue
+        bestRank[elName] = rank
         var intType = str(rec.internal_type?.value || rec.internal_type || "string")
-        var colLabel = str(rec.column_label)
+        var choiceVal = str(rec.choice?.value || rec.choice || "0")
         var refTable = str(rec.reference?.value || rec.reference || "")
-        if (elName) fieldMeta[elName] = { type: intType, label: colLabel, reference: refTable }
+        fieldMeta[elName] = { type: dictPillType(intType, choiceVal), label: str(rec.column_label), reference: refTable }
       }
     } catch (_) {
       // Fallback: use "string" type and generated labels if dictionary lookup fails
@@ -3938,23 +3983,33 @@ async function buildConditionLabelCache(
 
     for (var sg = 0; sg < segments.length; sg++) {
       var seg = segments[sg]
+      var titleSeg = seg.replace(/_/g, " ").replace(/\b\w/g, function (c: string) {
+        return c.toUpperCase()
+      })
       try {
+        // Query across the current table's class hierarchy so inherited segments resolve.
+        var segHierarchy = await getTableHierarchy(client, currentTbl)
         var segResp = await client.get("/api/now/table/sys_dictionary", {
           params: {
-            sysparm_query: "name=" + currentTbl + "^element=" + seg,
-            sysparm_fields: "element,column_label,internal_type,reference",
+            sysparm_query: "element=" + seg + "^nameIN" + segHierarchy.join(","),
+            sysparm_fields: "name,element,column_label,internal_type,reference,choice",
             sysparm_display_value: "false",
-            sysparm_limit: 1,
+            sysparm_limit: segHierarchy.length,
           },
         })
-        var segRec = segResp.data.result?.[0]
+        var segRows = segResp.data.result || []
+        segRows.sort(function (a: any, b: any) {
+          var ra = segHierarchy.indexOf(str(a.name))
+          var rb = segHierarchy.indexOf(str(b.name))
+          return (ra < 0 ? 999 : ra) - (rb < 0 ? 999 : rb)
+        })
+        var segRec = segRows[0]
         if (segRec) {
-          var segLabel =
-            str(segRec.column_label) ||
-            seg.replace(/_/g, " ").replace(/\b\w/g, function (c: string) {
-              return c.toUpperCase()
-            })
-          var segType = str(segRec.internal_type?.value || segRec.internal_type || "string")
+          var segLabel = str(segRec.column_label) || titleSeg
+          var segType = dictPillType(
+            str(segRec.internal_type?.value || segRec.internal_type || "string"),
+            str(segRec.choice?.value || segRec.choice || "0"),
+          )
           var segRef = str(segRec.reference?.value || segRec.reference || "")
           labelParts.push(segLabel)
           if (sg === segments.length - 1) {
@@ -3963,18 +4018,10 @@ async function buildConditionLabelCache(
             currentTbl = segRef
           }
         } else {
-          labelParts.push(
-            seg.replace(/_/g, " ").replace(/\b\w/g, function (c: string) {
-              return c.toUpperCase()
-            }),
-          )
+          labelParts.push(titleSeg)
         }
       } catch (_) {
-        labelParts.push(
-          seg.replace(/_/g, " ").replace(/\b\w/g, function (c: string) {
-            return c.toUpperCase()
-          }),
-        )
+        labelParts.push(titleSeg)
       }
     }
 
@@ -4647,8 +4694,12 @@ async function addFlowLogicViaGraphQL(
       return prefix + WORD_OP_MAP[wordOp]
     })
   }
+  // Value capture stops at the `^` clause separator (and whitespace) so that in a
+  // multi-clause condition like "current.priority=2^current.active=true" the first
+  // clause's value doesn't greedily swallow the rest — otherwise only the first
+  // field becomes a pill and later condition rows render with an empty field.
   var DOT_NOTATION_RE =
-    /((?:trigger\.)?current)\.(\w+)\s*(===?|!==?|>=|<=|>|<|=|LIKE|STARTSWITH|ENDSWITH|NOT LIKE|ISEMPTY|ISNOTEMPTY)\s*(?:'([^']*)'|"([^"]*)"|(\S*))/g
+    /((?:trigger\.)?current)\.(\w+)\s*(===?|!==?|>=|<=|>|<|=|LIKE|STARTSWITH|ENDSWITH|NOT LIKE|ISEMPTY|ISNOTEMPTY)\s*(?:'([^']*)'|"([^"]*)"|([^\s^]*))/g
   if (DOT_NOTATION_RE.test(dotProcessed)) {
     DOT_NOTATION_RE.lastIndex = 0
     rawCondition = dotProcessed.replace(
