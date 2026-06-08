@@ -252,6 +252,7 @@ async function deploySnowFlowLLMAPI(options: {
   restMessage?: string
   httpMethod?: string
   defaultModel?: string
+  midServer?: string
 }): Promise<{ success: boolean; error?: string; baseUri?: string }> {
   const { instanceUrl, headers } = options
 
@@ -265,6 +266,14 @@ SnowFlowLLMService.prototype = {
         var result = { success: false, response: '', error: '' };
         try {
             var r = new sn_ws.RESTMessageV2(restMessageName, httpMethodName);
+            // Force MID Server routing: setMIDServer takes the MID NAME (ecc_agent.name), not sys_id,
+            // and overrides any "Use MID Server" config on the REST Message record at runtime.
+            // skip_sensor avoids the Sensor business rule racing the response and returning a null body.
+            var midServer = gs.getProperty('snow_flow.llm.mid_server', '');
+            if (midServer) {
+                r.setMIDServer(midServer);
+                r.setEccParameter('skip_sensor', true);
+            }
             var requestBody = JSON.stringify({
                 model: modelName || gs.getProperty('snow_flow.llm.default_model', 'default'),
                 messages: [{ role: 'user', content: message }],
@@ -297,6 +306,14 @@ SnowFlowLLMService.prototype = {
         var result = { success: false, response: '', error: '' };
         try {
             var r = new sn_ws.RESTMessageV2(restMessageName, httpMethodName);
+            // Force MID Server routing: setMIDServer takes the MID NAME (ecc_agent.name), not sys_id,
+            // and overrides any "Use MID Server" config on the REST Message record at runtime.
+            // skip_sensor avoids the Sensor business rule racing the response and returning a null body.
+            var midServer = gs.getProperty('snow_flow.llm.mid_server', '');
+            if (midServer) {
+                r.setMIDServer(midServer);
+                r.setEccParameter('skip_sensor', true);
+            }
             var requestBody = JSON.stringify({
                 model: modelName || gs.getProperty('snow_flow.llm.default_model', 'default'),
                 messages: messages,
@@ -585,12 +602,23 @@ SnowFlowLLMService.prototype = {
       }
     }
 
-    // Set system properties
-    if (options.restMessage || options.httpMethod || options.defaultModel) {
+    // Set system properties (idempotent create-or-update by name).
+    // When a MID Server is selected we ALSO lift the instance-wide 30s ECC response cap
+    // (glide.http.outbound.max_timeout.enabled='false') and raise the ECC response timeout
+    // to 190s so long LLM completions can complete via the ECC queue.
+    if (options.restMessage || options.httpMethod || options.defaultModel || options.midServer) {
+      const midProps = options.midServer
+        ? [
+            { name: "snow_flow.llm.mid_server", value: options.midServer },
+            { name: "glide.http.outbound.max_timeout.enabled", value: "false" },
+            { name: "glide.rest.outbound.ecc_response.timeout", value: "190" },
+          ]
+        : []
       const properties = [
         { name: "snow_flow.llm.rest_message", value: options.restMessage || "" },
         { name: "snow_flow.llm.http_method", value: options.httpMethod || "Chat_Completions" },
         { name: "snow_flow.llm.default_model", value: options.defaultModel || "default" },
+        ...midProps,
       ]
 
       for (const prop of properties) {
@@ -619,6 +647,23 @@ SnowFlowLLMService.prototype = {
             }),
           })
         }
+      }
+    }
+
+    // No MID Server selected: clear any previously-forced routing so deploy turns it off.
+    // Leave the glide.* timeout properties untouched (do not re-enable the instance-wide cap).
+    if (!options.midServer) {
+      const clearCheckResponse = await fetch(
+        `${instanceUrl}/api/now/table/sys_properties?sysparm_query=name=snow_flow.llm.mid_server&sysparm_limit=1`,
+        { headers },
+      )
+      const clearCheckData = await clearCheckResponse.json()
+      if (clearCheckData.result && clearCheckData.result.length > 0) {
+        await fetch(`${instanceUrl}/api/now/table/sys_properties/${clearCheckData.result[0].sys_id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({ value: "" }),
+        })
       }
     }
 
@@ -1001,6 +1046,7 @@ export function DialogAuthServiceNowLLM() {
       restMessage: selectedEndpoint()?.name,
       httpMethod: selectedMethod(),
       defaultModel: selectedModel()?.id,
+      midServer: selectedMidServer(),
     })
 
     if (result.success) {
@@ -1061,6 +1107,7 @@ export function DialogAuthServiceNowLLM() {
       const effectiveContextWindow = model?.contextWindow || 32000
       const effectiveMaxTokens = model?.maxTokens || 4096
       const endpoint = selectedEndpoint()
+      const routeLabel = selectedMidServer() ? `via MID Server ${selectedMidServer()}` : "via ServiceNow"
 
       // Create friendly alias
       const modelAlias = createModelAlias(modelId)
@@ -1075,7 +1122,7 @@ export function DialogAuthServiceNowLLM() {
       if (useAlias) {
         modelsConfig[modelAlias] = {
           id: modelId,
-          name: `${modelId} (via MID Server)`,
+          name: `${modelId} (${routeLabel})`,
           tool_call: true,
           temperature: true,
           reasoning: false,
@@ -1086,7 +1133,7 @@ export function DialogAuthServiceNowLLM() {
         }
       }
       modelsConfig[modelId] = {
-        name: `${modelId} (via MID Server)`,
+        name: `${modelId} (${routeLabel})`,
         tool_call: true,
         temperature: true,
         reasoning: false,
@@ -1323,6 +1370,12 @@ export function DialogAuthServiceNowLLM() {
             </text>
             <text fg={theme.textMuted}>This creates a Scripted REST API with LLM endpoints on your instance</text>
           </box>
+          <Show when={selectedMidServer()}>
+            <text fg={theme.warning}>
+              Forcing via MID Server {selectedMidServer()} routes calls through the slower ECC queue and lifts the
+              instance-wide 30s outbound REST cap.
+            </text>
+          </Show>
           <box paddingTop={1} flexDirection="row" gap={3}>
             <text fg={theme.text}>[Y] Yes, deploy</text>
             <text fg={theme.textMuted}>[N] Skip deployment</text>
