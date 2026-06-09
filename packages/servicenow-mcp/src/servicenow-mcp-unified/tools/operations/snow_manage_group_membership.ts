@@ -5,7 +5,7 @@
  * and list group members. Handles user/group resolution (sys_id, username, email, group name).
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 
@@ -174,7 +174,7 @@ async function listGroupMembers(client: any, group: any, include_details: boolea
 
   if (include_details && memberships.length > 0) {
     // Get detailed user information for each member
-    var userSysIds = memberships.map(function (m) {
+    var userSysIds = memberships.map(function (m: any) {
       return m.user.value || m.user
     })
     var userQuery = `sys_idIN${userSysIds.join(",")}`
@@ -189,7 +189,7 @@ async function listGroupMembers(client: any, group: any, include_details: boolea
     var users = usersResponse.data.result || []
 
     // Create a map of user details
-    var userMap = {}
+    var userMap: Record<string, any> = {}
     for (var i = 0; i < users.length; i++) {
       userMap[users[i].sys_id] = users[i]
     }
@@ -271,7 +271,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 
     return createErrorResult(`Invalid action: ${action}. Must be add, remove, or list`)
   } catch (error) {
-    return createErrorResult(error.message)
+    return createErrorResult(error instanceof Error ? error.message : String(error))
   }
 }
 

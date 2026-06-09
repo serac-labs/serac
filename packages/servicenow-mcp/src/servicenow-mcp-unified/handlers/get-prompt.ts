@@ -4,7 +4,7 @@
 
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
-import { HandlerDeps } from "./types.js"
+import { type HandlerDeps } from "./types.js"
 
 export const getPrompt = (deps: HandlerDeps) => async (request: any) => {
   const { name, arguments: args } = request.params

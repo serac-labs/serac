@@ -13,7 +13,7 @@
  *     users (audit finding 1.3). Every call now reads `auth.json` fresh.
  */
 
-import { MCPToolDefinition, JWTPayload, UserRole, ToolPermission } from "./types.js"
+import { type MCPToolDefinition, type JWTPayload, type UserRole, type ToolPermission } from "./types.js"
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js"
 import * as fs from "fs"
 import * as path from "path"
@@ -134,7 +134,7 @@ function getDefaultPermission(tool: MCPToolDefinition): {
  *
  * @throws McpError if user doesn't have permission
  */
-export function validatePermission(tool: MCPToolDefinition, jwtPayload: JWTPayload | null): void {
+export function validatePermission(tool: MCPToolDefinition, jwtPayload: JWTPayload | null | undefined): void {
   // Extract user role
   const userRole = jwtPayload?.role || "developer" // Default to developer for backward compatibility
 
@@ -175,7 +175,7 @@ export function validatePermission(tool: MCPToolDefinition, jwtPayload: JWTPaylo
 /**
  * Filter tools based on user role (for ListTools handler)
  */
-export function filterToolsByRole(tools: MCPToolDefinition[], jwtPayload: JWTPayload | null): MCPToolDefinition[] {
+export function filterToolsByRole(tools: MCPToolDefinition[], jwtPayload: JWTPayload | null | undefined): MCPToolDefinition[] {
   const userRole = jwtPayload?.role || "developer"
 
   return tools.filter((tool) => {
@@ -201,7 +201,7 @@ export function getPermissionSummary(tool: MCPToolDefinition): string {
  * Anything above ~1e12 is ms (year 33658+ in seconds), anything below is seconds.
  * Normalize to ms before comparing so HTTP-signed tokens don't read as "always expired".
  */
-export function validateJWTExpiry(jwtPayload: JWTPayload | null): void {
+export function validateJWTExpiry(jwtPayload: JWTPayload | null | undefined): void {
   if (!jwtPayload) return // Skip validation if no JWT
   if (!jwtPayload.exp) return
 

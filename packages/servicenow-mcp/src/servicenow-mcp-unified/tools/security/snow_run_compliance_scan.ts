@@ -4,7 +4,7 @@
  * Executes compliance scans against specified frameworks (SOX, GDPR, HIPAA, PCI-DSS) to identify non-compliant configurations and security gaps.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 

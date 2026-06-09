@@ -5,7 +5,7 @@
  * optimize GlideRecord queries, and improve system responsiveness.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 
@@ -87,8 +87,9 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     // queryParts.push('sourceLIKEquery');
 
     // Time range filter
+    var sinceTimestamp = ""
     if (since) {
-      var sinceTimestamp = parseRelativeTime(since)
+      sinceTimestamp = parseRelativeTime(since)
       queryParts.push("sys_created_on>" + sinceTimestamp)
     }
 

@@ -10,7 +10,7 @@
  * not produce an artifact reference.
  */
 
-import { ToolResult, ServiceNowContext, MCPToolDefinition } from "./types.js"
+import { type ToolResult, type ServiceNowContext, type MCPToolDefinition } from "./types.js"
 import { loadEnterpriseAuth } from "./context-loader.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 

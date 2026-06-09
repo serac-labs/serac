@@ -12,13 +12,13 @@
  * - Connection pooling
  */
 
-import axios, { AxiosInstance, AxiosError } from "axios"
+import axios, { type AxiosInstance, AxiosError } from "axios"
 import * as fs from "fs/promises"
 import * as path from "path"
 import * as crypto from "node:crypto"
 import * as os from "node:os"
 import { seracHomePath } from "./serac-home.js"
-import { ServiceNowContext, OAuthTokenResponse, EnterpriseLicense } from "./types.js"
+import { type ServiceNowContext, type OAuthTokenResponse, type EnterpriseLicense } from "./types.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 
 /**

@@ -6332,8 +6332,9 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     }
   }
 
+  var client: any = undefined
   try {
-    var client = await getAuthenticatedClient(context)
+    client = await getAuthenticatedClient(context)
 
     // ── Update Set tracking (opt-in via ensure_update_set=true) ──
     var WRITE_ACTIONS = [

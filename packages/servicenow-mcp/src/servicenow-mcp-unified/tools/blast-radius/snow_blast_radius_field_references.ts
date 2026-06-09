@@ -21,11 +21,11 @@
  * erroring never kills the overall scan.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 import { analyzeScript, scriptReferencesField } from "./shared/script-analyzer.js"
-import { ARTIFACT_SPECS, ArtifactSearchSpec, ARTIFACT_TYPE_NAMES } from "./shared/metadata-tables.js"
+import { ARTIFACT_SPECS, type ArtifactSearchSpec, ARTIFACT_TYPE_NAMES } from "./shared/metadata-tables.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_blast_radius_field_references",

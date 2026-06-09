@@ -4,7 +4,7 @@
  * Returns status of locally synced artifacts including last sync time, changes, and coherence validation.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 import * as fs from "fs/promises"
 import * as path from "path"

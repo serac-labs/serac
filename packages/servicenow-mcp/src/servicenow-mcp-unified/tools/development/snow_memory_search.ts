@@ -4,7 +4,7 @@
  * Searches cached ServiceNow artifacts in local memory for instant results without API calls.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 import { promises as fs } from "fs"
 import { join } from "path"

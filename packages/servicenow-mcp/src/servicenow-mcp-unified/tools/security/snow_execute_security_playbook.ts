@@ -3,7 +3,7 @@
  * Execute automated security response playbook with orchestrated actions
  */
 
-import { MCPToolDefinition, ToolResult, ServiceNowContext } from "../../shared/types.js"
+import { type MCPToolDefinition, type ToolResult, type ServiceNowContext } from "../../shared/types.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_execute_security_playbook",

@@ -3,7 +3,7 @@
  * Generate real-time security operations dashboard with key metrics
  */
 
-import { MCPToolDefinition, ToolResult, ServiceNowContext } from "../../shared/types.js"
+import { type MCPToolDefinition, type ToolResult, type ServiceNowContext } from "../../shared/types.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_security_dashboard",

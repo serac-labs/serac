@@ -5,7 +5,7 @@
  * Handles const/let, arrow functions, template literals, destructuring, etc.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 
 export const toolDefinition: MCPToolDefinition = {
@@ -59,19 +59,19 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     let conversions: any[] = []
 
     // 1. Convert const/let to var
-    es5Code = es5Code.replace(/\b(const|let)\s+/g, (match, keyword) => {
+    es5Code = es5Code.replace(/\b(const|let)\s+/g, (match: string, keyword: string) => {
       conversions.push({ from: keyword, to: "var", type: "variable_declaration" })
       return "var "
     })
 
     // 2. Convert arrow functions
-    es5Code = es5Code.replace(/\(([^)]*)\)\s*=>\s*\{/g, (match, params) => {
+    es5Code = es5Code.replace(/\(([^)]*)\)\s*=>\s*\{/g, (match: string, params: string) => {
       conversions.push({ from: `(${params}) => {`, to: `function(${params}) {`, type: "arrow_function" })
       return `function(${params}) {`
     })
 
     // Single-line arrow functions
-    es5Code = es5Code.replace(/\(([^)]*)\)\s*=>\s*([^;{}\n]+)/g, (match, params, body) => {
+    es5Code = es5Code.replace(/\(([^)]*)\)\s*=>\s*([^;{}\n]+)/g, (match: string, params: string, body: string) => {
       conversions.push({
         from: `(${params}) => ${body}`,
         to: `function(${params}) { return ${body}; }`,
@@ -81,16 +81,16 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     })
 
     // 3. Convert template literals
-    es5Code = es5Code.replace(/`([^`]*)`/g, (match, content) => {
+    es5Code = es5Code.replace(/`([^`]*)`/g, (match: string, content: string) => {
       // Extract ${...} expressions
-      const withVars = content.replace(/\$\{([^}]+)\}/g, (m, expr) => `' + (${expr}) + '`)
+      const withVars = content.replace(/\$\{([^}]+)\}/g, (m: string, expr: string) => `' + (${expr}) + '`)
       const converted = `'${withVars}'`.replace(/'' \+ /g, "").replace(/ \+ ''/g, "")
       conversions.push({ from: match, to: converted, type: "template_literal" })
       return converted
     })
 
     // 4. Convert destructuring (simple cases)
-    es5Code = es5Code.replace(/(?:const|let|var)\s*\{([^}]+)\}\s*=\s*([^;]+);/g, (match, props, source) => {
+    es5Code = es5Code.replace(/(?:const|let|var)\s*\{([^}]+)\}\s*=\s*([^;]+);/g, (match: string, props: string, source: string) => {
       const properties = props.split(",").map((p: string) => p.trim())
       const assignments = properties.map((p: string) => `var ${p} = ${source}.${p};`).join("\n")
       conversions.push({ from: match, to: assignments, type: "destructuring" })
@@ -98,7 +98,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     })
 
     // 5. Convert for...of to traditional for loop
-    es5Code = es5Code.replace(/for\s*\(\s*(?:const|let|var)\s+(\w+)\s+of\s+([^)]+)\)/g, (match, variable, array) => {
+    es5Code = es5Code.replace(/for\s*\(\s*(?:const|let|var)\s+(\w+)\s+of\s+([^)]+)\)/g, (match: string, variable: string, array: string) => {
       const converted = `for (var __i = 0; __i < ${array}.length; __i++) {\nvar ${variable} = ${array}[__i];`
       conversions.push({ from: match, to: converted, type: "for_of_loop" })
       return converted

@@ -19,10 +19,10 @@ import fs from "fs"
 import path from "path"
 import os from "os"
 import {
-  EnterpriseToolCallRequest,
-  EnterpriseToolCallResponse,
-  EnterpriseToolListResponse,
-  EnterpriseTool,
+  type EnterpriseToolCallRequest,
+  type EnterpriseToolCallResponse,
+  type EnterpriseToolListResponse,
+  type EnterpriseTool,
 } from "./types.js"
 import { mcpDebug } from "../shared/mcp-debug.js"
 

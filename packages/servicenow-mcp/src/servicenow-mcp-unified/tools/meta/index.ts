@@ -18,7 +18,7 @@
  * @see https://www.anthropic.com/engineering/advanced-tool-use
  */
 
-import { MCPToolDefinition, ServiceNowContext } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext } from "../../shared/types.js"
 import { toolRegistry } from "../../shared/tool-registry.js"
 import { ToolSearch } from "../../shared/tool-search.js"
 

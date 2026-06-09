@@ -21,7 +21,7 @@ import { ToolSearch } from "../shared/tool-search.js"
 import { mcpDebug, mcpWarn } from "../../shared/mcp-debug.js"
 import { extractJWTPayload } from "../shared/permission-validator.js"
 import { createServer } from "../shared/server-factory.js"
-import { ServiceNowContext, RequestContext } from "../shared/types.js"
+import { type ServiceNowContext, type RequestContext } from "../shared/types.js"
 import {
   loadContext,
   loadEnterpriseAuth,
@@ -66,7 +66,7 @@ export const startStdio = async (): Promise<StdioHandle> => {
     // it would silently share state across future stdio users.
     return {
       sessionId,
-      jwtPayload,
+      jwtPayload: jwtPayload ?? undefined,
       serviceNow: { ...context, tenantId: "stdio" },
       origin: "stdio",
     }

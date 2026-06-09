@@ -7,7 +7,7 @@
  *           snow_json_to_xml, snow_xml_to_json
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 
 export const toolDefinition: MCPToolDefinition = {
@@ -87,7 +87,7 @@ async function executeCsvToJson(args: any, context: ServiceNowContext): Promise<
   const data = lines.slice(1).map((line: string) => {
     const values = line.split(delimiter)
     const obj: any = {}
-    headers.forEach((h, i) => {
+    headers.forEach((h: string, i: number) => {
       obj[h.trim()] = values[i]?.trim()
     })
     return obj

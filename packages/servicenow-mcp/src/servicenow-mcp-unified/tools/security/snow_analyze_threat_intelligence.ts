@@ -1,6 +1,6 @@
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js"
-import { MCPToolDefinition, ToolResult } from "../../shared/types.js"
-import { ServiceNowContext } from "../../shared/types.js"
+import { type MCPToolDefinition, type ToolResult } from "../../shared/types.js"
+import { type ServiceNowContext } from "../../shared/types.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_analyze_threat_intelligence",

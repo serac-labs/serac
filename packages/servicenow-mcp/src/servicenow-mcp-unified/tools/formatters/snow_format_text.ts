@@ -2,7 +2,7 @@
  * snow_format_text
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 
 export const toolDefinition: MCPToolDefinition = {
@@ -48,13 +48,13 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       case "titlecase":
         formatted = text
           .split(" ")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
           .join(" ")
         break
       case "camelcase":
         formatted = text
           .split(" ")
-          .map((word, i) => (i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
+          .map((word: string, i: number) => (i === 0 ? word.toLowerCase() : word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()))
           .join("")
         break
       case "snakecase":

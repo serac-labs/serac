@@ -2,7 +2,7 @@
  * snow_duplicate_detection
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 
@@ -35,7 +35,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
   const { table, match_fields, record_data } = args
   try {
     const client = await getAuthenticatedClient(context)
-    const query = match_fields.map((field) => `${field}=${record_data[field]}`).join("^")
+    const query = match_fields.map((field: string) => `${field}=${record_data[field]}`).join("^")
 
     const response = await client.get(`/api/now/table/${table}`, {
       params: {

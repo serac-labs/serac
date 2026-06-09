@@ -4,7 +4,7 @@
  * Source: servicenow-security-compliance-mcp.ts
  */
 
-import { MCPToolDefinition, ToolResult, ServiceNowContext } from "../../shared/types.js"
+import { type MCPToolDefinition, type ToolResult, type ServiceNowContext } from "../../shared/types.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_discover_security_policies",

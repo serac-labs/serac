@@ -2,7 +2,7 @@
  * snow_field_filter
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 
 export const toolDefinition: MCPToolDefinition = {
@@ -41,7 +41,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     }
 
     const operator = operatorMap[match_type]
-    const query = values.map((val) => `${field}${operator}${val}`).join("^OR")
+    const query = values.map((val: string) => `${field}${operator}${val}`).join("^OR")
 
     return createSuccessResult({
       query,

@@ -13,7 +13,7 @@ import * as os from "os"
 import https from "https"
 import http from "http"
 
-import { ServiceNowContext } from "./types.js"
+import { type ServiceNowContext } from "./types.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 
 /**

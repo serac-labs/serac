@@ -8,7 +8,7 @@
 
 import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { registerHandlers } from "../handlers/register.js"
-import { HandlerDeps } from "../handlers/types.js"
+import { type HandlerDeps } from "../handlers/types.js"
 
 export interface ServerDeps extends HandlerDeps {
   name?: string

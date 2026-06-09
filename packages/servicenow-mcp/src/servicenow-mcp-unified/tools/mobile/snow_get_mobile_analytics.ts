@@ -2,7 +2,7 @@
  * snow_get_mobile_analytics - Get mobile analytics data
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 
@@ -87,7 +87,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       // Calculate average session duration
       const durations = records.filter((r: any) => r.duration).map((r: any) => parseInt(r.duration))
       if (durations.length > 0) {
-        analytics.avg_session_duration_seconds = durations.reduce((a, b) => a + b, 0) / durations.length
+        analytics.avg_session_duration_seconds = durations.reduce((a: number, b: number) => a + b, 0) / durations.length
       }
 
       // Feature usage

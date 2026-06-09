@@ -8,7 +8,7 @@
  * GitHub PAT is managed server-side via the enterprise portal.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 import { proxyToolCall } from "../../../enterprise-proxy/proxy.js"
 

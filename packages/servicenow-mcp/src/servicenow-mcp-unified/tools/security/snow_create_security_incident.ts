@@ -3,7 +3,7 @@
  * Create security incident with automated threat correlation and priority assignment
  */
 
-import { MCPToolDefinition, ToolResult, ServiceNowContext } from "../../shared/types.js"
+import { type MCPToolDefinition, type ToolResult, type ServiceNowContext } from "../../shared/types.js"
 
 /**
  * Map priority string to ServiceNow priority number (1=Critical, 2=High, 3=Medium, 4=Low)

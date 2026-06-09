@@ -3,7 +3,7 @@
  */
 
 import { MCPPromptManager } from "../../shared/mcp-prompt-manager.js"
-import { RequestContext } from "../shared/types.js"
+import { type RequestContext } from "../shared/types.js"
 
 /**
  * Resolves a per-request `RequestContext` from a transport-specific request.

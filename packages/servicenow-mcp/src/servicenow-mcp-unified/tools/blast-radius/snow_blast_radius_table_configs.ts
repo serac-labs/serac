@@ -7,12 +7,12 @@
  * about is queried (plugin-gated ones fail silently via allSettled).
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 import {
   ARTIFACT_SPECS,
-  ArtifactSearchSpec,
+  type ArtifactSearchSpec,
   ARTIFACT_TYPE_NAMES,
   TABLE_CONFIG_TYPES,
 } from "./shared/metadata-tables.js"

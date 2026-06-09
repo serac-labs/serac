@@ -12,8 +12,8 @@ import { filterToolsByRole } from "../shared/permission-validator.js"
 import { META_TOOLS } from "../tools/meta/index.js"
 import { ToolSearch } from "../shared/tool-search.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
-import { MCPToolDefinition } from "../shared/types.js"
-import { HandlerDeps } from "./types.js"
+import { type MCPToolDefinition } from "../shared/types.js"
+import { type HandlerDeps } from "./types.js"
 
 export const listTools = (deps: HandlerDeps) => async (request: any, extra?: any) => {
   const ctx = await deps.resolveContext(request, extra)

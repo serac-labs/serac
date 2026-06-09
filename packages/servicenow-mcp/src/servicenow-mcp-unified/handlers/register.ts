@@ -18,7 +18,7 @@ import { listTools } from "./list-tools.js"
 import { callTool } from "./call-tool.js"
 import { listPrompts } from "./list-prompts.js"
 import { getPrompt } from "./get-prompt.js"
-import { HandlerDeps } from "./types.js"
+import { type HandlerDeps } from "./types.js"
 
 export const registerHandlers = (server: Server, deps: HandlerDeps): void => {
   server.setRequestHandler(ListToolsRequestSchema, listTools(deps))

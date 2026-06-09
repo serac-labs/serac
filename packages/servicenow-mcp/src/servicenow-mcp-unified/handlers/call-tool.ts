@@ -16,7 +16,7 @@ import { ToolSearch } from "../shared/tool-search.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 import { formatArgsForLogging, isRetryableOperation } from "../shared/handler-helpers.js"
 import { reportArtifactToInstanceMap } from "../shared/instance-map-hook.js"
-import { HandlerDeps } from "./types.js"
+import { type HandlerDeps } from "./types.js"
 
 export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any) => {
   const { name, arguments: args } = request.params

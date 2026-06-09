@@ -3,7 +3,7 @@
  * Escalate user permissions with approval workflow and time-based access controls
  */
 
-import { MCPToolDefinition, ToolResult, ServiceNowContext } from "../../shared/types.js"
+import { type MCPToolDefinition, type ToolResult, type ServiceNowContext } from "../../shared/types.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_escalate_permissions",

@@ -13,7 +13,7 @@
  * - Errors are clearly marked
  */
 
-import { ToolResult } from "./types.js"
+import { type ToolResult } from "./types.js"
 
 /**
  * Format symbols

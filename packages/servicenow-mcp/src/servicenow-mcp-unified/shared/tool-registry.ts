@@ -11,13 +11,13 @@ import * as path from "path"
 import { fileURLToPath } from "url"
 import { dirname } from "path"
 import {
-  MCPToolDefinition,
-  RegisteredTool,
-  ToolDiscoveryResult,
-  ToolExecutor,
-  ToolRegistryConfig,
-  ToolValidationResult,
-  ToolMetadata,
+  type MCPToolDefinition,
+  type RegisteredTool,
+  type ToolDiscoveryResult,
+  type ToolExecutor,
+  type ToolRegistryConfig,
+  type ToolValidationResult,
+  type ToolMetadata,
 } from "./types.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 

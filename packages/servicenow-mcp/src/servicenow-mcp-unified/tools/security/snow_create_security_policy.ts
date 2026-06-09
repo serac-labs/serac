@@ -3,7 +3,7 @@
  * Creates security policies for access control and data protection. Configures enforcement levels, scope, and rule sets.
  */
 
-import { MCPToolDefinition, ToolResult, ServiceNowContext } from "../../shared/types.js"
+import { type MCPToolDefinition, type ToolResult, type ServiceNowContext } from "../../shared/types.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_create_security_policy",

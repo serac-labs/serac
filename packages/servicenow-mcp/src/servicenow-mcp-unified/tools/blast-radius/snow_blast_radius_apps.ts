@@ -5,7 +5,7 @@
  * in the instance with counts of business rules, client scripts, etc.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
 import { SCOPE_COUNT_TABLES } from "./shared/metadata-tables.js"

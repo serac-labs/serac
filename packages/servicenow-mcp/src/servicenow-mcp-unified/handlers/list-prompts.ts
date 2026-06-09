@@ -3,7 +3,7 @@
  */
 
 import { mcpDebug } from "../../shared/mcp-debug.js"
-import { HandlerDeps } from "./types.js"
+import { type HandlerDeps } from "./types.js"
 
 export const listPrompts = (deps: HandlerDeps) => async () => {
   const prompts = deps.promptManager.listPrompts()
