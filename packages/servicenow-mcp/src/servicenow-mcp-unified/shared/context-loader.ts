@@ -355,6 +355,10 @@ export const loadContext = (): ServiceNowContext => {
   const refreshToken = process.env.SERVICENOW_REFRESH_TOKEN || process.env.SNOW_REFRESH_TOKEN
   const username = process.env.SERVICENOW_USERNAME || process.env.SNOW_USERNAME
   const password = process.env.SERVICENOW_PASSWORD || process.env.SNOW_PASSWORD
+  // OTAP classification (optional). Lets a self-hosted CLI user mark an instance
+  // "production" so the call-tool prod-write guard applies. Invalid/absent ⇒ undefined.
+  const rawEnvironment = (process.env.SERVICENOW_ENVIRONMENT_TYPE || process.env.SNOW_ENVIRONMENT_TYPE || "").toLowerCase()
+  const environmentType = (["production", "development", "test", "uat", "sandbox"] as const).find((v) => v === rawEnvironment)
 
   // Helper: Convert empty strings to undefined (treat empty as missing)
   const normalizeCredential = (val?: string) => (val && val.trim() !== "" ? val : undefined)
@@ -380,6 +384,7 @@ export const loadContext = (): ServiceNowContext => {
       refreshToken: normalizeCredential(refreshToken),
       username: normalizeCredential(username),
       password: normalizeCredential(password),
+      environmentType,
     }
   }
 

@@ -54,6 +54,14 @@ export interface ServiceNowContext {
    * ignore it. Populated by call-tool.ts before the executor runs.
    */
   origin?: "stdio" | "http"
+  /**
+   * OTAP classification of the connected instance. When "production", the
+   * call-tool handler blocks write tools by default (reads stay free) unless the
+   * caller passes `__confirmProd: true` after the user approves the change.
+   * Populated by the transport's context resolver — HTTP from the portal's
+   * instance record, stdio from SNOW_ENVIRONMENT_TYPE. Absent ⇒ not gated.
+   */
+  environmentType?: "production" | "development" | "test" | "uat" | "sandbox"
 }
 
 /**
