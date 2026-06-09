@@ -23,6 +23,9 @@ jobs:
   sync:
     runs-on: ubuntu-latest
     if: github.repository == 'serac-labs/serac'
+    env:
+      HUSKY: "0" # CI must not run the local dev git hooks (the pre-push typecheck
+      # would block pushing a sync branch that intentionally still has work to do).
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
@@ -73,7 +76,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          git push --force origin sync/upstream
+          git push --force --no-verify origin sync/upstream
           cat > "$RUNNER_TEMP/body.md" <<EOF
           Automated merge of upstream \`anomalyco/opencode@dev\` into \`main\`.
 
