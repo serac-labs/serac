@@ -691,6 +691,7 @@
       "version": "0.1.0",
       "bin": {
         "servicenow-mcp-stdio": "./src/servicenow-mcp-unified/index.ts",
+        "servicenow-mcp-enterprise-proxy": "./src/enterprise-proxy/index.ts",
       },
       "dependencies": {
         "@modelcontextprotocol/sdk": "1.26.0",

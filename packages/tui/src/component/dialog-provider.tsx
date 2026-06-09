@@ -309,6 +309,12 @@ function AutoMethod(props: AutoMethodProps) {
     }
     await sdk.client.instance.dispose()
     await sync.bootstrap()
+    // The Serac dashboard prefills the user's model (see CodeMethod) — skip the
+    // manual model picker after a dashboard login and just close.
+    if (props.providerID === "serac") {
+      dialog.clear()
+      return
+    }
     dialog.replace(() => <DialogModel providerID={props.providerID} />)
   })
 
@@ -360,6 +366,14 @@ function CodeMethod(props: CodeMethodProps) {
         if (!error) {
           await sdk.client.instance.dispose()
           await sync.bootstrap()
+          // The Serac dashboard prefills the user's model from their dashboard
+          // settings (the serac auth plugin's config hook injects the BYOK
+          // provider + sets it as the default model). So don't force the manual
+          // model picker after a dashboard login — just close.
+          if (props.providerID === "serac") {
+            dialog.clear()
+            return
+          }
           dialog.replace(() => <DialogModel providerID={props.providerID} />)
           return
         }

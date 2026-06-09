@@ -1,7 +1,7 @@
 import path from "path"
 import fs from "fs"
 import os from "os"
-import type { Hooks, PluginInput } from "@opencode-ai/plugin"
+import type { Config, Hooks, PluginInput } from "@opencode-ai/plugin"
 import * as Log from "@opencode-ai/core/util/log"
 import { Global } from "@opencode-ai/core/global"
 
@@ -12,6 +12,11 @@ const log = Log.create({ service: "plugin.serac" })
 // drives the enterprise-proxy MCP server through which the platform brokers
 // ServiceNow + ALL integrations.
 const PORTAL_URL = "https://dashboard.serac.build"
+
+// How long to wait on the dashboard when fetching the user's LLM providers in
+// the config hook. The hook runs on the startup path, so a stuck request must
+// not block the TUI — on timeout we silently fall back to local config.
+const LLM_FETCH_TIMEOUT = 10000
 
 // True when running as a bun-compiled single-file binary (execPath is the serac
 // binary, not the bun/node runtime). Same probe as the servicenow plugin — used
@@ -36,6 +41,63 @@ function readStoredSeracAuth(): { token: string; portalUrl: string } | undefined
   } catch {
     return undefined
   }
+}
+
+// One BYOK AI provider as the dashboard exposes it to a CLI. Mirrors the platform
+// route GET /api/chat/providers/for-cli (portal/backend/src/routes/chat.ts): the
+// decrypted api key, the optional custom endpoint, whether the user marked it the
+// default, and a free-form config blob whose `defaultModel` holds the exact model
+// id the user picked in the dashboard's provider settings.
+interface DashboardLlmProvider {
+  providerType: string
+  apiKey: string
+  endpointUrl?: string | null
+  isDefault?: boolean
+  config?: Record<string, unknown> | null
+}
+
+// Pull the user's BYOK AI providers + selected model from the dashboard, keyed by
+// the stored enterprise JWT. This is the SAME endpoint the previous fork hit from
+// provider/provider.ts (PortalSync.fetchAiProvidersFromPortal) — re-expressed here
+// so the config hook can prefill the model right after the dashboard device-auth.
+// Returns providers ordered is_default-first (the platform sorts that way), so the
+// first isDefault entry is the user's chosen model. Network/HTTP failures are
+// swallowed: local config keeps working and the user can still pick a model.
+async function fetchDashboardLlmProviders(
+  portalUrl: string,
+  token: string,
+): Promise<DashboardLlmProvider[]> {
+  try {
+    const parsed = new URL(portalUrl)
+    // SECURITY: only ship the JWT over HTTPS (localhost excepted for dev).
+    if (parsed.protocol !== "https:" && parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") {
+      log.warn("refusing to fetch dashboard LLM providers over non-HTTPS", { portalUrl })
+      return []
+    }
+    const response = await fetch(`${portalUrl}/api/chat/providers/for-cli`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: AbortSignal.timeout(LLM_FETCH_TIMEOUT),
+    })
+    if (!response.ok) {
+      log.warn("dashboard LLM providers fetch failed", { status: response.status })
+      return []
+    }
+    const data = (await response.json()) as { providers?: DashboardLlmProvider[] }
+    return data.providers ?? []
+  } catch (error) {
+    log.warn("dashboard LLM providers fetch error", { error: String(error) })
+    return []
+  }
+}
+
+// The dashboard stores the user's chosen model id under config.defaultModel (set
+// by the frontend's LLMProviderSettings save). Read it defensively — config is a
+// free-form blob.
+function modelIdFromConfig(config: DashboardLlmProvider["config"]): string | undefined {
+  if (!config || typeof config !== "object") return undefined
+  const model = (config as Record<string, unknown>)["defaultModel"]
+  return typeof model === "string" && model.trim() ? model.trim() : undefined
 }
 
 // Mirror of the home-dir resolution the enterprise-proxy uses (servicenow-mcp's
@@ -198,38 +260,102 @@ export async function SeracDashboardAuthPlugin(_input: PluginInput): Promise<Hoo
         },
       ],
     },
-    // ENTERPRISE MODE: when a dashboard JWT is stored, inject the
-    // `serac-enterprise` MCP server (the enterprise-proxy). The platform brokers
-    // ServiceNow + ALL integrations behind this single proxy, keyed by the JWT.
+    // ENTERPRISE MODE: when a dashboard JWT is stored, the config hook does two
+    // independent things, each guarded on its own so neither short-circuits the
+    // other:
+    //
+    //   (1) MCP — inject the `serac-enterprise` MCP server (the enterprise-proxy).
+    //       The platform brokers ServiceNow + ALL integrations behind this single
+    //       proxy, keyed by the JWT.
+    //
+    //   (2) MODEL PREFILL — fetch the user's BYOK AI providers + their selected
+    //       model from the dashboard and inject them so the dashboard model is the
+    //       active/default model. This is why, after the dashboard login, the user
+    //       no longer has to pick a model manually (the TUI also skips the picker
+    //       for the "serac" provider — see runProviderAuth in
+    //       packages/tui/src/component/dialog-provider.tsx).
     //
     // This runs alongside (not instead of) the servicenow plugin's own config
     // hook, which injects the DIRECT servicenow MCP for the manual OAuth/Basic
     // path. Both config hooks compose against the same resolved config.
     config: async (config) => {
-      const target = config as { mcp?: Record<string, unknown> }
       const auth = readStoredSeracAuth()
       if (!auth) return
 
-      target.mcp ??= {}
-      if (target.mcp["serac-enterprise"]) return
-
-      target.mcp["serac-enterprise"] = {
-        type: "local",
-        // In a compiled binary the package's enterprise-proxy bin isn't on PATH,
-        // so route through the hidden in-process subcommand (mirrors how the
-        // servicenow plugin launches x-servicenow-mcp).
-        command: isCompiledBinary()
-          ? [process.execPath, "x-servicenow-enterprise"]
-          : ["servicenow-mcp-enterprise-proxy"],
-        environment: {
-          SNOW_PORTAL_URL: auth.portalUrl,
-          // The proxy treats a JWT here as a direct device-auth token (no
-          // license-key exchange). It also re-reads ~/.serac/enterprise.json on
-          // each call to pick up a fresher token after re-auth.
-          SNOW_LICENSE_KEY: auth.token,
-        },
-        enabled: true,
+      // (1) MCP server injection.
+      const mcpTarget = config as { mcp?: Record<string, unknown> }
+      mcpTarget.mcp ??= {}
+      if (!mcpTarget.mcp["serac-enterprise"]) {
+        mcpTarget.mcp["serac-enterprise"] = {
+          type: "local",
+          // In a compiled binary the package's enterprise-proxy bin isn't on
+          // PATH, so route through the hidden in-process subcommand (mirrors how
+          // the servicenow plugin launches x-servicenow-mcp).
+          command: isCompiledBinary()
+            ? [process.execPath, "x-servicenow-enterprise"]
+            : ["servicenow-mcp-enterprise-proxy"],
+          environment: {
+            SNOW_PORTAL_URL: auth.portalUrl,
+            // The proxy treats a JWT here as a direct device-auth token (no
+            // license-key exchange). It also re-reads ~/.serac/enterprise.json on
+            // each call to pick up a fresher token after re-auth.
+            SNOW_LICENSE_KEY: auth.token,
+          },
+          enabled: true,
+        }
       }
+
+      // (2) Model prefill from the dashboard's BYOK LLM providers.
+      await injectDashboardModel(config, auth)
     },
   }
+}
+
+// Inject the user's dashboard BYOK providers + selected model into the resolved
+// config so the dashboard model becomes the active/default model with no manual
+// pick. This mirrors how the previous fork merged PortalSync.fetchAiProvidersFromPortal
+// results into the provider list, re-expressed as a 1.16 config() mutation:
+//
+//   - For each provider the dashboard returns, set cfg.provider[type].options.apiKey
+//     (+ baseURL when a custom endpoint is configured). For a models.dev provider
+//     (openai, anthropic, …) this merges into the existing catalog entry, so all
+//     its models stay available and the BYOK key makes them usable. We do NOT
+//     overwrite a provider that already has an apiKey in local config — local
+//     config wins (the enterprise key is the lowest-priority fallback, same as the
+//     fork).
+//   - Set cfg.model = "<providerType>/<defaultModel>" from the default provider so
+//     Provider.defaultModel() (which reads cfg.model first) resolves to it. We only
+//     set it when the user hasn't already pinned a model in local config.
+async function injectDashboardModel(
+  config: Config,
+  auth: { token: string; portalUrl: string },
+): Promise<void> {
+  const providers = await fetchDashboardLlmProviders(auth.portalUrl, auth.token)
+  if (providers.length === 0) return
+
+  const target = config as Config & { provider?: Record<string, any>; model?: string }
+  target.provider ??= {}
+
+  for (const p of providers) {
+    if (!p.providerType || !p.apiKey) continue
+    const existing = target.provider[p.providerType]
+    // Local config wins: don't clobber an apiKey the user already configured.
+    if (existing?.options?.apiKey) continue
+    const options: Record<string, unknown> = { ...existing?.options, apiKey: p.apiKey }
+    if (p.endpointUrl) options["baseURL"] = p.endpointUrl
+    target.provider[p.providerType] = { ...existing, options }
+  }
+
+  // Respect an explicit local model pin; otherwise prefill from the dashboard's
+  // default provider (the platform returns providers is_default-first, so the
+  // first one carrying a model id is the user's choice).
+  if (target.model) return
+  const chosen =
+    providers.find((p) => p.isDefault && p.providerType && modelIdFromConfig(p.config)) ??
+    providers.find((p) => p.providerType && modelIdFromConfig(p.config))
+  if (!chosen) return
+  const modelId = modelIdFromConfig(chosen.config)
+  if (!modelId) return
+  target.model = `${chosen.providerType}/${modelId}`
+  log.info("serac: prefilled default model from dashboard", { model: target.model })
 }
