@@ -43,6 +43,193 @@ function readStoredSeracAuth(): { token: string; portalUrl: string } | undefined
   }
 }
 
+// Read the "servicenow" auth record straight from auth.json, same direct-disk
+// approach as readStoredSeracAuth above. We only need to know whether a
+// ServiceNow instance is ALREADY selected — if so, the user (or a previous
+// auto-select) has chosen one and we must NOT override it.
+function hasStoredServiceNowInstance(): boolean {
+  try {
+    const raw =
+      process.env["OPENCODE_AUTH_CONTENT"] ?? fs.readFileSync(path.join(Global.Path.data, "auth.json"), "utf8")
+    const data = JSON.parse(raw) as Record<string, { type?: string; metadata?: Record<string, string> }>
+    const entry = data["servicenow"]
+    return !!(entry && entry.type === "api" && entry.metadata?.["instance"])
+  } catch {
+    return false
+  }
+}
+
+// Persist the chosen instance's direct creds under the "servicenow" provider in
+// the SAME "api" record shape the ServiceNowAuthPlugin's OAuth method (and the
+// TUI instance picker's connect()) produce: key = clientSecret (so the record is
+// never keyless), metadata = { instance, clientId, clientSecret, authType:"oauth" }.
+// The servicenow config hook reads exactly these fields back out to inject the
+// direct servicenow MCP, and a later restart / `/instance` switch overwrite it
+// the same way. Written directly to auth.json because this runs in the early
+// config hook (no Auth service / HTTP surface available yet), mirroring how this
+// file already reads auth.json directly.
+function storeServiceNowInstanceAuth(creds: {
+  instanceUrl: string
+  clientId: string
+  clientSecret: string
+}): boolean {
+  try {
+    const file = path.join(Global.Path.data, "auth.json")
+    const raw = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "{}"
+    const data = JSON.parse(raw) as Record<string, unknown>
+    data["servicenow"] = {
+      type: "api",
+      key: creds.clientSecret,
+      metadata: {
+        instance: creds.instanceUrl,
+        clientId: creds.clientId,
+        clientSecret: creds.clientSecret,
+        authType: "oauth",
+      },
+    }
+    fs.mkdirSync(path.dirname(file), { recursive: true })
+    fs.writeFileSync(file, JSON.stringify(data, null, 2), "utf8")
+    return true
+  } catch (error) {
+    log.warn("serac: failed to store auto-selected servicenow instance", { error: String(error) })
+    return false
+  }
+}
+
+// One ServiceNow instance as the dashboard's list endpoint exposes it. Mirrors
+// the platform route GET /api/servicenow/instances (portal/backend/src/routes/
+// servicenow-instances.ts): the instance id, its name + URL, the per-instance
+// enabled flag, and isDefault (the user's chosen default instance). Same shape
+// the TUI instance picker reads (feature-plugins/servicenow/auth.tsx).
+interface SnInstance {
+  id: number
+  instanceName: string
+  instanceUrl: string
+  isDefault: boolean
+  enabled: boolean
+}
+
+// GET /api/servicenow/instances — the user's ServiceNow instances, keyed by the
+// dashboard JWT. Returns only enabled instances. Same HTTPS guard + timeout +
+// silent-fallback discipline as fetchDashboardLlmProviders, so a hung or failed
+// fetch never blocks startup. Mirrors the TUI picker's fetchSnInstances.
+async function fetchSnInstances(portalUrl: string, token: string): Promise<SnInstance[]> {
+  try {
+    const parsed = new URL(portalUrl)
+    if (parsed.protocol !== "https:" && parsed.hostname !== "localhost" && parsed.hostname !== "127.0.0.1") {
+      log.warn("refusing to fetch ServiceNow instances over non-HTTPS", { portalUrl })
+      return []
+    }
+    const response = await fetch(`${portalUrl}/api/servicenow/instances`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: AbortSignal.timeout(LLM_FETCH_TIMEOUT),
+    })
+    if (!response.ok) {
+      log.warn("ServiceNow instances fetch failed", { status: response.status })
+      return []
+    }
+    const data = (await response.json()) as { success?: boolean; instances?: SnInstance[] }
+    if (!data.success || !Array.isArray(data.instances)) return []
+    return data.instances.filter((i) => i.enabled)
+  } catch (error) {
+    log.warn("ServiceNow instances fetch error", { error: String(error) })
+    return []
+  }
+}
+
+// GET /api/servicenow/instances/:id/for-cli — that instance's direct OAuth creds
+// (decrypted clientSecret). Same guard/timeout/fallback as above. Mirrors the
+// TUI picker's fetchSnInstanceById.
+async function fetchSnInstanceForCli(
+  portalUrl: string,
+  token: string,
+  instanceId: number,
+): Promise<{ instanceUrl: string; clientId: string; clientSecret: string } | undefined> {
+  try {
+    const response = await fetch(`${portalUrl}/api/servicenow/instances/${instanceId}/for-cli`, {
+      method: "GET",
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
+      signal: AbortSignal.timeout(LLM_FETCH_TIMEOUT),
+    })
+    if (!response.ok) {
+      log.warn("ServiceNow instance for-cli fetch failed", { status: response.status })
+      return undefined
+    }
+    const data = (await response.json()) as {
+      success?: boolean
+      instance?: { instanceUrl?: string; clientId?: string; clientSecret?: string }
+    }
+    const inst = data.instance
+    if (!data.success || !inst?.instanceUrl || !inst.clientId || !inst.clientSecret) return undefined
+    return { instanceUrl: inst.instanceUrl, clientId: inst.clientId, clientSecret: inst.clientSecret }
+  } catch (error) {
+    log.warn("ServiceNow instance for-cli fetch error", { error: String(error) })
+    return undefined
+  }
+}
+
+// Auto-select the user's DEFAULT ServiceNow instance right after the dashboard
+// login, so the footer shows `SN <instance>` immediately without a manual
+// /instance step. Only runs when NO "servicenow" instance is stored yet (never
+// overrides a manually-chosen one). Picks the instance flagged isDefault; if
+// none is flagged but exactly one is enabled, picks that. Fetches its for-cli
+// creds, stores them under "servicenow", AND injects the direct servicenow MCP
+// into the resolved config right here.
+//
+// WHY inject the MCP here (not just write auth + rely on the servicenow hook):
+// config hooks run sequentially over the SAME config object, and
+// SeracDashboardAuthPlugin runs BEFORE ServiceNowAuthPlugin. Although the
+// servicenow hook (running after) would re-read auth.json from disk and could
+// pick up the record we just wrote, that coupling is fragile (it breaks if the
+// plugin order in internalPlugins() ever changes) and the footer reads
+// config.mcp.servicenow from the resolved config the server hands the TUI. By
+// injecting config.mcp.servicenow ourselves we guarantee the footer + MCP light
+// up on this same config load regardless of hook order; the servicenow hook then
+// sees mcp.servicenow already set and no-ops. The persisted auth.json record
+// makes restarts / `/instance` switches behave identically to the manual picker.
+async function autoSelectDefaultInstance(
+  config: Config,
+  auth: { token: string; portalUrl: string },
+): Promise<void> {
+  // Respect a manual / previous choice — never override a stored instance.
+  if (hasStoredServiceNowInstance()) return
+
+  const instances = await fetchSnInstances(auth.portalUrl, auth.token)
+  if (instances.length === 0) return
+
+  const chosen = instances.find((i) => i.isDefault) ?? (instances.length === 1 ? instances[0] : undefined)
+  if (!chosen) return
+
+  const creds = await fetchSnInstanceForCli(auth.portalUrl, auth.token, chosen.id)
+  if (!creds) return
+
+  if (!storeServiceNowInstanceAuth(creds)) return
+
+  // Inject the direct servicenow MCP into THIS config load so the footer +
+  // server light up immediately. Mirrors the env names the servicenow config
+  // hook (plugin/servicenow/auth.ts) sets, so the two paths produce an identical
+  // mcp.servicenow entry. If the servicenow hook already injected one, leave it.
+  const mcpTarget = config as { mcp?: Record<string, unknown> }
+  mcpTarget.mcp ??= {}
+  if (!mcpTarget.mcp["servicenow"]) {
+    mcpTarget.mcp["servicenow"] = {
+      type: "local",
+      command: isCompiledBinary() ? [process.execPath, "x-servicenow-mcp"] : ["servicenow-mcp-stdio"],
+      environment: {
+        SERVICENOW_INSTANCE_URL: creds.instanceUrl,
+        SERVICENOW_CLIENT_ID: creds.clientId,
+        SERVICENOW_CLIENT_SECRET: creds.clientSecret,
+      },
+      enabled: true,
+    }
+  }
+  log.info("serac: auto-selected default ServiceNow instance", {
+    instance: chosen.instanceName,
+    url: creds.instanceUrl,
+  })
+}
+
 // One BYOK AI provider as the dashboard exposes it to a CLI. Mirrors the platform
 // route GET /api/chat/providers/for-cli (portal/backend/src/routes/chat.ts): the
 // decrypted api key, the optional custom endpoint, whether the user marked it the
@@ -305,7 +492,14 @@ export async function SeracDashboardAuthPlugin(_input: PluginInput): Promise<Hoo
         }
       }
 
-      // (2) Model prefill from the dashboard's BYOK LLM providers.
+      // (2) Auto-select the user's DEFAULT ServiceNow instance (if none is
+      // stored yet) so the footer + direct servicenow MCP light up right after
+      // the dashboard login, with no manual /instance step. Guarded + silent on
+      // failure so it never blocks startup. Runs before the (independent) model
+      // prefill; each guards itself so neither short-circuits the other.
+      await autoSelectDefaultInstance(config, auth)
+
+      // (3) Model prefill from the dashboard's BYOK LLM providers.
       await injectDashboardModel(config, auth)
     },
   }
