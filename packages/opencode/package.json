@@ -1,9 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "version": "1.16.2",
-  "name": "opencode",
+  "name": "@serac-labs/core",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "private": true,
   "scripts": {
     "typecheck": "tsgo --noEmit",

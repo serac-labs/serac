@@ -137,13 +137,22 @@ const targets = singleFlag
 await $`rm -rf dist`
 
 const binaries: Record<string, string> = {}
+// Maps published npm package name -> filesystem-safe dist slug (and tar/zip artifact base).
+const slugs: Record<string, string> = {}
 if (!skipInstall) {
   await $`bun install --os="*" --cpu="*" @opentui/core@${pkg.dependencies["@opentui/core"]}`
   await $`bun install --os="*" --cpu="*" @parcel/watcher@${pkg.dependencies["@parcel/watcher"]}`
 }
+// The npm package name is scoped (@serac-labs/core) so it cannot be used directly
+// as a filesystem directory or as a Bun compile target token (the "/" breaks paths).
+// We therefore derive two strings per platform:
+//   - name: the published npm package name, e.g. "@serac-labs/core-darwin-arm64"
+//   - slug: a flat, filesystem-safe token used for the dist dir + bun target,
+//           e.g. "serac-core-darwin-arm64"
+// "serac-core" mirrors @serac-labs/core in slug form.
+const platformSlugBase = "serac-core"
 for (const item of targets) {
-  const name = [
-    pkg.name,
+  const suffix = [
     // changing to win32 flags npm for some reason
     item.os === "win32" ? "windows" : item.os,
     item.arch,
@@ -152,8 +161,10 @@ for (const item of targets) {
   ]
     .filter(Boolean)
     .join("-")
+  const name = `${pkg.name}-${suffix}`
+  const slug = `${platformSlugBase}-${suffix}`
   console.log(`building ${name}`)
-  await $`mkdir -p dist/${name}/bin`
+  await $`mkdir -p dist/${slug}/bin`
 
   const localPath = path.resolve(dir, "node_modules/@opentui/core/parser.worker.js")
   const rootPath = path.resolve(dir, "../../node_modules/@opentui/core/parser.worker.js")
@@ -178,8 +189,8 @@ for (const item of targets) {
       autoloadDotenv: false,
       autoloadTsconfig: true,
       autoloadPackageJson: true,
-      target: name.replace(pkg.name, "bun") as any,
-      outfile: `dist/${name}/bin/opencode`,
+      target: slug.replace(platformSlugBase, "bun") as any,
+      outfile: `dist/${slug}/bin/opencode`,
       execArgv: [`--user-agent=opencode/${Script.version}`, "--use-system-ca", "--"],
       windows: {},
     },
@@ -198,7 +209,7 @@ for (const item of targets) {
 
   // Smoke test: only run if binary is for current platform
   if (item.os === process.platform && item.arch === process.arch && !item.abi) {
-    const binaryPath = `dist/${name}/bin/opencode`
+    const binaryPath = `dist/${slug}/bin/opencode`
     console.log(`Running smoke test: ${binaryPath} --version`)
     try {
       const versionOutput = await $`${binaryPath} --version`.text()
@@ -209,8 +220,8 @@ for (const item of targets) {
     }
   }
 
-  await $`rm -rf ./dist/${name}/bin/tui`
-  await Bun.file(`dist/${name}/package.json`).write(
+  await $`rm -rf ./dist/${slug}/bin/tui`
+  await Bun.file(`dist/${slug}/package.json`).write(
     JSON.stringify(
       {
         name,
@@ -225,17 +236,19 @@ for (const item of targets) {
     ),
   )
   binaries[name] = Script.version
+  slugs[name] = slug
 }
 
 if (Script.release) {
   for (const key of Object.keys(binaries)) {
-    if (key.includes("linux")) {
-      await $`tar -czf ../../${key}.tar.gz *`.cwd(`dist/${key}/bin`)
+    const slug = slugs[key]
+    if (slug.includes("linux")) {
+      await $`tar -czf ../../${slug}.tar.gz *`.cwd(`dist/${slug}/bin`)
     } else {
-      await $`zip -r ../../${key}.zip *`.cwd(`dist/${key}/bin`)
+      await $`zip -r ../../${slug}.zip *`.cwd(`dist/${slug}/bin`)
     }
   }
   await $`gh release upload v${Script.version} ./dist/*.zip ./dist/*.tar.gz --clobber --repo ${process.env.GH_REPO}`
 }
 
-export { binaries }
+export { binaries, slugs }
