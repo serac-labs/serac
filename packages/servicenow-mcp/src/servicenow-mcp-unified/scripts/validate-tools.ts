@@ -2,7 +2,7 @@
 /**
  * Tool Registry Validation Script
  *
- * Validates that all 235+ tools can be discovered and registered correctly.
+ * Validates that all 400+ tools can be discovered and registered correctly.
  */
 
 import { toolRegistry } from "../shared/tool-registry.js"
@@ -61,11 +61,11 @@ async function main() {
     console.log("✅ Validation Summary:")
     console.log("─".repeat(80))
 
-    const expectedToolCount = 225
+    const minToolCount = 400
     const actualToolCount = stats.totalTools
-    const toolCountMatch = actualToolCount === expectedToolCount
+    const toolCountMatch = actualToolCount >= minToolCount
 
-    console.log(`  Expected Tools:          ${expectedToolCount}`)
+    console.log(`  Expected Tools (min):    ${minToolCount}`)
     console.log(`  Actual Tools:            ${actualToolCount}`)
     console.log(`  Count Match:             ${toolCountMatch ? "✅ YES" : "❌ NO"}`)
     console.log("")
@@ -76,7 +76,7 @@ async function main() {
     }
 
     if (!toolCountMatch) {
-      console.log("⚠️  Tool count mismatch. Expected 235 tools.")
+      console.log(`⚠️  Tool count too low. Expected at least ${minToolCount} tools.`)
       process.exit(1)
     }
 
