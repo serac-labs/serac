@@ -15,7 +15,7 @@ import { tool_search_exec, tool_execute_exec } from "../tools/meta/index.js"
 import { ToolSearch } from "../shared/tool-search.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 import { formatArgsForLogging, isRetryableOperation } from "../shared/handler-helpers.js"
-import { reportArtifactToInstanceMap } from "../shared/instance-map-hook.js"
+import { reportArtifactToInstanceMap, isWriteTool } from "../shared/instance-map-hook.js"
 import { type HandlerDeps } from "./types.js"
 
 export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any) => {
@@ -128,6 +128,25 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
     validateJWTExpiry(ctx.jwtPayload)
     validatePermission(tool.definition, ctx.jwtPayload)
 
+    // Prod-write safety: a write tool against a PRODUCTION-classified instance is
+    // blocked by default, so the agent can't silently change a client's prod.
+    // Reads — and writes to dev/test/uat — are never gated. The caller re-issues
+    // with `__confirmProd: true` only after the user approves the specific change;
+    // the flag is stripped below so the executor never sees it.
+    const prodWrite = context.environmentType === "production" && isWriteTool(tool.definition)
+    if (prodWrite && args?.__confirmProd !== true) {
+      throw new McpError(
+        ErrorCode.InvalidRequest,
+        `"${name}" is a write against a PRODUCTION ServiceNow instance and is blocked by default. ` +
+          `Surface this change to the user; only after they approve, re-issue the exact same call with ` +
+          `"__confirmProd": true added to the arguments. Reads, and writes to dev/test/uat, need no confirmation.`,
+      )
+    }
+    const execArgs =
+      args && typeof args === "object" && "__confirmProd" in args
+        ? Object.fromEntries(Object.entries(args).filter(([k]) => k !== "__confirmProd"))
+        : args
+
     // Execute tool with error handling (permission check passed!).
     // Spread `origin` onto the context so tools that branch on transport
     // (snow_pull_artifact: write-to-disk on stdio, return-inline on http)
@@ -136,7 +155,7 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
     const result = await executeWithErrorHandling(
       name,
       async () => {
-        return await tool.executor(args, contextWithOrigin)
+        return await tool.executor(execArgs, contextWithOrigin)
       },
       {
         retry: isRetryableOperation(name),
