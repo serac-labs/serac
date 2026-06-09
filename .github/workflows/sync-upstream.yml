@@ -2,11 +2,11 @@ name: Sync from opencode
 
 # Weekly automated sync of upstream opencode (anomalyco/opencode@dev) into serac.
 # Serac is a thin ADDITIVE layer on top of a SHARED opencode base, so a merge
-# pulls in new opencode commits while preserving serac's own commits. On a clean
-# merge it opens/updates a review PR (with a monorepo-typecheck verdict); if the
-# org blocks Actions from opening PRs, it falls back to a notification issue with
-# a one-click compare link. On conflicts it opens/updates a tracking issue.
-# Nothing reaches main without a human merge.
+# pulls in new opencode commits while preserving serac's own commits. A clean
+# merge pushes the sync/upstream branch and notifies via (in order of what the
+# org/repo allows) a PR, else an issue, and ALWAYS a run summary with a one-click
+# compare link. On conflicts it notifies the same way. Nothing reaches main
+# without a human merge. The job never fails on a missing notification channel.
 
 on:
   schedule:
@@ -72,15 +72,17 @@ jobs:
             echo "verdict=⚠️ monorepo typecheck FAILED — resolve before merging" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Open the sync PR (fall back to an issue if the org blocks it)
+      - name: Notify (clean merge → PR, else issue, always a run summary)
         if: steps.merge.outputs.result == 'clean'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set +e # best-effort notifications; the step ends with exit 0
           git push --force --no-verify origin sync/upstream
           BEHIND="${{ steps.check.outputs.behind }}"
           VERDICT="${{ steps.tc.outputs.verdict }}"
           TITLE="⬆️ Sync from opencode ($BEHIND new commits)"
+          COMPARE="https://github.com/serac-labs/serac/compare/main...sync/upstream?expand=1"
 
           cat > "$RUNNER_TEMP/body.md" <<EOF
           Automated merge of upstream \`anomalyco/opencode@dev\` into \`main\`.
@@ -93,45 +95,41 @@ jobs:
           _Opened automatically by \`sync-upstream.yml\`._
           EOF
 
-          # Already an open PR for the branch? Just update it.
+          # Always leave a run summary — needs no special permissions.
+          {
+            echo "## $TITLE"
+            echo ""
+            echo "- **$BEHIND** new opencode commits merged onto \`sync/upstream\`"
+            echo "- $VERDICT"
+            echo "- 👉 [Open the PR]($COMPARE)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          # Prefer a PR; if the org blocks Actions from opening PRs, fall back to an issue.
           if gh pr view sync/upstream --json number >/dev/null 2>&1; then
             gh pr edit sync/upstream --title "$TITLE" --body-file "$RUNNER_TEMP/body.md"
-            exit 0
-          fi
-          # Try to open the PR (works when the org allows Actions to create PRs).
-          if gh pr create --base main --head sync/upstream --title "$TITLE" --body-file "$RUNNER_TEMP/body.md" 2>"$RUNNER_TEMP/prerr.txt"; then
-            exit 0
-          fi
-
-          echo "::warning::Auto-PR blocked — falling back to a notification issue. $(cat "$RUNNER_TEMP/prerr.txt")"
-          gh label create upstream-sync --color FBCA04 --description "Automated opencode upstream sync" --force >/dev/null 2>&1 || true
-          cat > "$RUNNER_TEMP/issue.md" <<EOF
-          The sync branch \`sync/upstream\` is ready: **$BEHIND** new opencode commits merged on top of serac's layer.
-
-          - $VERDICT
-
-          GitHub Actions can't open the PR (the org setting *Allow GitHub Actions to create and approve pull requests* is off). Open it yourself:
-          👉 https://github.com/serac-labs/serac/compare/main...sync/upstream?expand=1
-
-          Enable that setting in the **serac-labs org → Settings → Actions → General** to get real auto-PRs instead of this issue.
-
-          _Opened automatically by \`sync-upstream.yml\`._
-          EOF
-          EXISTING=$(gh issue list --label upstream-sync --state open --json number --jq '.[0].number // empty')
-          if [ -n "$EXISTING" ]; then
-            gh issue edit "$EXISTING" --title "$TITLE" --body-file "$RUNNER_TEMP/issue.md"
+          elif gh pr create --base main --head sync/upstream --title "$TITLE" --body-file "$RUNNER_TEMP/body.md"; then
+            echo "opened PR"
           else
-            gh issue create --title "$TITLE" --label upstream-sync --body-file "$RUNNER_TEMP/issue.md"
+            echo "::notice::Auto-PR blocked (enable the serac-labs org 'Allow GitHub Actions to create and approve pull requests' setting). Falling back to an issue."
+            NUM=$(gh issue list --search "Sync from opencode in:title" --state open --json number --jq '.[0].number // empty')
+            if [ -n "$NUM" ]; then
+              gh issue edit "$NUM" --title "$TITLE" --body-file "$RUNNER_TEMP/body.md"
+            else
+              gh issue create --title "$TITLE" --body-file "$RUNNER_TEMP/body.md"
+            fi
           fi
+          exit 0
 
-      - name: Open / update the conflict issue
+      - name: Notify (conflict → issue, always a run summary)
         if: steps.merge.outputs.result == 'conflict'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh label create upstream-sync --color FBCA04 --description "Automated opencode upstream sync" --force >/dev/null 2>&1 || true
+          set +e
+          BEHIND="${{ steps.check.outputs.behind }}"
+          TITLE="⚠️ Upstream opencode sync needs manual merge"
           cat > "$RUNNER_TEMP/issue.md" <<EOF
-          Upstream \`anomalyco/opencode@dev\` is **${{ steps.check.outputs.behind }}** commits ahead and the automated merge hit conflicts.
+          Upstream \`anomalyco/opencode@dev\` is **$BEHIND** commits ahead and the automated merge hit conflicts.
 
           Resolve locally:
           \`\`\`sh
@@ -144,10 +142,20 @@ jobs:
 
           _Opened automatically by \`sync-upstream.yml\`._
           EOF
-          TITLE="⚠️ Upstream opencode sync needs manual merge"
-          EXISTING=$(gh issue list --label upstream-sync --state open --json number --jq '.[0].number // empty')
-          if [ -n "$EXISTING" ]; then
-            gh issue edit "$EXISTING" --title "$TITLE" --body-file "$RUNNER_TEMP/issue.md"
+
+          {
+            echo "## $TITLE"
+            echo ""
+            echo "Upstream is **$BEHIND** commits ahead; the auto-merge conflicts. Resolve locally:"
+            echo '```sh'
+            echo "git fetch upstream dev && git checkout main && git merge upstream/dev"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          NUM=$(gh issue list --search "Upstream opencode sync needs manual merge in:title" --state open --json number --jq '.[0].number // empty')
+          if [ -n "$NUM" ]; then
+            gh issue edit "$NUM" --body-file "$RUNNER_TEMP/issue.md"
           else
-            gh issue create --title "$TITLE" --label upstream-sync --body-file "$RUNNER_TEMP/issue.md"
+            gh issue create --title "$TITLE" --body-file "$RUNNER_TEMP/issue.md"
           fi
+          exit 0
