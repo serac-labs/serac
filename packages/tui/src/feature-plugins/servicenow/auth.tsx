@@ -357,6 +357,17 @@ const tui: TuiPlugin = async (api) => {
           show(api)
         },
       },
+      {
+        name: "servicenow.instance",
+        title: "Switch ServiceNow Instance",
+        slashName: "instance",
+        slashAliases: ["switch-instance"],
+        category: "Serac",
+        namespace: "palette",
+        run() {
+          api.ui.dialog.replace(() => <SeracInstancePicker />)
+        },
+      },
     ],
   })
 }
