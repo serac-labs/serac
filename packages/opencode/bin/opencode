@@ -48,9 +48,6 @@ const envPath = process.env.OPENCODE_BIN_PATH
 const scriptPath = fs.realpathSync(__filename)
 const scriptDir = path.dirname(scriptPath)
 
-//
-const cached = path.join(scriptDir, ".opencode")
-
 const platformMap = {
   darwin: "darwin",
   linux: "linux",
@@ -72,6 +69,11 @@ if (!arch) {
 }
 const base = "@serac-labs/core-" + platform + "-" + arch
 const binary = platform === "windows" ? "opencode.exe" : "opencode"
+
+// The postinstall (scripts/postinstall.cjs) downloads the platform binary and
+// places it here. On windows Bun compiles to `opencode.exe`, so it lands as
+// `.opencode.exe` (a real executable Windows can exec); elsewhere `.opencode`.
+const cached = path.join(scriptDir, platform === "windows" ? ".opencode.exe" : ".opencode")
 
 function supportsAvx2() {
   if (arch !== "x64") return false
@@ -188,10 +190,25 @@ function findBinary(startDir) {
 
 const resolved = envPath || (fs.existsSync(cached) ? cached : findBinary(scriptDir))
 if (!resolved) {
+  // Approach B: the platform binary is fetched by the postinstall script
+  // (scripts/postinstall.cjs), which writes it to `cached`. If we get here it
+  // almost always means the postinstall did NOT run — most commonly because the
+  // install used `--ignore-scripts` (common in CI / locked-down corp setups) or
+  // a package manager (e.g. pnpm) that skips lifecycle scripts by default.
+  const pkgDir = path.dirname(scriptDir)
   console.error(
-    "It seems that your package manager failed to install the right version of the serac CLI for your platform. You can try manually installing " +
-      names.map((n) => `\"${n}\"`).join(" or ") +
-      " package",
+    "serac: the platform binary is missing — the postinstall step that downloads it did not run.\n" +
+      "\n" +
+      "This usually happens when the package was installed with --ignore-scripts,\n" +
+      "or with a package manager that does not run postinstall scripts by default.\n" +
+      "\n" +
+      "To fix it, either:\n" +
+      "  1. Reinstall without --ignore-scripts:  npm install -g @serac-labs/core\n" +
+      "  2. Run the postinstall manually:         node " +
+      path.join(pkgDir, "scripts", "postinstall.cjs") +
+      "\n" +
+      "  3. Download the binary for your platform from:\n" +
+      "     https://github.com/serac-labs/serac/releases",
   )
   process.exit(1)
 }
