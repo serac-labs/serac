@@ -13,7 +13,7 @@ tools:
 
 # MCP Tool Discovery Guide
 
-Serac provides 400+ tools via MCP (Model Context Protocol) servers. Tools are **lazy-loaded** to save tokens - use `tool_search` to discover them.
+Serac provides 429 tools via MCP (Model Context Protocol) servers. Tools are **lazy-loaded** to save tokens - use `tool_search` to discover them.
 
 ## Quick Start
 
