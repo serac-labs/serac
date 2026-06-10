@@ -33,7 +33,15 @@ export type ReportPayload = {
   metadata?: Record<string, unknown>
 }
 
-export const SKIP_ACTIONS = new Set(["get", "find", "list", "analyze", "export", "verify"])
+// Read-shaped action values: a write tool invoked with one of these only
+// observed the instance ("current"/"preview" are snow_update_set_manage's
+// inspection actions), so the artifact in the result was not touched.
+export const SKIP_ACTIONS = new Set(["get", "find", "list", "analyze", "export", "verify", "current", "preview"])
+
+// Tools whose `permission: "write"` covers LOCAL side effects only (files
+// under the sync directory) — they never mutate the instance, so their
+// artifact references are observations, not changes.
+export const SKIP_TOOLS = new Set(["snow_pull_artifact", "snow_sync_status", "snow_sync_cleanup"])
 
 export function isWriteTool(definition: MCPToolDefinition | undefined): boolean {
   if (!definition) return false
@@ -144,6 +152,7 @@ export function reportArtifactToInstanceMap(
   tenant?: TenantHint,
 ): void {
   if (!isWriteTool(toolDefinition)) return
+  if (SKIP_TOOLS.has(toolName)) return
   if (args && typeof args.action === "string" && SKIP_ACTIONS.has(args.action)) return
 
   const payload = buildPayload(toolName, args ?? {}, result, context)

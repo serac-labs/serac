@@ -4,7 +4,7 @@
  */
 
 import { describe, test, expect } from "@jest/globals"
-import { buildPayload, isWriteTool, pickHookTransport, SKIP_ACTIONS } from "../instance-map-hook"
+import { buildPayload, isWriteTool, pickHookTransport, SKIP_ACTIONS, SKIP_TOOLS } from "../instance-map-hook"
 import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../types"
 
 const baseContext: ServiceNowContext = {
@@ -214,7 +214,7 @@ describe("instance-map-hook", () => {
 
   describe("SKIP_ACTIONS", () => {
     test("skips the expected read-only actions", () => {
-      for (const a of ["get", "find", "list", "analyze", "export", "verify"]) {
+      for (const a of ["get", "find", "list", "analyze", "export", "verify", "current", "preview"]) {
         expect(SKIP_ACTIONS.has(a)).toBe(true)
       }
     })
@@ -223,6 +223,24 @@ describe("instance-map-hook", () => {
       for (const a of ["create", "update", "import", "delete"]) {
         expect(SKIP_ACTIONS.has(a)).toBe(false)
       }
+    })
+
+    test("does not skip update-set actions that mutate the instance", () => {
+      for (const a of ["switch", "complete", "ignore", "add_artifact"]) {
+        expect(SKIP_ACTIONS.has(a)).toBe(false)
+      }
+    })
+  })
+
+  describe("SKIP_TOOLS", () => {
+    test("skips local-sync tools that never mutate the instance", () => {
+      for (const t of ["snow_pull_artifact", "snow_sync_status", "snow_sync_cleanup"]) {
+        expect(SKIP_TOOLS.has(t)).toBe(true)
+      }
+    })
+
+    test("does not skip snow_push_artifact, which writes to the instance", () => {
+      expect(SKIP_TOOLS.has("snow_push_artifact")).toBe(false)
     })
   })
 })
