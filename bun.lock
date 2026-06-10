@@ -599,6 +599,7 @@
       "devDependencies": {
         "@babel/core": "7.28.4",
         "@octokit/webhooks-types": "7.6.1",
+        "@opencode-ai/http-recorder": "workspace:*",
         "@standard-schema/spec": "1.0.0",
         "@tsconfig/bun": "1.0.9",
         "@types/babel__core": "7.20.5",
