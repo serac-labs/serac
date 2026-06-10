@@ -77,6 +77,7 @@ import * as atfTools from "../tools/atf/index.js"
 import * as automationTools from "../tools/automation/index.js"
 import * as updateSetsTools from "../tools/update-sets/index.js"
 import * as localSyncTools from "../tools/local-sync/index.js"
+import * as fluentTools from "../tools/fluent/index.js"
 import * as uiBuilderTools from "../tools/ui-builder/index.js"
 import * as integrationTools from "../tools/integration/index.js"
 import * as platformTools from "../tools/platform/index.js"
@@ -164,6 +165,7 @@ const STATIC_TOOL_MODULES: Record<string, any> = {
   automation: automationTools,
   "update-sets": updateSetsTools,
   "local-sync": localSyncTools,
+  fluent: fluentTools,
   "ui-builder": uiBuilderTools,
   integration: integrationTools,
   platform: platformTools,

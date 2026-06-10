@@ -133,6 +133,9 @@ export * from "./handlers/index.js"
 // Filters (4 tools)
 export * from "./filters/index.js"
 
+// Fluent — ServiceNow SDK local pro-code development (8 tools, stdio-only)
+export * from "./fluent/index.js"
+
 // Parsers (3 tools)
 export * from "./parsers/index.js"
 
