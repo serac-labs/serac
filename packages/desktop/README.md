@@ -1,6 +1,6 @@
-# OpenCode Desktop
+# Serac Desktop
 
-The OpenCode Desktop app, built with Electron.
+The Serac Desktop app, built with Electron.
 
 ## Development
 
