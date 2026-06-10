@@ -1,6 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "name": "@serac-labs/core",
   "license": "Apache-2.0",
   "private": false,
@@ -42,6 +42,7 @@
   "devDependencies": {
     "@babel/core": "7.28.4",
     "@octokit/webhooks-types": "7.6.1",
+    "@opencode-ai/http-recorder": "workspace:*",
     "@standard-schema/spec": "1.0.0",
     "@tsconfig/bun": "1.0.9",
     "@types/babel__core": "7.20.5",
