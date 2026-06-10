@@ -86,7 +86,7 @@ describe("installation", () => {
       Effect.gen(function* () {
         const result = yield* Installation.use.latest("npm")
         expect(result).toBe("1.5.0")
-        expect(npmCalls).toContain(`https://registry.npmjs.org/opencode-ai/${InstallationChannel}`)
+        expect(npmCalls).toContain(`https://registry.npmjs.org/@serac-labs%2Fcore/${InstallationChannel}`)
       }),
     )
 
@@ -100,7 +100,7 @@ describe("installation", () => {
       Effect.gen(function* () {
         const result = yield* Installation.use.latest("bun")
         expect(result).toBe("1.6.0")
-        expect(bunCalls).toContain(`https://registry.npmjs.org/opencode-ai/${InstallationChannel}`)
+        expect(bunCalls).toContain(`https://registry.npmjs.org/@serac-labs%2Fcore/${InstallationChannel}`)
       }),
     )
 
@@ -114,23 +114,18 @@ describe("installation", () => {
       Effect.gen(function* () {
         const result = yield* Installation.use.latest("pnpm")
         expect(result).toBe("1.7.0")
-        expect(pnpmCalls).toContain(`https://registry.npmjs.org/opencode-ai/${InstallationChannel}`)
+        expect(pnpmCalls).toContain(`https://registry.npmjs.org/@serac-labs%2Fcore/${InstallationChannel}`)
       }),
     )
 
-    testEffect(testLayer(() => jsonResponse({ version: "2.3.4" }))).effect("reads scoop manifest versions", () =>
-      Effect.gen(function* () {
-        const result = yield* Installation.use.latest("scoop")
-        expect(result).toBe("2.3.4")
-      }),
-    )
-
-    testEffect(testLayer(() => jsonResponse({ d: { results: [{ Version: "3.4.5" }] } }))).effect(
-      "reads chocolatey feed versions",
+    testEffect(testLayer(() => jsonResponse({ tag_name: "v2.3.4" }))).effect(
+      "scoop and choco fall back to GitHub releases",
       () =>
         Effect.gen(function* () {
-          const result = yield* Installation.use.latest("choco")
-          expect(result).toBe("3.4.5")
+          const scoop = yield* Installation.use.latest("scoop")
+          expect(scoop).toBe("2.3.4")
+          const choco = yield* Installation.use.latest("choco")
+          expect(choco).toBe("2.3.4")
         }),
     )
 
@@ -139,8 +134,8 @@ describe("installation", () => {
         () => jsonResponse({ versions: { stable: "2.0.0" } }),
         (cmd, args) => {
           // getBrewFormula: return core formula (no tap)
-          if (cmd === "brew" && args.includes("--formula") && args.includes("anomalyco/tap/opencode")) return ""
-          if (cmd === "brew" && args.includes("--formula") && args.includes("opencode")) return "opencode"
+          if (cmd === "brew" && args.includes("--formula") && args.includes("serac-labs/tap/serac")) return ""
+          if (cmd === "brew" && args.includes("--formula") && args.includes("serac")) return "serac"
           return ""
         },
       ),
@@ -158,7 +153,7 @@ describe("installation", () => {
       testLayer(
         () => jsonResponse({}), // HTTP not used for tap formula
         (cmd, args) => {
-          if (cmd === "brew" && args.includes("anomalyco/tap/opencode") && args.includes("--formula")) return "opencode"
+          if (cmd === "brew" && args.includes("serac-labs/tap/serac") && args.includes("--formula")) return "serac"
           if (cmd === "brew" && args.includes("--json=v2")) return brewInfoJson
           return ""
         },
@@ -172,6 +167,14 @@ describe("installation", () => {
   })
 
   describe("upgrade", () => {
+    testEffect(testLayer(() => jsonResponse({}))).effect("refuses choco and scoop upgrades", () =>
+      Effect.gen(function* () {
+        const error = yield* Effect.flip(Installation.use.upgrade("choco", "9.9.9"))
+        expect(error).toBeInstanceOf(Installation.UpgradeFailedError)
+        expect(error.stderr).toContain("not distributed via choco")
+      }),
+    )
+
     testEffect(
       testLayer(
         () => jsonResponse({}),
