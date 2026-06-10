@@ -5,7 +5,7 @@
 </p>
 <p align="center">开源的 AI Coding Agent。</p>
 <p align="center">
-  <a href="https://www.npmjs.com/package/@serac-labs/serac"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/serac?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=flat-square" /></a>
 </p>
 
 <p align="center">
@@ -33,7 +33,6 @@
   <a href="README.vi.md">Tiếng Việt</a>
 </p>
 
-[![Serac Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://serac.build)
 
 ---
 
@@ -44,7 +43,7 @@
 curl -fsSL https://serac.build/install | bash
 
 # 软件包管理器
-npm i -g @serac-labs/serac@latest  # 也可使用 bun/pnpm/yarn
+npm i -g @serac-labs/core@latest  # 也可使用 bun/pnpm/yarn
 ```
 
 > [!TIP]

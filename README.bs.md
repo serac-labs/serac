@@ -7,7 +7,7 @@
 </p>
 <p align="center">Serac je open source AI agent za programiranje.</p>
 <p align="center">
-  <a href="https://www.npmjs.com/package/@serac-labs/serac"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/serac?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=flat-square" /></a>
   <a href="https://github.com/serac-labs/serac"><img alt="GitHub" src="https://img.shields.io/github/stars/serac-labs/serac?style=flat-square" /></a>
 </p>
 
@@ -36,7 +36,6 @@
   <a href="README.vi.md">Tiếng Việt</a>
 </p>
 
-[![Serac Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://serac.build)
 
 ---
 
@@ -47,7 +46,7 @@
 curl -fsSL https://serac.build/install | bash
 
 # Package manageri
-npm i -g @serac-labs/serac@latest  # ili bun/pnpm/yarn
+npm i -g @serac-labs/core@latest  # ili bun/pnpm/yarn
 ```
 
 > [!TIP]

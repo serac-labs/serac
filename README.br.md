@@ -5,7 +5,7 @@
 </p>
 <p align="center">O agente de programação com IA de código aberto.</p>
 <p align="center">
-  <a href="https://www.npmjs.com/package/@serac-labs/serac"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/serac?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=flat-square" /></a>
 </p>
 
 <p align="center">
@@ -33,7 +33,6 @@
   <a href="README.vi.md">Tiếng Việt</a>
 </p>
 
-[![Serac Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://serac.build)
 
 ---
 
@@ -44,7 +43,7 @@
 curl -fsSL https://serac.build/install | bash
 
 # Gerenciadores de pacotes
-npm i -g @serac-labs/serac@latest  # ou bun/pnpm/yarn
+npm i -g @serac-labs/core@latest  # ou bun/pnpm/yarn
 ```
 
 > [!TIP]

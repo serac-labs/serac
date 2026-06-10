@@ -5,7 +5,7 @@
 </p>
 <p align="center">L’agente di coding AI open source.</p>
 <p align="center">
-  <a href="https://www.npmjs.com/package/@serac-labs/serac"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/serac?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=flat-square" /></a>
   <a href="https://github.com/serac-labs/serac/actions/workflows/publish.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/serac-labs/serac/publish.yml?style=flat-square&branch=main" /></a>
 </p>
 
@@ -34,7 +34,6 @@
   <a href="README.vi.md">Tiếng Việt</a>
 </p>
 
-[![Serac Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://serac.build)
 
 ---
 
@@ -45,7 +44,7 @@
 curl -fsSL https://serac.build/install | bash
 
 # Package manager
-npm i -g @serac-labs/serac@latest  # oppure bun/pnpm/yarn
+npm i -g @serac-labs/core@latest  # oppure bun/pnpm/yarn
 ```
 
 > [!TIP]

@@ -7,7 +7,7 @@
 </p>
 <p align="center">オープンソースのAIコーディングエージェント。</p>
 <p align="center">
-  <a href="https://www.npmjs.com/package/@serac-labs/serac"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/serac?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=flat-square" /></a>
   <a href="https://github.com/serac-labs/serac/actions/workflows/publish.yml"><img alt="Build status" src="https://img.shields.io/github/actions/workflow/status/serac-labs/serac/publish.yml?style=flat-square&branch=dev" /></a>
 </p>
 
@@ -36,7 +36,6 @@
   <a href="README.vi.md">Tiếng Việt</a>
 </p>
 
-[![Serac Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://serac.build)
 
 ---
 
@@ -47,7 +46,7 @@
 curl -fsSL https://serac.build/install | bash
 
 # パッケージマネージャー
-npm i -g @serac-labs/serac@latest  # bun/pnpm/yarn でもOK
+npm i -g @serac-labs/core@latest  # bun/pnpm/yarn でもOK
 scoop install serac                # Windows
 choco install serac                # Windows
 brew install serac-labs/tap/serac  # macOS と Linux（推奨。常に最新）
