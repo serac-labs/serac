@@ -336,6 +336,11 @@ jobs:
           tag_name: v${{ steps.version.outputs.version }}
           name: Serac v${{ steps.version.outputs.version }}
           prerelease: ${{ steps.channel.outputs.prerelease == 'true' }}
+          # GitHub picks "Latest" by created_at, so a stable release that lands
+          # on a pre-existing snow-flow-era tag (v1.1.0, v1.2.0, v1.3.x, v1.4.x
+          # all exist) would silently NOT become Latest — and the CLI's
+          # update check reads releases/latest. Mark it explicitly.
+          make_latest: ${{ steps.channel.outputs.prerelease == 'true' && 'false' || 'true' }}
           generate_release_notes: ${{ steps.channel.outputs.channel == 'stable' }}
           files: |
             packages/opencode/dist/serac-core-*.tar.gz
