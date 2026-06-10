@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
-APP=opencode
+# Asset prefix on the GitHub release: serac-core-<os>-<arch>[-baseline][-musl].{tar.gz,zip}
+APP=serac-core
 
 MUTED='\033[0;2m'
 RED='\033[0;31m'
@@ -9,24 +10,24 @@ NC='\033[0m' # No Color
 
 usage() {
     cat <<EOF
-OpenCode Installer
+Serac Installer
 
 Usage: install.sh [options]
 
 Options:
     -h, --help              Display this help message
-    -v, --version <version> Install a specific version (e.g., 1.0.180)
+    -v, --version <version> Install a specific version (e.g., 1.1.0)
     -b, --binary <path>     Install from a local binary instead of downloading
         --no-modify-path    Don't modify shell config files (.zshrc, .bashrc, etc.)
 
 Examples:
-    curl -fsSL https://opencode.ai/install | bash
-    curl -fsSL https://opencode.ai/install | bash -s -- --version 1.0.180
-    ./install --binary /path/to/opencode
+    curl -fsSL https://serac.build/install | bash
+    curl -fsSL https://serac.build/install | bash -s -- --version 1.1.0
+    ./install --binary /path/to/serac
 EOF
 }
 
-requested_version=${VERSION:-}
+requested_version=${SERAC_VERSION:-${VERSION:-}}
 no_modify_path=false
 binary_path=""
 
@@ -65,7 +66,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-INSTALL_DIR=$HOME/.opencode/bin
+INSTALL_DIR=${SERAC_INSTALL_DIR:-${XDG_BIN_DIR:-$HOME/.serac/bin}}
 mkdir -p "$INSTALL_DIR"
 
 # If --binary is provided, skip all download/detection logic
@@ -181,24 +182,26 @@ else
     fi
 
     if [ -z "$requested_version" ]; then
-        url="https://github.com/anomalyco/opencode/releases/latest/download/$filename"
-        specific_version=$(curl -s https://api.github.com/repos/anomalyco/opencode/releases/latest | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p')
+        url="https://github.com/serac-labs/serac/releases/latest/download/$filename"
+        # `|| true` keeps set -e/pipefail from killing the script silently on
+        # transport failures; the -z check below reports them instead.
+        specific_version=$(curl -s https://api.github.com/repos/serac-labs/serac/releases/latest | sed -n 's/.*"tag_name": *"v\([^"]*\)".*/\1/p' || true)
 
-        if [[ $? -ne 0 || -z "$specific_version" ]]; then
+        if [[ -z "$specific_version" ]]; then
             echo -e "${RED}Failed to fetch version information${NC}"
             exit 1
         fi
     else
         # Strip leading 'v' if present
         requested_version="${requested_version#v}"
-        url="https://github.com/anomalyco/opencode/releases/download/v${requested_version}/$filename"
+        url="https://github.com/serac-labs/serac/releases/download/v${requested_version}/$filename"
         specific_version=$requested_version
 
         # Verify the release exists before downloading
-        http_status=$(curl -sI -o /dev/null -w "%{http_code}" "https://github.com/anomalyco/opencode/releases/tag/v${requested_version}")
+        http_status=$(curl -sI -o /dev/null -w "%{http_code}" "https://github.com/serac-labs/serac/releases/tag/v${requested_version}" || true)
         if [ "$http_status" = "404" ]; then
             echo -e "${RED}Error: Release v${requested_version} not found${NC}"
-            echo -e "${MUTED}Available releases: https://github.com/anomalyco/opencode/releases${NC}"
+            echo -e "${MUTED}Available releases: https://github.com/serac-labs/serac/releases${NC}"
             exit 1
         fi
     fi
@@ -219,11 +222,15 @@ print_message() {
 }
 
 check_version() {
-    if command -v opencode >/dev/null 2>&1; then
-        opencode_path=$(which opencode)
-
-        ## Check the installed version
-        installed_version=$(opencode --version 2>/dev/null || echo "")
+    # Compare against the binary at the install destination, NOT whatever
+    # `serac` happens to be first on PATH — a different install (e.g. npm)
+    # at the target version must not short-circuit this one.
+    local existing="${INSTALL_DIR}/serac"
+    if [ "$os" = "windows" ]; then
+        existing="${INSTALL_DIR}/serac.exe"
+    fi
+    if [ -x "$existing" ]; then
+        installed_version=$("$existing" --version 2>/dev/null || echo "")
 
         if [[ "$installed_version" != "$specific_version" ]]; then
             print_message info "${MUTED}Installed version: ${NC}$installed_version."
@@ -275,7 +282,7 @@ download_with_progress() {
     fi
 
     local tmp_dir=${TMPDIR:-/tmp}
-    local basename="${tmp_dir}/opencode_install_$$"
+    local basename="${tmp_dir}/serac_install_$$"
     local tracefile="${basename}.trace"
 
     rm -f "$tracefile"
@@ -287,7 +294,7 @@ download_with_progress() {
     trap "trap - RETURN; rm -f \"$tracefile\"; printf '\033[?25h' >&4; exec 4>&-" RETURN
 
     (
-        curl --trace-ascii "$tracefile" -s -L -o "$output" "$url"
+        curl --trace-ascii "$tracefile" -fsL -o "$output" "$url"
     ) &
     local curl_pid=$!
 
@@ -325,13 +332,13 @@ download_with_progress() {
 }
 
 download_and_install() {
-    print_message info "\n${MUTED}Installing ${NC}opencode ${MUTED}version: ${NC}$specific_version"
-    local tmp_dir="${TMPDIR:-/tmp}/opencode_install_$$"
+    print_message info "\n${MUTED}Installing ${NC}serac ${MUTED}version: ${NC}$specific_version"
+    local tmp_dir="${TMPDIR:-/tmp}/serac_install_$$"
     mkdir -p "$tmp_dir"
 
     if [[ "$os" == "windows" ]] || ! [ -t 2 ] || ! download_with_progress "$url" "$tmp_dir/$filename"; then
         # Fallback to standard curl on Windows, non-TTY environments, or if custom progress fails
-        curl -# -L -o "$tmp_dir/$filename" "$url"
+        curl -#fL -o "$tmp_dir/$filename" "$url"
     fi
 
     if [ "$os" = "linux" ]; then
@@ -340,15 +347,28 @@ download_and_install() {
         unzip -q "$tmp_dir/$filename" -d "$tmp_dir"
     fi
 
-    mv "$tmp_dir/opencode" "$INSTALL_DIR"
-    chmod 755 "${INSTALL_DIR}/opencode"
+    # Release archives ship the binary as opencode(.exe); install it under
+    # the product command name.
+    if [ "$os" = "windows" ]; then
+        # Windows can't overwrite a running exe, but it can rename it — park
+        # the old binary as .old so self-upgrade works.
+        if [ -f "${INSTALL_DIR}/serac.exe" ]; then
+            rm -f "${INSTALL_DIR}/serac.exe.old" 2>/dev/null || true
+            mv -f "${INSTALL_DIR}/serac.exe" "${INSTALL_DIR}/serac.exe.old"
+        fi
+        mv "$tmp_dir/opencode.exe" "${INSTALL_DIR}/serac.exe"
+        chmod 755 "${INSTALL_DIR}/serac.exe"
+    else
+        mv "$tmp_dir/opencode" "${INSTALL_DIR}/serac"
+        chmod 755 "${INSTALL_DIR}/serac"
+    fi
     rm -rf "$tmp_dir"
 }
 
 install_from_binary() {
-    print_message info "\n${MUTED}Installing ${NC}opencode ${MUTED}from: ${NC}$binary_path"
-    cp "$binary_path" "${INSTALL_DIR}/opencode"
-    chmod 755 "${INSTALL_DIR}/opencode"
+    print_message info "\n${MUTED}Installing ${NC}serac ${MUTED}from: ${NC}$binary_path"
+    cp "$binary_path" "${INSTALL_DIR}/serac"
+    chmod 755 "${INSTALL_DIR}/serac"
 }
 
 if [ -n "$binary_path" ]; then
@@ -366,9 +386,9 @@ add_to_path() {
     if grep -Fxq "$command" "$config_file"; then
         print_message info "Command already exists in $config_file, skipping write."
     elif [[ -w $config_file ]]; then
-        echo -e "\n# opencode" >> "$config_file"
+        echo -e "\n# serac" >> "$config_file"
         echo "$command" >> "$config_file"
-        print_message info "${MUTED}Successfully added ${NC}opencode ${MUTED}to \$PATH in ${NC}$config_file"
+        print_message info "${MUTED}Successfully added ${NC}serac ${MUTED}to \$PATH in ${NC}$config_file"
     else
         print_message warning "Manually add the directory to $config_file (or similar):"
         print_message info "  $command"
@@ -415,19 +435,19 @@ if [[ "$no_modify_path" != "true" ]]; then
     elif [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
         case $current_shell in
             fish)
-                add_to_path "$config_file" "fish_add_path $INSTALL_DIR"
+                add_to_path "$config_file" "fish_add_path \"$INSTALL_DIR\""
             ;;
             zsh)
-                add_to_path "$config_file" "export PATH=$INSTALL_DIR:\$PATH"
+                add_to_path "$config_file" "export PATH=\"$INSTALL_DIR:\$PATH\""
             ;;
             bash)
-                add_to_path "$config_file" "export PATH=$INSTALL_DIR:\$PATH"
+                add_to_path "$config_file" "export PATH=\"$INSTALL_DIR:\$PATH\""
             ;;
             ash)
-                add_to_path "$config_file" "export PATH=$INSTALL_DIR:\$PATH"
+                add_to_path "$config_file" "export PATH=\"$INSTALL_DIR:\$PATH\""
             ;;
             sh)
-                add_to_path "$config_file" "export PATH=$INSTALL_DIR:\$PATH"
+                add_to_path "$config_file" "export PATH=\"$INSTALL_DIR:\$PATH\""
             ;;
             *)
                 export PATH=$INSTALL_DIR:$PATH
@@ -439,22 +459,15 @@ if [[ "$no_modify_path" != "true" ]]; then
 fi
 
 if [ -n "${GITHUB_ACTIONS-}" ] && [ "${GITHUB_ACTIONS}" == "true" ]; then
-    echo "$INSTALL_DIR" >> $GITHUB_PATH
+    echo "$INSTALL_DIR" >> "$GITHUB_PATH"
     print_message info "Added $INSTALL_DIR to \$GITHUB_PATH"
 fi
 
 echo -e ""
-echo -e "${MUTED}                    ${NC}             ▄     "
-echo -e "${MUTED}█▀▀█ █▀▀█ █▀▀█ █▀▀▄ ${NC}█▀▀▀ █▀▀█ █▀▀█ █▀▀█"
-echo -e "${MUTED}█░░█ █░░█ █▀▀▀ █░░█ ${NC}█░░░ █░░█ █░░█ █▀▀▀"
-echo -e "${MUTED}▀▀▀▀ █▀▀▀ ▀▀▀▀ ▀  ▀ ${NC}▀▀▀▀ ▀▀▀▀ ▀▀▀▀ ▀▀▀▀"
-echo -e ""
-echo -e ""
-echo -e "${MUTED}OpenCode includes free models, to start:${NC}"
+echo -e "${MUTED}Serac installed. To start:${NC}"
 echo -e ""
 echo -e "cd <project>  ${MUTED}# Open directory${NC}"
-echo -e "opencode      ${MUTED}# Run command${NC}"
+echo -e "serac         ${MUTED}# Run command${NC}"
 echo -e ""
-echo -e "${MUTED}For more information visit ${NC}https://opencode.ai/docs"
-echo -e ""
+echo -e "${MUTED}For more information visit ${NC}https://docs.serac.build"
 echo -e ""

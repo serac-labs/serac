@@ -5,7 +5,7 @@
 </p>
 <p align="center">The open source AI coding agent.</p>
 <p align="center">
-  <a href="https://www.npmjs.com/package/@serac-labs/serac"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/serac?style=flat-square" /></a>
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=flat-square" /></a>
 </p>
 
 <p align="center">
@@ -44,7 +44,7 @@
 curl -fsSL https://serac.build/install | bash
 
 # Package managers
-npm i -g @serac-labs/serac@latest  # or bun/pnpm/yarn
+npm i -g @serac-labs/core@latest  # or bun/pnpm/yarn
 ```
 
 > [!TIP]
@@ -67,8 +67,7 @@ The install script respects the following priority order for the installation pa
 
 1. `$SERAC_INSTALL_DIR` - Custom installation directory
 2. `$XDG_BIN_DIR` - XDG Base Directory Specification compliant path
-3. `$HOME/bin` - Standard user binary directory (if it exists or can be created)
-4. `$HOME/.opencode/bin` - Default fallback
+3. `$HOME/.serac/bin` - Default
 
 ```bash
 # Examples
