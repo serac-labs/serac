@@ -2,7 +2,7 @@
   "name": "@opencode-ai/console-app",
   "version": "1.16.2",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "typecheck": "tsgo --noEmit",
     "dev": "vite dev --host 0.0.0.0",

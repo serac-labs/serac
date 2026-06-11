@@ -176,7 +176,7 @@ export const dict = {
   "home.faq.q8": "OpenCode 是開源的嗎？",
   "home.faq.a8.p1": "是的，OpenCode 完全開源。原始碼公開在",
   "home.faq.a8.p2": "並採用",
-  "home.faq.a8.mitLicense": "MIT 授權條款",
+  "home.faq.a8.mitLicense": "Apache License 2.0",
   "home.faq.a8.p3": "，意味著任何人都可以使用、修改或貢獻。社群中的任何人都可以提交 issue、pull requests 並擴充功能。",
 
   "home.zenCta.title": "存取可靠且最佳化的編碼代理模型",

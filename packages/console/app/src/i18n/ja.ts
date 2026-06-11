@@ -179,7 +179,7 @@ export const dict = {
   "home.faq.q8": "OpenCodeはオープンソースですか？",
   "home.faq.a8.p1": "はい、OpenCodeは完全にオープンソースです。ソースコードは",
   "home.faq.a8.p2": "の",
-  "home.faq.a8.mitLicense": "MITライセンス",
+  "home.faq.a8.mitLicense": "Apache License 2.0",
   "home.faq.a8.p3":
     "のもとで公開されており、誰でも使用、変更、開発への参加ができます。コミュニティの誰でもissueを起こしたり、pull requestを送ったり、機能を拡張できます。",
 

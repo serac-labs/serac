@@ -1,11 +1,26 @@
 <p align="center">
-  <a href="https://serac.build">
-    <h1 align="center">Serac</h1>
-  </a>
+<pre align="center">
+███████╗███████╗██████╗  █████╗  ██████╗
+██╔════╝██╔════╝██╔══██╗██╔══██╗██╔════╝
+███████╗█████╗  ██████╔╝███████║██║     
+╚════██║██╔══╝  ██╔══██╗██╔══██║██║     
+███████║███████╗██║  ██║██║  ██║╚██████╗
+╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝
+</pre>
 </p>
-<p align="center">The open source AI coding agent.</p>
+
+<h3 align="center">The terminal-native AI agent for ServiceNow developers and consultants.</h3>
+
 <p align="center">
-  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=flat-square" /></a>
+  Your terminal &bull; your keys (BYOK, 20+ providers) &bull; every instance &bull; 429 ServiceNow MCP tools
+</p>
+
+<p align="center">
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="npm" src="https://img.shields.io/npm/v/@serac-labs/core?style=for-the-badge&logo=npm&logoColor=white&color=CB3837" /></a>&nbsp;
+  <a href="https://www.npmjs.com/package/@serac-labs/core"><img alt="Downloads" src="https://img.shields.io/npm/dw/@serac-labs/core?style=for-the-badge&logo=npm&logoColor=white&label=downloads&color=CB3837" /></a>&nbsp;
+  <a href="https://github.com/serac-labs/serac/stargazers"><img alt="Stars" src="https://img.shields.io/github/stars/serac-labs/serac?style=for-the-badge&logo=github&color=yellow" /></a>&nbsp;
+  <a href="https://github.com/serac-labs/serac"><img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" /></a>&nbsp;
+  <a href="https://github.com/serac-labs/serac/blob/main/LICENSE"><img alt="License" src="https://img.shields.io/badge/license-Apache--2.0-blue?style=for-the-badge" /></a>
 </p>
 
 <p align="center">
@@ -34,6 +49,8 @@
 </p>
 
 [![Serac Terminal UI](packages/web/src/assets/lander/screenshot.png)](https://serac.build)
+
+Serac is a terminal-native AI development agent purpose-built for **ServiceNow**. It brings 429 ServiceNow MCP tools, 55 bundled domain skills (including Blast Radius impact analysis), and 20+ AI providers into your own terminal — your editor, your keys (BYOK), and any instance you connect to. It's built for ServiceNow developers and the consultants who work across many client instances. Serac extends the open-source [opencode](https://github.com/anomalyco/opencode) agent with a deep ServiceNow domain layer.
 
 ---
 
@@ -101,3 +118,7 @@ If you're interested in contributing to Serac, please read our [contributing doc
 ### Building on Serac
 
 If you are working on a project that's related to Serac and is using "serac" as part of its name, for example "serac-dashboard" or "serac-mobile", please add a note to your README to clarify that it is not built by the Serac team and is not affiliated with us in any way.
+
+### License
+
+Licensed under the [Apache License 2.0](LICENSE) — see also [`NOTICE`](NOTICE) for third-party attributions (built on the MIT-licensed [opencode](https://github.com/anomalyco/opencode)).

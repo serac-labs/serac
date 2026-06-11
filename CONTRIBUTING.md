@@ -1,6 +1,6 @@
-# Contributing to OpenCode
+# Contributing to Serac
 
-We want to make it easy for you to contribute to OpenCode. Here are the most common type of changes that get merged:
+We want to make it easy for you to contribute to Serac. Here are the most common type of changes that get merged:
 
 - Bug fixes
 - Additional LSPs / Formatters
@@ -23,6 +23,20 @@ If you are unsure if a PR would be accepted, feel free to ask a maintainer or lo
 > PRs that ignore these guardrails will likely be closed.
 
 Want to take on an issue? Leave a comment and a maintainer may assign it to you unless it is something we are already working on.
+
+## License and the Developer Certificate of Origin (DCO)
+
+Serac is released under the [Apache License 2.0](./LICENSE) and is built on the MIT-licensed [opencode](https://github.com/anomalyco/opencode) project (see [`NOTICE`](./NOTICE)). By contributing, you agree that your contributions are licensed under the same Apache 2.0 terms.
+
+We use the [Developer Certificate of Origin](https://developercertificate.org/) (DCO) — a lightweight way to certify that you wrote, or otherwise have the right to submit, the code you contribute. It is **not** a copyright-assignment CLA; you keep ownership of your work.
+
+Sign off every commit by adding a `Signed-off-by` line, which `git commit -s` does for you:
+
+```
+Signed-off-by: Your Name <your.email@example.com>
+```
+
+The name and email must match your commit author. Signing off certifies the statements at https://developercertificate.org/.
 
 ## Adding New Providers
 

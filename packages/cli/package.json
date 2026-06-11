@@ -3,7 +3,7 @@
   "name": "@opencode-ai/cli",
   "version": "1.16.2",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "bin": {
     "lildax": "./bin/lildax.cjs"
   },

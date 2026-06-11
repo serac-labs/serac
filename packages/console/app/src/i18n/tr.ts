@@ -179,7 +179,7 @@ export const dict = {
   "home.faq.q8": "OpenCode açık kaynak mı?",
   "home.faq.a8.p1": "Evet, OpenCode tamamen açık kaynaktır. Kaynak kodu",
   "home.faq.a8.p2": "'da",
-  "home.faq.a8.mitLicense": "MIT Lisansı",
+  "home.faq.a8.mitLicense": "Apache License 2.0",
   "home.faq.a8.p3":
     "altında herkese açıktır, yani herkes kullanabilir, değiştirebilir veya geliştirmeye katkıda bulunabilir. Topluluktan herkes issue açabilir, pull request gönderebilir ve işlevselliği genişletebilir.",
 

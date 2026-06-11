@@ -175,7 +175,7 @@ export const dict = {
   "home.faq.q8": "OpenCode 是开源的吗？",
   "home.faq.a8.p1": "是的，OpenCode 是完全开源的。源代码公开在",
   "home.faq.a8.p2": "遵循",
-  "home.faq.a8.mitLicense": "MIT 许可证",
+  "home.faq.a8.mitLicense": "Apache License 2.0",
   "home.faq.a8.p3":
     "，这意味着任何人都可以使用、修改或为它的发展做贡献。社区中的任何人都可以提交 issue、提交 PR 并扩展功能。",
 

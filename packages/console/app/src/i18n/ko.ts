@@ -178,7 +178,7 @@ export const dict = {
   "home.faq.q8": "OpenCode는 오픈 소스인가요?",
   "home.faq.a8.p1": "네, OpenCode는 완전히 오픈 소스입니다. 소스 코드는",
   "home.faq.a8.p2": "에 공개되어 있으며,",
-  "home.faq.a8.mitLicense": "MIT 라이선스",
+  "home.faq.a8.mitLicense": "Apache License 2.0",
   "home.faq.a8.p3":
     "를 따릅니다. 즉, 누구나 사용, 수정 또는 개발에 기여할 수 있습니다. 커뮤니티의 누구든지 이슈를 등록하고, 풀 리퀘스트를 제출하고, 기능을 확장할 수 있습니다.",
 

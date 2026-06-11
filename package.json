@@ -117,7 +117,7 @@
     "type": "git",
     "url": "https://github.com/anomalyco/opencode"
   },
-  "license": "MIT",
+  "license": "Apache-2.0",
   "prettier": {
     "semi": false,
     "printWidth": 120
