@@ -9,7 +9,7 @@
 
 import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
-import { resolveSdk, runSdk, sdkAuthEnv, assertDirectory, readProjectConfig } from "./sdk.js"
+import { resolveSdk, runSdk, sdkAuthEnv, assertDirectory, readProjectConfig, assertNoFlag, SYS_ID_PATTERN } from "./sdk.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_fluent_dependencies",
@@ -71,11 +71,18 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
 
     const cliArgs = ["dependencies"]
     const sysIds = args.sys_ids as string[] | undefined
-    if (sysIds && sysIds.length > 0) cliArgs.push(...sysIds)
+    if (sysIds && sysIds.length > 0) {
+      for (const sysId of sysIds) {
+        if (!SYS_ID_PATTERN.test(sysId)) {
+          throw new SnowFlowError(ErrorType.VALIDATION_ERROR, `Invalid sys_id: "${sysId}" (expected 32 hex characters)`)
+        }
+      }
+      cliArgs.push(...sysIds)
+    }
     cliArgs.push("--directory", directory)
     if (args.type_defs_only) cliArgs.push("--type-defs-only")
     if (args.fluent_only) cliArgs.push("--fluent-only")
-    if (args.add_table) cliArgs.push("--add", String(args.add_table), "--scope", String(args.scope))
+    if (args.add_table) cliArgs.push("--add", assertNoFlag(String(args.add_table), "add_table"), "--scope", assertNoFlag(String(args.scope), "scope"))
 
     const sdk = await resolveSdk(directory)
     const run = await runSdk(sdk, cliArgs, { cwd: directory, env: sdkAuthEnv(context), timeoutMs: 600_000 })

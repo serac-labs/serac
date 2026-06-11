@@ -9,7 +9,7 @@
 
 import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
-import { resolveSdk, runSdk, sdkAuthEnv, assertDirectory, readProjectConfig } from "./sdk.js"
+import { resolveSdk, runSdk, sdkAuthEnv, assertDirectory, readProjectConfig, assertNoFlag } from "./sdk.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_fluent_install",
@@ -69,7 +69,7 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
     const cliArgs = ["install"]
     if (args.info) cliArgs.push("--info")
     if (args.reinstall) cliArgs.push("--reinstall")
-    if (args.source) cliArgs.push("--source", String(args.source))
+    if (args.source) cliArgs.push("--source", assertNoFlag(String(args.source), "source"))
     if (!args.info) {
       cliArgs.push(`--demoData=${args.demo_data === true}`)
       if (args.skip_flow_activation) cliArgs.push("--skip-flow-activation")

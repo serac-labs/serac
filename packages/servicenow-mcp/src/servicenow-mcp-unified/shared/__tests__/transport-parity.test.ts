@@ -35,6 +35,16 @@ const EXPECTED_STDIO_ONLY = new Set<string>([
   "snow_sync_cleanup",
   "snow_memory_search",
   "snow_sync_data_consistency",
+  // The fluent domain spawns the now-sdk CLI as a local child process and
+  // reads/writes project directories on the local machine — never HTTP-safe.
+  "snow_fluent_build",
+  "snow_fluent_dependencies",
+  "snow_fluent_download",
+  "snow_fluent_explain",
+  "snow_fluent_init",
+  "snow_fluent_install",
+  "snow_fluent_status",
+  "snow_fluent_transform",
   // snow_artifact_manage and snow_pull_artifact were stdio-only until they
   // grew per-arg HTTP-safety guards (`httpForbiddenArgs`). They now run on
   // both transports — the unsafe filesystem args are rejected centrally

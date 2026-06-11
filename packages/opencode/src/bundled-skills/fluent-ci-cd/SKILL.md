@@ -43,7 +43,7 @@ target/
 ✅ Commit keys.ts on every change, enforce with --frozenKeys in PR checks (section 2)
 ```
 
-One app per repo is the simplest layout and what these examples assume. The SDK itself doesn't mandate it — per ServiceNow staff, Fluent apps "can be arranged in any way you'd like as long as the `now.config.json` is set up correctly". `now.config.json` holds only `scope`/`scopeId`/`name` (no instance connection info), so it is safe to commit.
+One app per repo is the simplest layout and what these examples assume. The SDK itself doesn't mandate a layout — projects can be arranged freely as long as `now.config.json` is set up correctly. `now.config.json` binds the project to one scope (`scope`/`scopeId`/`name`; optionally `tsconfigPath`) and contains no instance connection info, so it is safe to commit.
 
 ## 2. The PR check: build with frozen keys
 
@@ -152,7 +152,7 @@ Tuning the install step: `--demoData` defaults to TRUE (pass nothing to keep it;
 
 ## 5. Production: NEVER install from CI
 
-Official SDK guidance, verbatim: **"Do not use `now-sdk install` from CI to deploy to production instances."** And the suggested promotion path from ServiceNow staff: "The suggested approach for promoting apps with Fluent applications is definitely through git and the App Repo."
+Official SDK guidance, verbatim: **"Do not use `now-sdk install` from CI to deploy to production instances."** The promotion path is git plus the Application Repository: publish the app from the test instance to the App Repo and install it in production from there — that is where change management and rollback live.
 
 Why this is a hard rule: `now-sdk install` bypasses update sets ("Installing via now-sdk does not generate changes in update sets as of now") and "there is no rollback context created for app installed via now-sdk". The only SDK-side undo is `--reinstall` (uninstall + fresh install — destructive).
 

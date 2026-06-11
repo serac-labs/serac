@@ -10,7 +10,7 @@
 
 import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
-import { resolveSdk, runSdk, sdkAuthEnv, assertDirectory, readProjectConfig } from "./sdk.js"
+import { resolveSdk, runSdk, sdkAuthEnv, assertDirectory, readProjectConfig, assertNoFlag } from "./sdk.js"
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_fluent_transform",
@@ -61,7 +61,7 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
     }
 
     const cliArgs = ["transform", "--directory", directory]
-    if (args.from) cliArgs.push("--from", String(args.from))
+    if (args.from) cliArgs.push("--from", assertNoFlag(String(args.from), "from"))
     const tables = args.tables as string[] | undefined
     if (tables && tables.length > 0) cliArgs.push("--table", tables.join(","))
     if (args.format === false) cliArgs.push("--format", "false")

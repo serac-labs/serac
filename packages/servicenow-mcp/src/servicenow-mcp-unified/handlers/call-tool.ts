@@ -42,8 +42,9 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
     // 🆕 Handle meta-tools (tool_search, tool_execute) for lazy loading mode
     if (name === "tool_search") {
       mcpDebug("[Server] Executing meta-tool: tool_search")
-      // Pass sessionId to enable session-based tool enabling
-      const contextWithSession = { ...context, sessionId }
+      // Pass sessionId to enable session-based tool enabling, and origin so
+      // the meta path can filter stdio-only tools out of HTTP discovery.
+      const contextWithSession = { ...context, sessionId, origin: ctx.origin }
       const result = await tool_search_exec(args as any, contextWithSession)
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
@@ -52,8 +53,10 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
 
     if (name === "tool_execute") {
       mcpDebug("[Server] Executing meta-tool: tool_execute")
-      // Pass sessionId for potential future use
-      const contextWithSession = { ...context, sessionId }
+      // Pass sessionId for potential future use, and origin so tool_execute
+      // enforces the same transport allowlist as the direct dispatch below —
+      // without it the meta path would bypass the stdio-only guard.
+      const contextWithSession = { ...context, sessionId, origin: ctx.origin }
       const result = await tool_execute_exec(args as any, contextWithSession)
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],

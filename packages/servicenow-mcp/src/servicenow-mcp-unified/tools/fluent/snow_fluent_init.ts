@@ -10,8 +10,9 @@
 
 import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
-import { resolveSdk, runSdk, sdkAuthEnv, readProjectConfig } from "./sdk.js"
+import { resolveSdk, runSdk, sdkAuthEnv, readProjectConfig, npmInvocation, assertNoFlag, SYS_ID_PATTERN } from "./sdk.js"
 import * as fs from "fs/promises"
+import * as path from "path"
 
 const TEMPLATES = ["base", "javascript.basic", "javascript.react", "typescript.basic", "typescript.react", "typescript.vue"]
 
@@ -38,7 +39,7 @@ export const toolDefinition: MCPToolDefinition = {
       },
       app_name: {
         type: "string",
-        description: "Display name of the application (required for a new app; ignored with `from`)",
+        description: "Display name of the application (required for a new app; with `from` it is forwarded when provided)",
       },
       package_name: {
         type: "string",
@@ -47,7 +48,7 @@ export const toolDefinition: MCPToolDefinition = {
       scope_name: {
         type: "string",
         description:
-          "Application scope, format x_<company_code>_<app_name>, max 18 chars (required for a new app; ignored with `from`)",
+          "Application scope, format x_<company_code>_<app_name>, max 18 chars (required for a new app; with `from` the existing app's scope is reused)",
       },
       template: {
         type: "string",
@@ -68,13 +69,17 @@ export const toolDefinition: MCPToolDefinition = {
   },
 }
 
-const SYS_ID_PATTERN = /^[0-9a-f]{32}$/
-
 export async function execute(args: Record<string, unknown>, context: ServiceNowContext): Promise<ToolResult> {
   try {
     const directory = args.directory as string
     if (!directory) {
       throw new SnowFlowError(ErrorType.VALIDATION_ERROR, "`directory` is required")
+    }
+    if (!path.isAbsolute(directory)) {
+      throw new SnowFlowError(
+        ErrorType.VALIDATION_ERROR,
+        `\`directory\` must be an absolute path (got "${directory}") — relative paths resolve against the MCP server's cwd, not the user's project.`,
+      )
     }
     const from = args.from as string | undefined
     if (!from) {
@@ -103,7 +108,7 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
     }
 
     const cliArgs = ["init"]
-    if (from) cliArgs.push("--from", from)
+    if (from) cliArgs.push("--from", assertNoFlag(from, "from"))
     if (args.app_name) cliArgs.push("--appName", String(args.app_name))
     if (args.package_name) cliArgs.push("--packageName", String(args.package_name))
     if (args.scope_name) cliArgs.push("--scopeName", String(args.scope_name))
@@ -124,13 +129,18 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
     }
 
     const config = await readProjectConfig(directory)
+
+    // The dependency install is a convenience step — its failure must never
+    // be reported as an init failure: the project is already scaffolded, and
+    // a retried init would hit the already-a-project guard above (dead end).
     const installDeps = args.install_dependencies !== false
-    const npmResult = installDeps
-      ? await runSdk({ command: "npm", prefixArgs: [], source: "path" }, ["install", "--no-fund", "--no-audit", "--loglevel=error"], {
+    const npm = installDeps
+      ? await runSdk(npmInvocation(), ["install", "--no-fund", "--no-audit", "--loglevel=error"], {
           cwd: directory,
           timeoutMs: 600_000,
-        })
+        }).catch((error: Error) => ({ failed: error.message }) as const)
       : null
+    const npmFailed = npm === null ? null : "failed" in npm ? npm.failed : npm.exitCode !== 0 ? npm.output.slice(-2000) : null
 
     return createSuccessResult(
       {
@@ -138,12 +148,14 @@ export async function execute(args: Record<string, unknown>, context: ServiceNow
         scope: config?.scope,
         scopeId: config?.scopeId,
         name: config?.name,
-        dependenciesInstalled: npmResult ? npmResult.exitCode === 0 : false,
+        dependenciesInstalled: npm !== null && !npmFailed,
+        ...(npmFailed ? { dependencyInstallError: npmFailed } : {}),
         output: run.output,
       },
       { executionTime: run.durationMs, command: run.command, sdkSource: sdk.source },
       `✓ Fluent project initialized in ${directory}\n  scope: ${config?.scope ?? "(unknown)"}\n  ` +
-        (from ? "Converted from existing app — metadata is XML; use snow_fluent_transform to convert records to Fluent code." : "New app scaffolded."),
+        (from ? "Converted from existing app — metadata is XML; use snow_fluent_transform to convert records to Fluent code." : "New app scaffolded.") +
+        (npmFailed ? `\n  ⚠ Dependency install failed — run npm install in ${directory} before building. Reason: ${npmFailed.slice(0, 300)}` : ""),
     )
   } catch (error: unknown) {
     const err = error as Error

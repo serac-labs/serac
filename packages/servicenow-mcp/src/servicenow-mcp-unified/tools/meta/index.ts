@@ -73,6 +73,18 @@ Example workflow:
   },
 }
 
+/**
+ * Transport allowlist check shared by the meta path. call-tool.ts enforces
+ * `transports` for direct dispatch; tool_search/tool_execute must apply the
+ * same rule or they become a bypass for stdio-only tools over HTTP.
+ * Fail closed: an absent origin is treated as "http".
+ */
+function allowedOnTransport(definition: { transports?: string[] } | undefined, origin: string | undefined): boolean {
+  const transports = definition?.transports
+  if (!transports) return true
+  return transports.includes(origin ?? "http")
+}
+
 export async function tool_search_exec(
   args: { query: string; limit?: number; enable?: boolean },
   context: ServiceNowContext,
@@ -86,7 +98,9 @@ export async function tool_search_exec(
 
   // Use ToolSearch.search() for consistent behavior with snow-flow
   // This searches the tool index populated at server startup
-  const searchResults = ToolSearch.search(args.query, limit)
+  const searchResults = ToolSearch.search(args.query, limit).filter((entry) =>
+    allowedOnTransport(toolRegistry.getTool(entry.id)?.definition, context.origin),
+  )
 
   // If no results from index, fall back to toolRegistry direct search
   // This handles the case where the index hasn't been populated yet
@@ -94,7 +108,9 @@ export async function tool_search_exec(
     // Fallback: search toolRegistry directly
     const query = args.query.toLowerCase()
     const queryWords = query.split(/\s+/).filter((w) => w.length > 2)
-    const allTools = toolRegistry.getToolDefinitions()
+    const allTools = toolRegistry
+      .getToolDefinitions()
+      .filter((tool) => allowedOnTransport(tool, context.origin))
 
     const scored = allTools.map((tool) => {
       let score = 0
@@ -297,6 +313,31 @@ export async function tool_execute_exec(
           ? `Did you mean one of these? ${similar.join(", ")}`
           : "Use tool_search to find available tools",
       hint: 'Use tool_search({query: "your task"}) to find the right tool',
+    }
+  }
+
+  // Enforce the transport allowlist exactly like the direct dispatch path in
+  // call-tool.ts — tool_execute must not be a bypass for stdio-only tools
+  // (local filesystem + child processes) over the multi-tenant HTTP transport.
+  if (!allowedOnTransport(tool.definition, context.origin)) {
+    return {
+      success: false,
+      error:
+        `Tool "${toolName}" is not available over the ${context.origin ?? "http"} transport ` +
+        `(allowed transports: ${(tool.definition.transports ?? []).join(", ")}).`,
+    }
+  }
+  const forbidden = tool.definition.httpForbiddenArgs
+  if ((context.origin ?? "http") === "http" && forbidden) {
+    for (const arg of forbidden) {
+      if (toolArgs[arg] !== undefined) {
+        return {
+          success: false,
+          error:
+            `Tool "${toolName}" cannot accept the "${arg}" argument over HTTP transport ` +
+            `(it would touch the shared filesystem). Use the inline-content equivalent instead.`,
+        }
+      }
     }
   }
 
