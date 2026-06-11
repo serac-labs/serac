@@ -958,6 +958,16 @@ function extractProcessflowError(body: any): string {
         })
         .join("; ")
     }
+    // The /snapshot compile reports per-element problems here (HTTP 200 body),
+    // e.g. an unregistered condition data-pill — surface them too.
+    var nonCritical = result.data?.nonCriticalErrors
+    if (Array.isArray(nonCritical) && nonCritical.length > 0) {
+      return nonCritical
+        .map(function (n: any) {
+          return typeof n === "string" ? n : n.message || n.errMsg || n.error || JSON.stringify(n)
+        })
+        .join("; ")
+    }
   }
   return ""
 }
