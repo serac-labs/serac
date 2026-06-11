@@ -8,7 +8,7 @@
  * the chat's set even after another chat moved the per-user current set away.
  */
 
-import { ServiceNowContext } from "./types.js"
+import type { ServiceNowContext } from "./types.js"
 import { getAuthenticatedClient } from "./auth.js"
 
 export async function setCurrentUpdateSet(context: ServiceNowContext, sysId: string): Promise<void> {
