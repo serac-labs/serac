@@ -21,6 +21,9 @@ export const toolDefinition: MCPToolDefinition = {
   // Permission enforcement
   // Classification: WRITE - Create operation - modifies data
   permission: "write",
+  // Config artifact (catalog UI policy / client script / catalog item) — captured
+  // in update sets, so override the itsm-category exemption in the write-guard.
+  updateSet: "required",
   allowedRoles: ["developer", "admin"],
   inputSchema: {
     type: "object",

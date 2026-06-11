@@ -91,6 +91,9 @@ export const toolDefinition: MCPToolDefinition = {
   complexity: "advanced",
   frequency: "medium",
   permission: "write",
+  // Config artifact (catalog UI policy / client script / catalog item) — captured
+  // in update sets, so override the itsm-category exemption in the write-guard.
+  updateSet: "required",
   allowedRoles: ["developer", "admin"],
   inputSchema: {
     type: "object",
