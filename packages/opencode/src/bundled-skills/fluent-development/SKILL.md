@@ -22,6 +22,9 @@ tools:
 
 Fluent is ServiceNow's pro-code model: application **metadata as declarative TypeScript**, with **git as the source of truth** instead of the instance. You edit `.now.ts` files locally, compile them (`build`), and push the compiled package to an instance (`install`). The CLI behind the tools is `now-sdk` from `@servicenow/sdk` (4.x, Node 20+).
 
+> **Where these tools run:** the `snow_fluent_*` tools are local-only — they execute the ServiceNow SDK (`now-sdk`) on the developer's machine via the Serac CLI/TUI. In hosted surfaces without local tool access (e.g. a web chat), do not call them; drive the same flow through git + CI instead: commit the project files, trigger the build/deploy pipeline, and follow the workflow runs.
+
+
 ## 1. Fluent vs the classic snow_* API tools
 
 | Task | Use |
