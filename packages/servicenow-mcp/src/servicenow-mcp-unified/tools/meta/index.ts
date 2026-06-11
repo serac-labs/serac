@@ -31,7 +31,12 @@ import {
   confirmationFlag,
   prodWriteBlockMessage,
   updateSetBlockMessage,
+  getActiveUpdateSet,
+  driftScope,
+  needsCurrentReassert,
+  markCurrentAsserted,
 } from "../../shared/update-set-guard.js"
+import { setCurrentUpdateSet } from "../../shared/update-set-rebind.js"
 
 // ============================================================================
 // tool_search - Search for available tools
@@ -363,8 +368,24 @@ export async function tool_execute_exec(
   if (confirmationFlag(toolArgs.__skipUpdateSet)) {
     recordUpdateSetSkip(usKey)
   }
-  if (requiresUpdateSet(tool.definition, toolArgs) && !updateSetActive(usKey)) {
-    return { success: false, error: updateSetBlockMessage(toolName) }
+  if (requiresUpdateSet(tool.definition, toolArgs)) {
+    if (!updateSetActive(usKey)) {
+      return { success: false, error: updateSetBlockMessage(toolName) }
+    }
+    // Re-bind the chat's update set if another chat moved the per-user current
+    // set away (mirrors call-tool.ts). Best-effort: a failed re-bind proceeds.
+    const bound = getActiveUpdateSet(usKey)
+    if (bound?.sysId) {
+      const scope = driftScope(context.tenantId, context.instanceUrl)
+      if (needsCurrentReassert(scope, bound.sysId)) {
+        try {
+          await setCurrentUpdateSet(context, bound.sysId)
+          markCurrentAsserted(scope, bound.sysId)
+        } catch (rebindError: any) {
+          console.error(`[MetaTool] update-set re-bind failed for ${toolName}: ${rebindError?.message ?? rebindError}`)
+        }
+      }
+    }
   }
 
   // Check if tool is deferred and needs to be enabled first

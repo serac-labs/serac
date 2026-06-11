@@ -132,9 +132,43 @@ export function recordUpdateSetSkip(key: string): void {
   entry(key).skipped = true
 }
 
+/** The chat's bound update set, if one was ensured/created/switched here. */
+export function getActiveUpdateSet(key: string): { sysId?: string; name?: string } | undefined {
+  return guardState.get(key)?.active
+}
+
+// ───────────────────────────────────────────────────────────────────────────
+// Current-update-set drift tracking.
+//
+// ServiceNow's "current update set" is a per-USER preference on the instance,
+// shared by every chat that authenticates as the same integration user. So
+// chat B switching to its own set moves the instance current away from chat
+// A's set; a later write in chat A would then land in B's set. We track, per
+// (tenant, instance), the set sys_id we last made current, so a config write
+// can cheaply detect this drift and re-bind THIS chat's set before writing —
+// without a read per write. Scope key deliberately omits sessionId (the drift
+// is across sessions on the same instance user).
+// ───────────────────────────────────────────────────────────────────────────
+const assertedCurrent = new Map<string, string>()
+
+export function driftScope(tenantId: string | undefined, instanceUrl: string | undefined): string {
+  return `${tenantId ?? "stdio"}\x00${instanceUrl ?? ""}`
+}
+
+/** True when the instance current we last asserted differs from `sysId`. */
+export function needsCurrentReassert(scope: string, sysId: string): boolean {
+  return assertedCurrent.get(scope) !== sysId
+}
+
+/** Record that `sysId` is now the instance current for this scope. */
+export function markCurrentAsserted(scope: string, sysId: string): void {
+  assertedCurrent.set(scope, sysId)
+}
+
 /** Test helper — wipe all guard state. */
 export function resetUpdateSetState(): void {
   guardState.clear()
+  assertedCurrent.clear()
 }
 
 /**
@@ -165,6 +199,13 @@ export function observeUpdateSetTool(
   if (action === "ensure" && args?.sync_with_user === false) return
   if (action === "ensure" || action === "create" || action === "switch") {
     entry(key).active = { sysId: data.sys_id, name: data.name }
+    // These actions also made the set current (sync/auto_switch on — the
+    // sync-off variants returned early above), so the instance current for
+    // this (tenant, instance) is now this set. Record it for drift detection.
+    if (typeof data.sys_id === "string") {
+      const parts = key.split("\x00")
+      markCurrentAsserted(`${parts[0] ?? "stdio"}\x00${parts[2] ?? ""}`, data.sys_id)
+    }
   }
   // NOTE: a "current" observation deliberately does NOT lift the guard.
   // The instance's current update set is a per-USER preference, so it leaks
