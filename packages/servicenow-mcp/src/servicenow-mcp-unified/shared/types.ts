@@ -122,6 +122,15 @@ export interface MCPToolDefinition {
    */
   httpForbiddenArgs?: string[]
 
+  /**
+   * Update-set guard override. The call-tool handler blocks configuration
+   * writes while no update set is active for the session (see
+   * shared/update-set-guard.ts). The default classification is
+   * category-based; set "required" or "exempt" here to correct an
+   * individual tool instead of growing the central lists.
+   */
+  updateSet?: "required" | "exempt"
+
   inputSchema: {
     type: "object"
     properties: Record<string, any>

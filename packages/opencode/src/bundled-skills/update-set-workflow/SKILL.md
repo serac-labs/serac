@@ -14,6 +14,8 @@ tools:
 
 Update Sets are MANDATORY for tracking changes in ServiceNow development. Without an Update Set, changes are not tracked and cannot be deployed to other instances.
 
+This is also enforced: configuration writes are blocked at the tool layer while no update set is active for the session. When you hit that block, ask the user whether to capture the work in a named update set, then call `snow_ensure_active_update_set({ name })` once and retry. Only if the user explicitly declines tracking, re-issue the call once with `__skipUpdateSet: true` — the choice is remembered for the rest of the session.
+
 ## Before ANY Development
 
 ALWAYS create or ensure an Update Set is active before making changes:
