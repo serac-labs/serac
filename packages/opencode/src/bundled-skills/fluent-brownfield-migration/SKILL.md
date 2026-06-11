@@ -23,6 +23,9 @@ tools:
 
 Take a scoped app that lives only on an instance and move it into a git-managed ServiceNow SDK (Fluent) project — incrementally, with zero functional change at the start. Based on `@servicenow/sdk` 4.x (`now-sdk` CLI). Run `snow_fluent_status` first to see where a project already stands (scope, SDK pin, keys.ts, XML vs Fluent counts); use `snow_fluent_explain` for offline SDK docs on any topic.
 
+> **Where these tools run:** the `snow_fluent_*` tools are local-only — they execute the ServiceNow SDK (`now-sdk`) on the developer's machine via the Serac CLI/TUI. In hosted surfaces without local tool access (e.g. a web chat), do not call them; drive the same flow through git + CI instead: commit the project files, trigger the build/deploy pipeline, and follow the workflow runs.
+
+
 ## 1. Step zero: pull the app down as-is
 
 Use `snow_fluent_init` with `from=<sys_app sys_id>` (CLI: `now-sdk init --from <sys_id>`). Since SDK 2.2.6 this does **not** generate Fluent code by default — it leaves every record as XML in the `metadata/` folder. Those XML files are the exact files the instance exports, so there is **no change to the application** at this point. `now.config.json` captures `scope` + `scopeId` (= the sys_app sys_id), and the XML builds and installs as-is.

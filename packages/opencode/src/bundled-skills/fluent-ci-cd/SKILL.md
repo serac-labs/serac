@@ -19,6 +19,9 @@ tools:
 
 How to run a ServiceNow Fluent (SDK 4.x, `now-sdk` CLI) project through version control and CI: what to commit, the PR check that catches stale `keys.ts`, headless auth, a minimal GitHub Actions workflow, and the hard line between CI deploys and production promotion. For the official reference, run `snow_fluent_explain` with topic `ci-integration` (offline `now-sdk explain ci-integration`).
 
+> **Where these tools run:** the `snow_fluent_*` tools are local-only — they execute the ServiceNow SDK (`now-sdk`) on the developer's machine via the Serac CLI/TUI. In hosted surfaces without local tool access (e.g. a web chat), do not call them; drive the same flow through git + CI instead: commit the project files, trigger the build/deploy pipeline, and follow the workflow runs.
+
+
 ## 1. Repo discipline
 
 The `.gitignore` that `snow_fluent_init` scaffolds is already correct — keep it as-is:
