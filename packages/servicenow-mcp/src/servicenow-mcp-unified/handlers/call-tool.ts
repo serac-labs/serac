@@ -22,6 +22,9 @@ import {
   recordUpdateSetSkip,
   requiresUpdateSet,
   updateSetActive,
+  confirmationFlag,
+  prodWriteBlockMessage,
+  updateSetBlockMessage,
 } from "../shared/update-set-guard.js"
 import { type HandlerDeps } from "./types.js"
 
@@ -144,13 +147,8 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
     // with `__confirmProd: true` only after the user approves the specific change;
     // the flag is stripped below so the executor never sees it.
     const prodWrite = context.environmentType === "production" && isWriteTool(tool.definition)
-    if (prodWrite && args?.__confirmProd !== true) {
-      throw new McpError(
-        ErrorCode.InvalidRequest,
-        `"${name}" is a write against a PRODUCTION ServiceNow instance and is blocked by default. ` +
-          `Surface this change to the user; only after they approve, re-issue the exact same call with ` +
-          `"__confirmProd": true added to the arguments. Reads, and writes to dev/test/uat, need no confirmation.`,
-      )
+    if (prodWrite && !confirmationFlag(args?.__confirmProd)) {
+      throw new McpError(ErrorCode.InvalidRequest, prodWriteBlockMessage(name))
     }
 
     // Update-set safety: a configuration write with no active update set for
@@ -159,18 +157,11 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
     // creating/switching an update set; `__skipUpdateSet: true` records an
     // explicit user decline and is remembered for the rest of the session.
     const usKey = guardKey(context.tenantId, sessionId, context.instanceUrl)
-    if (args?.__skipUpdateSet === true) {
+    if (confirmationFlag(args?.__skipUpdateSet)) {
       recordUpdateSetSkip(usKey)
     }
     if (requiresUpdateSet(tool.definition, args) && !updateSetActive(usKey)) {
-      throw new McpError(
-        ErrorCode.InvalidRequest,
-        `"${name}" is a configuration write but no update set is active for this session — the change ` +
-          `would land in the Default update set untracked. Ask the user whether to capture this work in a ` +
-          `named update set (suggest a name); after they approve, call snow_ensure_active_update_set({ name }) ` +
-          `once and re-issue this call. If the user explicitly declines tracking, re-issue once with ` +
-          `"__skipUpdateSet": true — the choice is remembered for the rest of the session.`,
-      )
+      throw new McpError(ErrorCode.InvalidRequest, updateSetBlockMessage(name))
     }
 
     const execArgs =

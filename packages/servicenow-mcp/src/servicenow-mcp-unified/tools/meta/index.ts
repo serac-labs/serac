@@ -21,6 +21,17 @@
 import { type MCPToolDefinition, type ServiceNowContext } from "../../shared/types.js"
 import { toolRegistry } from "../../shared/tool-registry.js"
 import { ToolSearch } from "../../shared/tool-search.js"
+import { isWriteTool } from "../../shared/instance-map-hook.js"
+import {
+  guardKey,
+  requiresUpdateSet,
+  updateSetActive,
+  recordUpdateSetSkip,
+  observeUpdateSetTool,
+  confirmationFlag,
+  prodWriteBlockMessage,
+  updateSetBlockMessage,
+} from "../../shared/update-set-guard.js"
 
 // ============================================================================
 // tool_search - Search for available tools
@@ -341,6 +352,21 @@ export async function tool_execute_exec(
     }
   }
 
+  // Mirror the write-guards from the direct dispatch path (call-tool.ts):
+  // without them tool_execute is a bypass around the prod-write and
+  // update-set confirmations. Same messages, same lenient flag parsing.
+  const prodWrite = context.environmentType === "production" && isWriteTool(tool.definition)
+  if (prodWrite && !confirmationFlag(toolArgs.__confirmProd)) {
+    return { success: false, error: prodWriteBlockMessage(toolName) }
+  }
+  const usKey = guardKey(context.tenantId, sessionId, context.instanceUrl)
+  if (confirmationFlag(toolArgs.__skipUpdateSet)) {
+    recordUpdateSetSkip(usKey)
+  }
+  if (requiresUpdateSet(tool.definition, toolArgs) && !updateSetActive(usKey)) {
+    return { success: false, error: updateSetBlockMessage(toolName) }
+  }
+
   // Check if tool is deferred and needs to be enabled first
   const canExecute = await ToolSearch.canExecuteTool(sessionId, toolName, tenantId)
   if (!canExecute) {
@@ -354,10 +380,17 @@ export async function tool_execute_exec(
     }
   }
 
-  // Execute the tool
+  // Execute the tool. Strip the guard flags so executors never see them,
+  // and feed update-set lifecycle tools into the guard state — in lazy
+  // mode (TUI) snow_ensure_active_update_set runs through THIS path, so
+  // without the observe call the guard could never be lifted.
+  const execArgs = Object.fromEntries(
+    Object.entries(toolArgs).filter(([k]) => k !== "__confirmProd" && k !== "__skipUpdateSet"),
+  )
   try {
     console.error(`[MetaTool] Executing via tool_execute: ${toolName}`)
-    const result = await tool.executor(toolArgs, context)
+    const result = await tool.executor(execArgs, context)
+    observeUpdateSetTool(toolName, execArgs, result, usKey)
     return {
       success: true,
       tool: toolName,
