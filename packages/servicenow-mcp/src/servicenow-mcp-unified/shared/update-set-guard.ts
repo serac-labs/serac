@@ -171,3 +171,35 @@ export function observeUpdateSetTool(
     entry(key).active = { sysId: data.sys_id, name: data.name }
   }
 }
+
+/**
+ * Shared write-guard helpers — used by BOTH dispatch paths (the direct
+ * handler in call-tool.ts and the tool_execute meta path), so the guard
+ * behavior and messages cannot drift apart.
+ *
+ * confirmationFlag: agents — especially smaller models — routinely
+ * stringify booleans ("__confirmProd": "true", "active": "true"). Both
+ * write-guards accept boolean true and the string "true", so a
+ * user-approved retry is not re-blocked over a serialization detail.
+ */
+export function confirmationFlag(value: unknown): boolean {
+  return value === true || (typeof value === "string" && value.toLowerCase() === "true")
+}
+
+export function prodWriteBlockMessage(name: string): string {
+  return (
+    `"${name}" is a write against a PRODUCTION ServiceNow instance and is blocked by default. ` +
+    `Surface this change to the user; only after they approve, re-issue the exact same call with ` +
+    `"__confirmProd": true added to the arguments. Reads, and writes to dev/test/uat, need no confirmation.`
+  )
+}
+
+export function updateSetBlockMessage(name: string): string {
+  return (
+    `"${name}" is a configuration write but no update set is active for this session — the change ` +
+    `would land in the Default update set untracked. Ask the user whether to capture this work in a ` +
+    `named update set (suggest a name); after they approve, call snow_ensure_active_update_set({ name }) ` +
+    `once and re-issue this call. If the user explicitly declines tracking, re-issue once with ` +
+    `"__skipUpdateSet": true — the choice is remembered for the rest of the session.`
+  )
+}
