@@ -16,6 +16,13 @@ import { ToolSearch } from "../shared/tool-search.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 import { formatArgsForLogging, isRetryableOperation } from "../shared/handler-helpers.js"
 import { reportArtifactToInstanceMap, isWriteTool } from "../shared/instance-map-hook.js"
+import {
+  guardKey,
+  observeUpdateSetTool,
+  recordUpdateSetSkip,
+  requiresUpdateSet,
+  updateSetActive,
+} from "../shared/update-set-guard.js"
 import { type HandlerDeps } from "./types.js"
 
 export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any) => {
@@ -145,9 +152,30 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
           `"__confirmProd": true added to the arguments. Reads, and writes to dev/test/uat, need no confirmation.`,
       )
     }
+
+    // Update-set safety: a configuration write with no active update set for
+    // this session is blocked, so changes can't silently land in the Default
+    // update set. The agent lifts the guard once per session by ensuring/
+    // creating/switching an update set; `__skipUpdateSet: true` records an
+    // explicit user decline and is remembered for the rest of the session.
+    const usKey = guardKey(context.tenantId, sessionId, context.instanceUrl)
+    if (args?.__skipUpdateSet === true) {
+      recordUpdateSetSkip(usKey)
+    }
+    if (requiresUpdateSet(tool.definition, args) && !updateSetActive(usKey)) {
+      throw new McpError(
+        ErrorCode.InvalidRequest,
+        `"${name}" is a configuration write but no update set is active for this session — the change ` +
+          `would land in the Default update set untracked. Ask the user whether to capture this work in a ` +
+          `named update set (suggest a name); after they approve, call snow_ensure_active_update_set({ name }) ` +
+          `once and re-issue this call. If the user explicitly declines tracking, re-issue once with ` +
+          `"__skipUpdateSet": true — the choice is remembered for the rest of the session.`,
+      )
+    }
+
     const execArgs =
-      args && typeof args === "object" && "__confirmProd" in args
-        ? Object.fromEntries(Object.entries(args).filter(([k]) => k !== "__confirmProd"))
+      args && typeof args === "object" && ("__confirmProd" in args || "__skipUpdateSet" in args)
+        ? Object.fromEntries(Object.entries(args).filter(([k]) => k !== "__confirmProd" && k !== "__skipUpdateSet"))
         : args
 
     // Execute tool with error handling (permission check passed!).
@@ -168,6 +196,10 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
         },
       },
     )
+
+    // Post-hook: keep the update-set guard in sync with what the update-set
+    // tools actually did (ensure/create/switch lift it, complete re-arms it).
+    observeUpdateSetTool(name, args, result, usKey)
 
     // Post-hook: report created/updated artifacts to the enterprise portal's
     // instance-map so the per-tenant graph stays in sync without relying on

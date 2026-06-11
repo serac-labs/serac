@@ -53,6 +53,16 @@ const ALLOWLIST: AllowedPattern[] = [
     pattern: /^export const SKIP_ACTIONS = new Set\(/,
     reason: "Static metadata — list of read-only/skip actions for the instance-map post-hook",
   },
+  {
+    file: "instance-map-hook.ts",
+    pattern: /^export const SKIP_TOOLS = new Set\(/,
+    reason: "Static metadata — write tools whose side effects are local-only (sync directory)",
+  },
+  {
+    file: "update-set-guard.ts",
+    pattern: /^const guardState = new Map</,
+    reason: "Keys are composed as tenantId\\x00sessionId\\x00instanceUrl — see guardKey()",
+  },
 ]
 
 describe("Multi-tenant invariants in shared/", () => {
