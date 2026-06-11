@@ -788,6 +788,13 @@ async function releaseFlowEditingLock(
   var graphqlOk = false
   var compilationError: string | undefined
   var debug: any = {}
+  // safeEdit(delete) returns deleteSuccess=false BOTH when the compile-on-close
+  // fails AND when there is simply no safe-edit session to delete (e.g. an
+  // activate after the flow was already closed). Probe up front so "no lock" is
+  // not misreported as a compilation error — the real /snapshot compile error
+  // (surfaced by the caller) stays the authoritative signal.
+  var hadLock = (await verifyFlowEditingLock(client, flowId)).locked
+  debug.had_lock = hadLock
   // Step 1: GraphQL safeEdit(delete) — primary mechanism
   // This triggers flow compilation and version creation on the server side.
   // If the flow has invalid elements (e.g. unsupported flowLogic type), the compilation
@@ -811,9 +818,12 @@ async function releaseFlowEditingLock(
         .join("; ")
       debug.graphql_errors = gqlErrors
     }
-    // If deleteSuccess is false but no GraphQL error, check the result for messages
-    if (!graphqlOk && !compilationError) {
-      compilationError = "safeEdit(delete) returned deleteSuccess=false. The flow may have compilation errors."
+    // deleteSuccess=false with no GraphQL error: only a real problem when a lock
+    // actually existed. Include whatever the server returned in the deleteResult
+    // (already captured above) rather than a bare generic string.
+    if (!graphqlOk && !compilationError && hadLock) {
+      compilationError =
+        "safeEdit(delete) returned deleteSuccess=false; deleteResult=" + JSON.stringify(deleteResult ?? {})
     }
   } catch (e: any) {
     compilationError = e.message || "safeEdit(delete) threw an exception"
@@ -934,11 +944,22 @@ async function verifyFlowActivation(
  *
  * Returns the new masterSnapshotId on success, or "" on failure.
  */
-async function compileFlowSnapshot(client: any, flowId: string): Promise<string> {
+interface SnapshotResult {
+  snapshotId: string
+  error?: string
+  errorCode?: number
+}
+
+// The /snapshot POST is the server-side COMPILE. It returns HTTP 200 even when
+// compilation fails, with the real reason in result.errorMessage / result.errorCode
+// (same 200-body error shape the tool already trusts elsewhere) and per-element
+// problems echoed in result.data.nonCriticalErrors. Surface that instead of just
+// dropping a "" so the caller can tell the user WHY the flow won't compile.
+async function compileFlowSnapshot(client: any, flowId: string): Promise<SnapshotResult> {
   try {
     var defResp = await client.get("/api/now/processflow/flow/" + flowId)
     var def = defResp.data?.result?.data
-    if (!def || !def.id) return ""
+    if (!def || !def.id) return { snapshotId: "", error: defResp.data?.result?.errorMessage || "flow definition not found" }
     // The UI tags every snapshot post with a fresh client session id.
     def.clientSessionId = generateUUID()
     // Triggered flows compile via .../snapshot; subflows use .../subflow
@@ -951,10 +972,24 @@ async function compileFlowSnapshot(client: any, flowId: string): Promise<string>
       def,
       { timeout: 180000 },
     )
-    return snapResp.data?.result?.data?.masterSnapshotId || ""
+    var result = snapResp.data?.result
+    var snapshotId = result?.data?.masterSnapshotId || ""
+    if (snapshotId) return { snapshotId }
+    // No snapshot id on a 200 = compile failed; dig out the real reason.
+    var nonCritical = result?.data?.nonCriticalErrors
+    var ncMsg =
+      Array.isArray(nonCritical) && nonCritical.length > 0
+        ? nonCritical.map(function (n: any) { return n?.message || n?.errMsg || JSON.stringify(n) }).join("; ")
+        : undefined
+    return {
+      snapshotId: "",
+      error: result?.errorMessage || ncMsg || "compile produced no snapshot (flow has compilation errors)",
+      errorCode: result?.errorCode,
+    }
   } catch (e: any) {
-    console.warn("[snow_manage_flow] compileFlowSnapshot failed for flow=" + flowId + ": " + (e.message || ""))
-    return ""
+    var serverMsg = e?.response?.data?.result?.errorMessage
+    console.warn("[snow_manage_flow] compileFlowSnapshot failed for flow=" + flowId + ": " + (serverMsg || e.message || ""))
+    return { snapshotId: "", error: serverMsg || e.message || "snapshot request failed" }
   }
 }
 
@@ -7418,17 +7453,20 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
         // to skip, which is why flows stayed draft and never triggered), THEN
         // record a published version. Verification below is the gate, so a failed
         // compile surfaces as a real error instead of a false "published".
-        var snapshotId = await compileFlowSnapshot(client, activateSysId)
-        if (snapshotId) activateSummary.field("snapshot", snapshotId)
+        var compile = await compileFlowSnapshot(client, activateSysId)
+        if (compile.snapshotId) activateSummary.field("snapshot", compile.snapshotId)
 
+        var versionError: string | undefined
         try {
           await client.post(
             "/api/now/processflow/versioning/create_version?sysparm_transaction_scope=global",
             { item_sys_id: activateSysId, type: "Activate/Publish", annotation: "", favorite: false },
           )
-        } catch (_) {
+        } catch (versionErr: any) {
           // The version record is non-fatal bookkeeping; the snapshot above is
-          // what activates the flow, and verification decides success.
+          // what activates the flow, and verification decides success. Capture
+          // the reason so a publish failure can still report it.
+          versionError = versionErr?.response?.data?.result?.errorMessage || versionErr?.message
         }
 
         // Releasing the editing lock cleans up the safe-edit session; capture any
@@ -7439,15 +7477,21 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
         // didn't materialize, then re-verify.
         var activation = await verifyFlowActivation(client, activateSysId)
         if (!activation.active || !activation.hasSnapshot) {
-          await compileFlowSnapshot(client, activateSysId)
+          var recompile = await compileFlowSnapshot(client, activateSysId)
+          if (recompile.error && !compile.error) compile = recompile
           activation = await verifyFlowActivation(client, activateSysId)
         }
 
         if (!activation.active || !activation.hasSnapshot) {
-          var why = releaseResult?.compilationError
-            ? "Compilation error: " + releaseResult.compilationError
-            : (activation.active ? "active but has no compiled snapshot" : "not active") +
-              " (status=" + activation.status + ")"
+          // The /snapshot compile error (1A) is the authoritative reason a flow
+          // won't activate; the safe-edit release message is a fallback (and is
+          // often a benign "no lock to delete", not a real compile failure).
+          var why = compile.error
+            ? "Compilation error: " + compile.error
+            : releaseResult?.compilationError
+              ? "Compilation error: " + releaseResult.compilationError
+              : (activation.active ? "active but has no compiled snapshot" : "not active") +
+                " (status=" + activation.status + ")"
           return createErrorResult(
             new SnowFlowError(
               ErrorType.UNKNOWN_ERROR,
@@ -7459,7 +7503,10 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
                   active: activation.active,
                   status: activation.status,
                   has_snapshot: activation.hasSnapshot,
-                  compilation_error: releaseResult?.compilationError || null,
+                  compilation_error: compile.error || releaseResult?.compilationError || null,
+                  compilation_error_code: compile.errorCode ?? null,
+                  safe_edit_note: releaseResult?.compilationError || null,
+                  version_error: versionError || null,
                 },
               },
             ),
