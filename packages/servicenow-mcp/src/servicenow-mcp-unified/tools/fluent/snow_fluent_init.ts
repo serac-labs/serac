@@ -8,7 +8,7 @@
  *   XML until snow_fluent_transform converts it to Fluent code).
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
 import { resolveSdk, runSdk, sdkAuthEnv, readProjectConfig, npmInvocation, assertNoFlag, SYS_ID_PATTERN } from "./sdk.js"
 import * as fs from "fs/promises"
