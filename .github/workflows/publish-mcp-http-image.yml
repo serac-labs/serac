@@ -1,0 +1,59 @@
+name: Publish mcp-http image
+
+# Builds the Bun-based mcp-http docker image and pushes it to GHCR.
+# Triggered on changes to the MCP transport code or the Dockerfile itself.
+# Also runnable manually via workflow_dispatch.
+#
+# Image is consumed by snow-flow-enterprise's docker-compose `mcp-http`
+# service (profile: mcp-http, opt-in).
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/servicenow-mcp/src/servicenow-mcp-unified/**'
+      - 'packages/servicenow-mcp/Dockerfile.mcp-http'
+      - '.github/workflows/publish-mcp-http-image.yml'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Image tag (default: latest + sha)'
+        required: false
+        default: 'latest'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    # Build on the canonical Serac repo only — forks should not push to the
+    # serac-labs GHCR namespace.
+    if: github.repository == 'serac-labs/serac'
+
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build + push
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: packages/servicenow-mcp
+          file: packages/servicenow-mcp/Dockerfile.mcp-http
+          push: true
+          tags: |
+            ghcr.io/serac-labs/serac-mcp-http:${{ github.event.inputs.tag || 'latest' }}
+            ghcr.io/serac-labs/serac-mcp-http:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
