@@ -147,9 +147,24 @@ export function getActiveUpdateSet(key: string): { sysId?: string; name?: string
 // (tenant, instance), the set sys_id we last made current, so a config write
 // can cheaply detect this drift and re-bind THIS chat's set before writing —
 // without a read per write. Scope key deliberately omits sessionId (the drift
-// is across sessions on the same instance user).
+// is across sessions on the same instance user). Best-effort, not atomic: the
+// current set is a mutable per-user preference and the write isn't pinned to a
+// set id, so a concurrent chat writing in the same ~moment can still interleave
+// (narrowed window, not a hard guarantee). It also can't see a current-set
+// change made outside Serac (e.g. the ServiceNow UI).
 // ───────────────────────────────────────────────────────────────────────────
-const assertedCurrent = new Map<string, string>()
+// Timestamped + pruned, mirroring guardState — entries are bounded by distinct
+// (tenant, instance) pairs and self-overwrite, but an unbounded map would still
+// retain dead tenants forever, so age them out the same way.
+const assertedCurrent = new Map<string, { sysId: string; touched: number }>()
+
+function pruneAsserted(): void {
+  if (assertedCurrent.size < MAX_ENTRIES) return
+  const cutoff = Date.now() - TTL_MS
+  for (const [key, value] of assertedCurrent) {
+    if (value.touched < cutoff) assertedCurrent.delete(key)
+  }
+}
 
 export function driftScope(tenantId: string | undefined, instanceUrl: string | undefined): string {
   return `${tenantId ?? "stdio"}\x00${instanceUrl ?? ""}`
@@ -157,12 +172,13 @@ export function driftScope(tenantId: string | undefined, instanceUrl: string | u
 
 /** True when the instance current we last asserted differs from `sysId`. */
 export function needsCurrentReassert(scope: string, sysId: string): boolean {
-  return assertedCurrent.get(scope) !== sysId
+  return assertedCurrent.get(scope)?.sysId !== sysId
 }
 
 /** Record that `sysId` is now the instance current for this scope. */
 export function markCurrentAsserted(scope: string, sysId: string): void {
-  assertedCurrent.set(scope, sysId)
+  pruneAsserted()
+  assertedCurrent.set(scope, { sysId, touched: Date.now() })
 }
 
 /** Test helper — wipe all guard state. */
