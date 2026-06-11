@@ -165,7 +165,9 @@ describe("guard state — session lifecycle", () => {
     expect(updateSetActive(key)).toBe(false)
   })
 
-  test("verifying a current non-Default set lifts the guard; Default does not", () => {
+  test("observing the current set does NOT lift the guard (it leaks across chats)", () => {
+    // The instance current update set is a per-user preference, so a fresh
+    // chat must not adopt whatever another chat left active just by reading it.
     observeUpdateSetTool(
       "snow_update_set_query",
       { action: "current" },
@@ -178,6 +180,15 @@ describe("guard state — session lifecycle", () => {
       "snow_update_set_query",
       { action: "current" },
       { success: true, data: { sys_id: "u9", name: "Sprint 12 fixes" } },
+      key,
+    )
+    expect(updateSetActive(key)).toBe(false)
+
+    // Only an ensure/create/switch in THIS chat satisfies the guard.
+    observeUpdateSetTool(
+      "snow_ensure_active_update_set",
+      { name: "Chat: laptop approval" },
+      { success: true, data: { sys_id: "u10", name: "Chat: laptop approval" } },
       key,
     )
     expect(updateSetActive(key)).toBe(true)

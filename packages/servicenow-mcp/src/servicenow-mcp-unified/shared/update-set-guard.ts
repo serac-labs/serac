@@ -165,11 +165,13 @@ export function observeUpdateSetTool(
   if (action === "ensure" && args?.sync_with_user === false) return
   if (action === "ensure" || action === "create" || action === "switch") {
     entry(key).active = { sysId: data.sys_id, name: data.name }
-    return
   }
-  if (action === "current" && typeof data.name === "string" && data.name !== "Default" && data.sys_id) {
-    entry(key).active = { sysId: data.sys_id, name: data.name }
-  }
+  // NOTE: a "current" observation deliberately does NOT lift the guard.
+  // The instance's current update set is a per-USER preference, so it leaks
+  // across chats — a fresh chat that merely READS the current set would
+  // otherwise adopt whatever a previous chat left active and write into it
+  // without prompting. The guard is satisfied only by an ensure/create/switch
+  // performed within THIS chat, so every new chat gets its own update set.
 }
 
 /**
