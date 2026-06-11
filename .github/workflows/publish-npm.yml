@@ -457,6 +457,13 @@ jobs:
           git config user.email "bot@serac.build"
           git config user.name "serac-bot"
           git checkout ${{ github.ref_name }}
+          # The release step above rewrote packages/opencode/package.json in the
+          # working tree (strips workspace: deps for the npm artifact). Restore
+          # the pristine source file first — without this, the bump commit
+          # writes the mangled file back to main and the NEXT release fails on
+          # unresolvable @opencode-ai/* workspace imports (the #218/#219/#227
+          # recurring breakage).
+          git restore packages/opencode/package.json
           sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$NEXT_VERSION\"/" packages/opencode/package.json
           git add packages/opencode/package.json
           git diff --cached --quiet && { echo "no bump needed"; exit 0; }
