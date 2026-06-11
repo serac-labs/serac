@@ -7,7 +7,7 @@
  * should go through the Application Repository, not this tool.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
 import { resolveSdk, runSdk, sdkAuthEnv, assertDirectory, readProjectConfig, assertNoFlag } from "./sdk.js"
 

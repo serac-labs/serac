@@ -19,7 +19,7 @@
 import { spawn } from "child_process"
 import * as fs from "fs/promises"
 import * as path from "path"
-import { ServiceNowContext } from "../../shared/types.js"
+import type { ServiceNowContext } from "../../shared/types.js"
 import { SnowFlowError, ErrorType } from "../../shared/error-handler.js"
 
 /**

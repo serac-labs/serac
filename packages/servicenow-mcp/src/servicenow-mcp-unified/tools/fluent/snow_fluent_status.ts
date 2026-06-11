@@ -7,7 +7,7 @@
  * still XML vs already Fluent, and build output presence.
  */
 
-import { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
+import type { MCPToolDefinition, ServiceNowContext, ToolResult } from "../../shared/types.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
 import { resolveSdk, assertDirectory, readProjectConfig } from "./sdk.js"
 import * as fs from "fs/promises"
