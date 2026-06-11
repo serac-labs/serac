@@ -5585,6 +5585,58 @@ const elementGraphQLMap: Record<string, { key: string; type: string; responseFie
   },
 }
 
+/**
+ * The flow-patch mutation identifies elements by uiUniqueIdentifier, but
+ * callers routinely pass the sys_id they got from snow_get_flow_structure —
+ * the two differ once a flow has an editing session, and ServiceNow then
+ * fails with the opaque "Unable to locate action instance by identifier".
+ * Resolve the caller-supplied id against the live flow model first; on a
+ * genuine miss, name the available elements so the caller can self-correct
+ * in one call instead of falling back to delete + re-add.
+ */
+async function resolveElementUiId(
+  client: any,
+  flowId: string,
+  patchType: string,
+  elementId: string,
+): Promise<{ uiId: string; error?: string }> {
+  const elements = await getFlowElementsFromProcessflow(client, flowId)
+  if (elements.length === 0) return { uiId: elementId }
+
+  const match = elements.find((el) => el.uuid === elementId || el.id === elementId)
+  if (match) {
+    if (match.patchType !== patchType) {
+      const verb =
+        match.patchType === "action"
+          ? "update_action"
+          : match.patchType === "flowlogic"
+            ? "update_flow_logic"
+            : "update_subflow"
+      return {
+        uiId: elementId,
+        error:
+          "Element " + elementId + " is a " + match.patchType + " (" + match.elementType + "), not " +
+          ("aeiou".includes(patchType[0] ?? "") ? "an " : "a ") + patchType + " — use " + verb + " instead.",
+      }
+    }
+    return { uiId: match.uuid }
+  }
+
+  const candidates = elements
+    .filter((el) => el.patchType === patchType)
+    .sort((a, b) => a.order - b.order)
+    .map((el) => el.uuid + " (order " + el.order + ", " + el.elementType + ")")
+  return {
+    uiId: elementId,
+    error:
+      "Element " + elementId + " was not found in the flow's current model. " +
+      (candidates.length > 0
+        ? "Available " + patchType + " elements: " + candidates.join("; ") + "."
+        : "The flow has no " + patchType + " elements.") +
+      " Run snow_get_flow_structure to refresh element ids before retrying.",
+  }
+}
+
 async function updateElementViaGraphQL(
   client: any,
   flowId: string,
@@ -5595,6 +5647,15 @@ async function updateElementViaGraphQL(
 ): Promise<{ success: boolean; steps?: any; error?: string }> {
   const config = elementGraphQLMap[elementType]
   if (!config) return { success: false, error: "Unknown element type: " + elementType }
+
+  // Triggers are not part of the element model; pass their id through as-is.
+  const resolved =
+    elementType === "trigger"
+      ? { uiId: elementId }
+      : await resolveElementUiId(client, flowId, config.type, elementId)
+  if (resolved.error) {
+    return { success: false, error: resolved.error, steps: { element: elementId, type: elementType } }
+  }
 
   const updateInputs = Object.entries(inputs).map(([name, value]) => ({
     name,
@@ -5608,15 +5669,23 @@ async function updateElementViaGraphQL(
         flowId,
         [config.key]: {
           update: [
-            { uiUniqueIdentifier: elementId, type: config.type, inputs: updateInputs, comment: annotation || "" },
+            { uiUniqueIdentifier: resolved.uiId, type: config.type, inputs: updateInputs, comment: annotation || "" },
           ],
         },
       },
       config.responseFields,
     )
-    return { success: true, steps: { element: elementId, type: elementType, inputs: updateInputs.map((i) => i.name) } }
+    return {
+      success: true,
+      steps: {
+        element: elementId,
+        resolvedUiId: resolved.uiId,
+        type: elementType,
+        inputs: updateInputs.map((i) => i.name),
+      },
+    }
   } catch (e: any) {
-    return { success: false, error: e.message, steps: { element: elementId, type: elementType } }
+    return { success: false, error: e.message, steps: { element: elementId, resolvedUiId: resolved.uiId, type: elementType } }
   }
 }
 
