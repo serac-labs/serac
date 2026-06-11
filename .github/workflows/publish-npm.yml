@@ -131,16 +131,30 @@ jobs:
           elif [[ "${{ steps.channel.outputs.channel }}" == "dev" ]]; then
             echo "version=${BASE_VERSION}-dev.${{ github.run_number }}" >> $GITHUB_OUTPUT
           else
-            # Stable release. Use BASE_VERSION verbatim — `npm view` is
-            # unreliable right after a name has been unpublished (the
-            # GET endpoint returns "no versions" but the PUT endpoint
-            # still rejects the same version as a duplicate, because
-            # npm tracks unpublished versions internally for 24h).
-            # Doing the bump in the source pkg.json + relying on the
-            # post-publish "Bump source pkg.json" step keeps the SOT in
-            # git rather than in npm's eventual-consistency registry index.
-            echo "version=${BASE_VERSION}" >> $GITHUB_OUTPUT
-            echo "Publishing at ${BASE_VERSION} (source-driven version)"
+            # Stable release. The npm registry drives the auto-increment:
+            # publish the patch after the latest published version. We used
+            # to publish BASE_VERSION verbatim and push a "+1 bump" commit
+            # back to main after publishing, but the main ruleset's required
+            # status checks now reject that push (remote: 'Required status
+            # check "guard" is expected'), leaving npm permanently one
+            # version ahead of source and turning every subsequent release
+            # red with "cannot publish over the previously published
+            # versions" (the 2026-06-11 all-day breakage).
+            #
+            # BASE_VERSION from source still acts as a FLOOR (sort -V picks
+            # the higher of the two): a manual minor/major bump in source is
+            # respected, and a stale/empty `npm view` right after an
+            # unpublish (npm tracks unpublished versions internally for 24h)
+            # can never select something older than source.
+            NPM_LATEST=$(npm view @serac-labs/core version 2>/dev/null || true)
+            if [ -n "$NPM_LATEST" ]; then
+              NPM_NEXT="$(echo "$NPM_LATEST" | cut -d. -f1).$(echo "$NPM_LATEST" | cut -d. -f2).$(($(echo "$NPM_LATEST" | cut -d. -f3) + 1))"
+            else
+              NPM_NEXT="$BASE_VERSION"
+            fi
+            VERSION=$(printf '%s\n%s\n' "$BASE_VERSION" "$NPM_NEXT" | sort -V | tail -1)
+            echo "version=$VERSION" >> $GITHUB_OUTPUT
+            echo "Publishing at $VERSION (npm latest: ${NPM_LATEST:-unknown}, source floor: $BASE_VERSION)"
           fi
 
       - name: Install dependencies
@@ -434,60 +448,12 @@ jobs:
             npm publish --access public --tag "$NPM_TAG" --provenance
           fi
 
-      - name: Bump source pkg.json for next publish
-        # The "Get version" step publishes source verbatim. To make the
-        # *next* push publish a new version (and not 403 with "version
-        # already exists"), bump the patch component in source here.
-        # Example: published 1.16.2 → write 1.16.3 back so the next merge
-        # to main publishes 1.16.3.
-        #
-        # MUST be gated to a BRANCH push (refs/heads/*), NOT just channel==stable:
-        # a `v*` TAG push is also 'stable', but `git checkout <tag>` lands on a
-        # DETACHED HEAD, so `git push origin <tag>` fails the retry loop and
-        # `exit 1`s AFTER a successful publish — turning a green run red.
-        if: steps.channel.outputs.channel == 'stable' && startsWith(github.ref, 'refs/heads/')
-        run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          MAJOR=$(echo "$VERSION" | cut -d. -f1)
-          MINOR=$(echo "$VERSION" | cut -d. -f2)
-          PATCH=$(echo "$VERSION" | cut -d. -f3)
-          NEXT_PATCH=$((PATCH + 1))
-          NEXT_VERSION="${MAJOR}.${MINOR}.${NEXT_PATCH}"
-
-          git config user.email "bot@serac.build"
-          git config user.name "serac-bot"
-          git checkout ${{ github.ref_name }}
-          # The release step above rewrote packages/opencode/package.json in the
-          # working tree (strips workspace: deps for the npm artifact). Restore
-          # the pristine source file first — without this, the bump commit
-          # writes the mangled file back to main and the NEXT release fails on
-          # unresolvable @opencode-ai/* workspace imports (the #218/#219/#227
-          # recurring breakage).
-          git restore packages/opencode/package.json
-          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$NEXT_VERSION\"/" packages/opencode/package.json
-          git add packages/opencode/package.json
-          git diff --cached --quiet && { echo "no bump needed"; exit 0; }
-          git commit -m "chore: bump source to ${NEXT_VERSION} for next publish [skip ci]"
-
-          # Push with retry — other workflows (e.g. tools.json regen) may have
-          # pushed to main during our multi-minute build. Rebase against latest
-          # and retry up to 3x. --autostash is required because earlier build
-          # steps leave files modified in the working tree; without it, git pull
-          # --rebase aborts with "cannot pull with rebase: You have unstaged
-          # changes" and the bump commit never lands — leaving npm one version
-          # ahead of source on the next push (already-published-version error).
-          for attempt in 1 2 3; do
-            if git push origin ${{ github.ref_name }}; then
-              echo "auto-bump push succeeded on attempt $attempt"
-              exit 0
-            fi
-            echo "auto-bump push rejected (attempt $attempt) — pulling latest and retrying"
-            git pull --rebase --autostash origin ${{ github.ref_name }}
-          done
-          echo "auto-bump push failed after 3 attempts" >&2
-          exit 1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # NOTE: there is deliberately NO "push a version bump back to main"
+      # step here anymore. The main ruleset's required status checks reject
+      # direct pushes from this workflow ('Required status check "guard" is
+      # expected'), which left npm one version ahead of source and every
+      # subsequent release red. The "Get version" step now derives the next
+      # stable version from the npm registry instead (source is a floor).
 
       # Platform binaries are distributed via GitHub releases.
       # Users download them automatically via scripts/postinstall.cjs, or
