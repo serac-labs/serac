@@ -15,6 +15,10 @@ import {
   requiresUpdateSet,
   resetUpdateSetState,
   updateSetActive,
+  getActiveUpdateSet,
+  driftScope,
+  needsCurrentReassert,
+  markCurrentAsserted,
 } from "../update-set-guard"
 import { MCPToolDefinition } from "../types"
 
@@ -165,7 +169,9 @@ describe("guard state — session lifecycle", () => {
     expect(updateSetActive(key)).toBe(false)
   })
 
-  test("verifying a current non-Default set lifts the guard; Default does not", () => {
+  test("observing the current set does NOT lift the guard (it leaks across chats)", () => {
+    // The instance current update set is a per-user preference, so a fresh
+    // chat must not adopt whatever another chat left active just by reading it.
     observeUpdateSetTool(
       "snow_update_set_query",
       { action: "current" },
@@ -178,6 +184,15 @@ describe("guard state — session lifecycle", () => {
       "snow_update_set_query",
       { action: "current" },
       { success: true, data: { sys_id: "u9", name: "Sprint 12 fixes" } },
+      key,
+    )
+    expect(updateSetActive(key)).toBe(false)
+
+    // Only an ensure/create/switch in THIS chat satisfies the guard.
+    observeUpdateSetTool(
+      "snow_ensure_active_update_set",
+      { name: "Chat: laptop approval" },
+      { success: true, data: { sys_id: "u10", name: "Chat: laptop approval" } },
       key,
     )
     expect(updateSetActive(key)).toBe(true)
@@ -203,5 +218,52 @@ describe("guard state — session lifecycle", () => {
       key,
     )
     expect(updateSetActive(key)).toBe(false)
+  })
+
+  test("getActiveUpdateSet returns the set bound by an ensure in this chat", () => {
+    expect(getActiveUpdateSet(key)).toBeUndefined()
+    observeUpdateSetTool(
+      "snow_ensure_active_update_set",
+      { name: "Chat A set" },
+      { success: true, data: { sys_id: "a1", name: "Chat A set" } },
+      key,
+    )
+    expect(getActiveUpdateSet(key)).toEqual({ sysId: "a1", name: "Chat A set" })
+  })
+
+  test("drift: another chat switching the instance current re-flags a re-bind", () => {
+    const scope = driftScope("42", "https://dev1.service-now.com")
+    const keyA = guardKey("42", "chat-a", "https://dev1.service-now.com")
+    const keyB = guardKey("42", "chat-b", "https://dev1.service-now.com")
+
+    // Chat A ensures US-A → it becomes the asserted current for the scope.
+    observeUpdateSetTool(
+      "snow_ensure_active_update_set",
+      { name: "US-A" },
+      { success: true, data: { sys_id: "us-a", name: "US-A" } },
+      keyA,
+    )
+    expect(needsCurrentReassert(scope, "us-a")).toBe(false)
+
+    // Chat B ensures US-B → scope current moves to US-B.
+    observeUpdateSetTool(
+      "snow_ensure_active_update_set",
+      { name: "US-B" },
+      { success: true, data: { sys_id: "us-b", name: "US-B" } },
+      keyB,
+    )
+    expect(needsCurrentReassert(scope, "us-b")).toBe(false)
+    // Back in chat A: its bound set is no longer current → re-bind needed.
+    expect(needsCurrentReassert(scope, "us-a")).toBe(true)
+
+    // After re-binding A, no further re-bind until the next drift.
+    markCurrentAsserted(scope, "us-a")
+    expect(needsCurrentReassert(scope, "us-a")).toBe(false)
+  })
+
+  test("drift scope never crosses tenants or instances", () => {
+    markCurrentAsserted(driftScope("42", "https://dev1.service-now.com"), "x")
+    expect(needsCurrentReassert(driftScope("43", "https://dev1.service-now.com"), "x")).toBe(true)
+    expect(needsCurrentReassert(driftScope("42", "https://dev2.service-now.com"), "x")).toBe(true)
   })
 })

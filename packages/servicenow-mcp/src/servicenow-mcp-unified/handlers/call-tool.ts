@@ -25,7 +25,12 @@ import {
   confirmationFlag,
   prodWriteBlockMessage,
   updateSetBlockMessage,
+  getActiveUpdateSet,
+  driftScope,
+  needsCurrentReassert,
+  markCurrentAsserted,
 } from "../shared/update-set-guard.js"
+import { setCurrentUpdateSet } from "../shared/update-set-rebind.js"
 import { type HandlerDeps } from "./types.js"
 
 export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any) => {
@@ -160,8 +165,27 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
     if (confirmationFlag(args?.__skipUpdateSet)) {
       recordUpdateSetSkip(usKey)
     }
-    if (requiresUpdateSet(tool.definition, args) && !updateSetActive(usKey)) {
-      throw new McpError(ErrorCode.InvalidRequest, updateSetBlockMessage(name))
+    if (requiresUpdateSet(tool.definition, args)) {
+      if (!updateSetActive(usKey)) {
+        throw new McpError(ErrorCode.InvalidRequest, updateSetBlockMessage(name))
+      }
+      // Guard satisfied. If this chat is bound to an update set and another
+      // chat has since moved the instance's (per-user) current set away from
+      // it, re-bind it before the write so the change lands in THIS chat's
+      // set. Cheap: only fires on detected drift (chat switch), not per write.
+      // Best-effort — a failed re-bind logs and proceeds rather than blocking.
+      const bound = getActiveUpdateSet(usKey)
+      if (bound?.sysId) {
+        const scope = driftScope(context.tenantId, context.instanceUrl)
+        if (needsCurrentReassert(scope, bound.sysId)) {
+          try {
+            await setCurrentUpdateSet(context, bound.sysId)
+            markCurrentAsserted(scope, bound.sysId)
+          } catch (rebindError: any) {
+            mcpDebug(`[Server] update-set re-bind failed for ${name}: ${rebindError?.message ?? rebindError}`)
+          }
+        }
+      }
     }
 
     const execArgs =
