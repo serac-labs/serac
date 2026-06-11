@@ -1,0 +1,46 @@
+name: license-guard
+
+# The Apache 2.0 relicense was silently lost once before: the 1.1.x upstream
+# re-sync rebuilt main's history and upstream's MIT LICENSE/README came back
+# with it (the merged relicense PR #189 was left behind on the abandoned
+# history line). This guard makes that class of regression impossible to miss:
+# any push or PR where the root LICENSE is not Apache 2.0, the NOTICE with the
+# opencode MIT attribution is missing, or a package.json license field slides
+# back to MIT, fails loudly.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Root LICENSE must be Apache 2.0
+        run: |
+          head -5 LICENSE | grep -q "Apache License" || {
+            echo "::error file=LICENSE::Root LICENSE is no longer Apache 2.0 — the relicense regressed (likely an upstream sync clobbered it). Restore LICENSE/NOTICE before merging."
+            exit 1
+          }
+
+      - name: NOTICE with opencode attribution must exist
+        run: |
+          test -f NOTICE && grep -q "opencode" NOTICE && grep -q "Apache License" NOTICE || {
+            echo "::error file=NOTICE::NOTICE file missing or missing the opencode MIT attribution."
+            exit 1
+          }
+
+      - name: No package.json may declare MIT
+        run: |
+          BAD=$(grep -rl '"license": "MIT"' --include=package.json . | grep -v node_modules || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::package.json license fields regressed to MIT:"
+            echo "$BAD"
+            exit 1
+          fi

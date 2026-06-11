@@ -181,7 +181,7 @@ export const dict = {
   "home.faq.q8": "Чи є OpenCode відкритим?",
   "home.faq.a8.p1": "Так, OpenCode повністю відкритий. Вихідний код доступний публічно на",
   "home.faq.a8.p2": "під ліцензією",
-  "home.faq.a8.mitLicense": "MIT License",
+  "home.faq.a8.mitLicense": "Apache License 2.0",
   "home.faq.a8.p3":
     ", тобто кожен може використовувати, змінювати або сприяти його розвитку. Будь-хто зі спільноти може створювати issues, надсилати pull request'и та розширювати функціональність.",
 

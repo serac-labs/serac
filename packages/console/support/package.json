@@ -2,7 +2,7 @@
   "name": "@opencode-ai/console-support",
   "version": "1.16.2",
   "type": "module",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "typecheck": "tsgo --noEmit",
     "dev": "sst shell --stage production -- vite dev"

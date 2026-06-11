@@ -180,7 +180,7 @@ export const dict = {
   "home.faq.q8": "Er OpenCode open source?",
   "home.faq.a8.p1": "Ja, OpenCode er fuldt open source. Kildekoden er offentlig på",
   "home.faq.a8.p2": "under",
-  "home.faq.a8.mitLicense": "MIT-licensen",
+  "home.faq.a8.mitLicense": "Apache License 2.0",
   "home.faq.a8.p3":
     ", hvilket betyder at alle kan bruge, ændre eller bidrage til udviklingen. Alle i communityet kan oprette issues, indsende pull requests og udvide funktionalitet.",
 

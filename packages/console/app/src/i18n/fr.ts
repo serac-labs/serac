@@ -180,7 +180,7 @@ export const dict = {
   "home.faq.q8": "OpenCode est-il open source ?",
   "home.faq.a8.p1": "Oui, OpenCode est entièrement open source. Le code source est public sur",
   "home.faq.a8.p2": "sous la",
-  "home.faq.a8.mitLicense": "Licence MIT",
+  "home.faq.a8.mitLicense": "Apache License 2.0",
   "home.faq.a8.p3":
     ", ce qui signifie que tout le monde peut l'utiliser, le modifier ou contribuer à son développement. Toute personne de la communauté peut ouvrir des tickets, soumettre des pull requests et étendre les fonctionnalités.",
 
