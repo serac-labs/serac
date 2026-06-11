@@ -788,6 +788,12 @@ async function releaseFlowEditingLock(
   var graphqlOk = false
   var compilationError: string | undefined
   var debug: any = {}
+  // safeEdit(delete) returns deleteSuccess=false BOTH when the compile-on-close
+  // fails AND when there simply is no safe-edit session to delete (e.g. a second
+  // activate call after the first one already released the lock). Check up front
+  // which case applies so "no lock" is not misreported as a compilation error.
+  var hadLock = (await verifyFlowEditingLock(client, flowId)).locked
+  debug.had_lock = hadLock
   // Step 1: GraphQL safeEdit(delete) — primary mechanism
   // This triggers flow compilation and version creation on the server side.
   // If the flow has invalid elements (e.g. unsupported flowLogic type), the compilation
@@ -811,8 +817,11 @@ async function releaseFlowEditingLock(
         .join("; ")
       debug.graphql_errors = gqlErrors
     }
-    // If deleteSuccess is false but no GraphQL error, check the result for messages
-    if (!graphqlOk && !compilationError) {
+    // If deleteSuccess is false but no GraphQL error, check the result for messages.
+    // Only report a compilation error when a safe-edit session actually existed —
+    // deleting a non-existent session also returns deleteSuccess=false, and that
+    // is not a compilation problem.
+    if (!graphqlOk && !compilationError && hadLock) {
       compilationError = "safeEdit(delete) returned deleteSuccess=false. The flow may have compilation errors."
     }
   } catch (e: any) {
@@ -922,6 +931,38 @@ async function verifyFlowActivation(
 }
 
 /**
+ * Mine a processflow API response body for an error/validation message.
+ * The /snapshot endpoint reports compile failures in several shapes (top-level
+ * error object, result.errorMessage, validationErrors arrays); normalize them
+ * to one string so publish failures carry the real reason instead of "".
+ */
+function extractProcessflowError(body: any): string {
+  if (!body) return ""
+  // HTML error pages (proxy 502s, instance-node 500s) carry no useful detail —
+  // return "" so the caller falls back to the interceptor's curated e.message.
+  if (typeof body === "string") return /^\s*</.test(body) ? "" : body.slice(0, 500)
+  var err = body.error
+  if (err) {
+    if (typeof err === "string") return err
+    return err.message || err.detail || JSON.stringify(err).slice(0, 500)
+  }
+  var result = body.result
+  if (result && typeof result === "object") {
+    if (typeof result.errorMessage === "string" && result.errorMessage) return result.errorMessage
+    if (typeof result.error === "string" && result.error) return result.error
+    var validation = result.data?.validationErrors || result.validationErrors
+    if (Array.isArray(validation) && validation.length > 0) {
+      return validation
+        .map(function (v: any) {
+          return typeof v === "string" ? v : v.message || v.error || JSON.stringify(v)
+        })
+        .join("; ")
+    }
+  }
+  return ""
+}
+
+/**
  * Compile + publish a flow's working copy into a master snapshot.
  *
  * This is the step the Flow Designer UI performs on Activate that the tool
@@ -932,13 +973,20 @@ async function verifyFlowActivation(
  * flow stays draft with an empty master_snapshot — the long-standing
  * "publish reports success but the flow never triggers" bug.
  *
- * Returns the new masterSnapshotId on success, or "" on failure.
+ * Returns { snapshotId } on success, or { snapshotId: "", error } with the
+ * server's compile/validation message on failure — the activate handler
+ * surfaces that error, so never swallow it here.
  */
-async function compileFlowSnapshot(client: any, flowId: string): Promise<string> {
+async function compileFlowSnapshot(client: any, flowId: string): Promise<{ snapshotId: string; error?: string }> {
   try {
     var defResp = await client.get("/api/now/processflow/flow/" + flowId)
     var def = defResp.data?.result?.data
-    if (!def || !def.id) return ""
+    if (!def || !def.id) {
+      return {
+        snapshotId: "",
+        error: "could not read the flow working copy (processflow/flow/" + flowId + " returned no definition)",
+      }
+    }
     // The UI tags every snapshot post with a fresh client session id.
     def.clientSessionId = generateUUID()
     // Triggered flows compile via .../snapshot; subflows use .../subflow
@@ -951,9 +999,60 @@ async function compileFlowSnapshot(client: any, flowId: string): Promise<string>
       def,
       { timeout: 180000 },
     )
-    return snapResp.data?.result?.data?.masterSnapshotId || ""
+    var snapshotId = snapResp.data?.result?.data?.masterSnapshotId || ""
+    if (snapshotId) return { snapshotId: snapshotId }
+    // HTTP 200 without a masterSnapshotId: the server accepted the POST but did
+    // not compile a snapshot. Surface whatever detail the body carries.
+    var bodyError = extractProcessflowError(snapResp.data)
+    return { snapshotId: "", error: bodyError || "the " + endpoint + " endpoint returned no masterSnapshotId" }
   } catch (e: any) {
-    console.warn("[snow_manage_flow] compileFlowSnapshot failed for flow=" + flowId + ": " + (e.message || ""))
+    // The auth interceptor turns 502/503 into a curated "instance is hibernating"
+    // message — prefer that over whatever HTML the proxy returned as the body.
+    var detail = e.isHibernating
+      ? e.message
+      : extractProcessflowError(e.response?.data) || e.message || "snapshot compile threw an exception"
+    console.warn("[snow_manage_flow] compileFlowSnapshot failed for flow=" + flowId + ": " + detail)
+    return { snapshotId: "", error: detail }
+  }
+}
+
+/**
+ * Best-effort diagnosis for a failed activation. The dominant causes of a flow
+ * that refuses to compile a snapshot are a missing trigger or a record-based
+ * trigger without a table — both invisible in the generic publish error.
+ * Returns a one-line actionable hint, or "" when nothing obvious is wrong.
+ * Subflows have no triggers by design, so they never get trigger hints.
+ */
+async function diagnoseActivationFailure(client: any, flowId: string): Promise<string> {
+  try {
+    // Subflows must not have triggers — any trigger hint would be actively wrong.
+    var flowResp = await client.get("/api/now/table/sys_hub_flow/" + flowId, {
+      params: { sysparm_fields: "type", sysparm_exclude_reference_link: "true" },
+    })
+    if (str(flowResp.data?.result?.type) === "subflow") return ""
+
+    // Read trigger name + table from the working copy (processflow API, with
+    // version/flow-record fallbacks) — sys_hub_trigger_instance has no usable
+    // action_type/table columns, so the Table API cannot answer this.
+    var trigInfo = await getFlowTriggerInfo(client, flowId)
+    if (!trigInfo.triggerName) {
+      return (
+        "Diagnosis: no trigger found on this flow. If it should run automatically, " +
+        "add one with action='add_trigger' before activating (manual flows can ignore this hint)."
+      )
+    }
+    // Only record-based triggers require a table; scheduled/manual ones don't.
+    if (!trigInfo.table && /creat|updat|delet/i.test(trigInfo.triggerName)) {
+      return (
+        "Diagnosis: trigger '" +
+        trigInfo.triggerName +
+        "' has no table set — a record trigger without a table fails compilation. " +
+        "Use action='update_trigger' with a table AND a trigger_type matching the current trigger " +
+        "(omitting trigger_type defaults to record_create_or_update, which would change when the flow fires)."
+      )
+    }
+    return ""
+  } catch (_) {
     return ""
   }
 }
@@ -7418,8 +7517,8 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
         // to skip, which is why flows stayed draft and never triggered), THEN
         // record a published version. Verification below is the gate, so a failed
         // compile surfaces as a real error instead of a false "published".
-        var snapshotId = await compileFlowSnapshot(client, activateSysId)
-        if (snapshotId) activateSummary.field("snapshot", snapshotId)
+        var compileResult = await compileFlowSnapshot(client, activateSysId)
+        if (compileResult.snapshotId) activateSummary.field("snapshot", compileResult.snapshotId)
 
         try {
           await client.post(
@@ -7439,19 +7538,29 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
         // didn't materialize, then re-verify.
         var activation = await verifyFlowActivation(client, activateSysId)
         if (!activation.active || !activation.hasSnapshot) {
-          await compileFlowSnapshot(client, activateSysId)
+          var recompile = await compileFlowSnapshot(client, activateSysId)
+          if (recompile.snapshotId || recompile.error) compileResult = recompile
           activation = await verifyFlowActivation(client, activateSysId)
         }
 
         if (!activation.active || !activation.hasSnapshot) {
-          var why = releaseResult?.compilationError
-            ? "Compilation error: " + releaseResult.compilationError
-            : (activation.active ? "active but has no compiled snapshot" : "not active") +
-              " (status=" + activation.status + ")"
+          // The snapshot compile IS the publish path, so its error is the real
+          // reason. The lock-release message is only a fallback — and is no
+          // longer fabricated when no editing session existed.
+          var why = compileResult.error
+            ? "Compilation failed: " + compileResult.error
+            : releaseResult?.compilationError
+              ? "Compilation error: " + releaseResult.compilationError
+              : (activation.active ? "active but has no compiled snapshot" : "not active") +
+                " (status=" + activation.status + ")"
+          var triggerHint = await diagnoseActivationFailure(client, activateSysId)
           return createErrorResult(
             new SnowFlowError(
               ErrorType.UNKNOWN_ERROR,
-              "Flow publish did not complete — the flow will NOT trigger. " + why + ".",
+              "Flow publish did not complete — the flow will NOT trigger. " +
+                why +
+                "." +
+                (triggerHint ? " " + triggerHint : ""),
               {
                 retryable: true,
                 details: {
@@ -7459,7 +7568,9 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
                   active: activation.active,
                   status: activation.status,
                   has_snapshot: activation.hasSnapshot,
+                  compile_error: compileResult.error || null,
                   compilation_error: releaseResult?.compilationError || null,
+                  trigger_diagnosis: triggerHint || null,
                 },
               },
             ),
