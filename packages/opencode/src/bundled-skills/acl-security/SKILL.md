@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_review_access_control
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_test_acl
+  - snow_artifact_manage
+  - snow_execute_script
   - snow_impersonate_user
   - snow_session_context
 ---

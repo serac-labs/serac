@@ -9,9 +9,9 @@ metadata:
   category: servicenow
 tools:
   - snow_query_table
-  - snow_find_artifact
+  - snow_artifact_manage
   - snow_test_rest_connection
-  - snow_execute_script_with_output
+  - snow_execute_script
 ---
 
 # IntegrationHub for ServiceNow
@@ -362,9 +362,9 @@ function executeWithRetry(fn, maxRetries, delayMs) {
 | Tool                              | Purpose                  |
 | --------------------------------- | ------------------------ |
 | `snow_query_table`                | Query spokes and actions |
-| `snow_find_artifact`              | Find integration configs |
+| `snow_artifact_manage` (action='find') | Find integration configs |
 | `snow_test_rest_connection`       | Test connections         |
-| `snow_execute_script_with_output` | Test action scripts      |
+| `snow_execute_script`             | Test action scripts      |
 
 ### Example Workflow
 

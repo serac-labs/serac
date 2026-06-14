@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_workspace_create
+  - snow_create_workspace
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # Agent Workspace for ServiceNow
@@ -440,12 +440,12 @@ action.insert()
 
 ### Available Tools
 
-| Tool                              | Purpose                  |
-| --------------------------------- | ------------------------ |
-| `snow_find_artifact`              | Find workspace configs   |
-| `snow_query_table`                | Query workspace tables   |
-| `snow_deploy`                     | Deploy workspace widgets |
-| `snow_execute_script_with_output` | Test workspace scripts   |
+| Tool                   | Purpose                                       |
+| ---------------------- | --------------------------------------------- |
+| `snow_artifact_manage` | Find workspace widgets (`action: "find"`)     |
+| `snow_query_table`     | Query workspace tables                        |
+| `snow_artifact_manage` | Deploy workspace widgets (`action: "create"`) |
+| `snow_execute_script`  | Test workspace scripts                        |
 
 ### Example Workflow
 
@@ -465,7 +465,7 @@ await snow_query_table({
 })
 
 // 3. Test similar incident finder
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var finder = new SimilarIncidentFinder();
         var similar = finder.findSimilar('incident_sys_id');

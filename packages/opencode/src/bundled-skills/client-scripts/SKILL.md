@@ -9,8 +9,7 @@ metadata:
   category: servicenow
 tools:
   - snow_create_client_script
-  - snow_find_artifact
-  - snow_edit_artifact
+  - snow_artifact_manage
   - snow_create_script_include
 ---
 

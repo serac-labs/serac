@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_va_topic_create
-  - snow_va_nlu_train
+  - snow_create_va_topic
+  - snow_train_va_nlu
   - snow_query_table
-  - snow_find_artifact
+  - snow_artifact_manage (action='find')
 ---
 
 # Virtual Agent for ServiceNow

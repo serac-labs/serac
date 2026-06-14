@@ -10,7 +10,7 @@ metadata:
 tools:
   - snow_create_report
   - snow_create_dashboard
-  - snow_schedule_report
+  - snow_schedule_report_delivery
   - snow_query_table
 ---
 
@@ -330,26 +330,28 @@ function exportReportToCSV(reportSysId) {
 
 ### Available Reporting Tools
 
-| Tool                             | Purpose               |
-| -------------------------------- | --------------------- |
-| `snow_create_report`             | Create report         |
-| `snow_create_dashboard`          | Create dashboard      |
-| `snow_create_scheduled_report`   | Schedule delivery     |
-| `snow_discover_reporting_tables` | Find available tables |
-| `snow_discover_report_fields`    | Get field options     |
-| `snow_export_report_data`        | Export data           |
-| `snow_create_data_visualization` | Create chart          |
+| Tool                                          | Purpose               |
+| --------------------------------------------- | --------------------- |
+| `snow_create_report`                          | Create report         |
+| `snow_create_dashboard`                       | Create dashboard      |
+| `snow_pa_create` (action='scheduled_report')  | Schedule delivery     |
+| `snow_pa_discover` (action='reporting_tables')| Find available tables |
+| `snow_pa_discover` (action='report_fields')   | Get field options     |
+| `snow_pa_operate` (action='export_report')    | Export data           |
+| `snow_pa_create` (action='visualization')     | Create chart          |
 
 ### Example Workflow
 
 ```javascript
 // 1. Discover available tables
-var tables = await snow_discover_reporting_tables({
+var tables = await snow_pa_discover({
+  action: "reporting_tables",
   category: "itsm",
 })
 
 // 2. Get fields for table
-var fields = await snow_discover_report_fields({
+var fields = await snow_pa_discover({
+  action: "report_fields",
   table: "incident",
 })
 
@@ -377,12 +379,13 @@ await snow_add_dashboard_widget({
   column: 0,
 })
 
-// 6. Schedule report
-await snow_create_scheduled_report({
-  report: reportId,
-  frequency: "weekly",
-  recipients: "managers@company.com",
-  format: "pdf",
+// 6. Schedule report (looked up by name, recipients as array)
+await snow_pa_create({
+  action: "scheduled_report",
+  reportName: "Incident Overview",
+  schedule: "weekly",
+  recipients: ["managers@company.com"],
+  format: "PDF",
 })
 ```
 

@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_change_create
-  - snow_change_schedule
+  - snow_change_manage
+  - snow_change_query
   - snow_query_table
-  - snow_find_artifact
+  - snow_artifact_manage
 ---
 
 # Change Management for ServiceNow
@@ -378,42 +378,44 @@ function transitionChange(changeSysId, newState, notes) {
 
 ### Available Change Tools
 
-| Tool                          | Purpose          |
-| ----------------------------- | ---------------- |
-| `snow_create_change_request`  | Create change    |
-| `snow_create_change_task`     | Add tasks        |
-| `snow_get_change_request`     | Get details      |
-| `snow_update_change_state`    | Transition state |
-| `snow_search_change_requests` | Find changes     |
-| `snow_schedule_cab_meeting`   | Schedule CAB     |
+| Tool                                            | Purpose          |
+| ----------------------------------------------- | ---------------- |
+| `snow_change_manage` (`action='create'`)        | Create change    |
+| `snow_change_manage` (`action='create_task'`)   | Add tasks        |
+| `snow_change_query` (`action='get'`)            | Get details      |
+| `snow_change_manage` (`action='update_state'`)  | Transition state |
+| `snow_change_query` (`action='search'`)         | Find changes     |
+| `snow_change_manage` (`action='schedule_cab'`)  | Schedule CAB     |
 
 ### Example Workflow
 
 ```javascript
-// 1. Create change
-var changeId = await snow_create_change_request({
+// 1. Create change (scheduling happens later via action: "update_state" -> "scheduled")
+var changeId = await snow_change_manage({
+  action: "create",
   short_description: "Database upgrade",
   type: "normal",
-  risk: "moderate",
-  start_date: "2024-03-20 22:00:00",
-  end_date: "2024-03-21 02:00:00",
+  risk: "medium",
 })
 
 // 2. Add tasks
-await snow_create_change_task({
-  change: changeId,
-  description: "Backup database",
-  order: 100,
+await snow_change_manage({
+  action: "create_task",
+  sys_id: changeId,
+  short_description: "Backup database",
 })
 
-// 3. Check conflicts
-var conflicts = await snow_check_change_conflicts({
-  change: changeId,
+// 3. Check conflicts: search for overlapping open changes in the same window
+// (see checkChangeConflicts above for per-CI conflict detection)
+var conflicts = await snow_change_query({
+  action: "search",
+  query: "stateNOT INclosed,cancelled^start_date<=2024-03-21 02:00:00^end_date>=2024-03-20 22:00:00",
 })
 
 // 4. Submit for approval
-await snow_update_change_state({
-  change: changeId,
+await snow_change_manage({
+  action: "update_state",
+  sys_id: changeId,
   state: "assess",
 })
 ```

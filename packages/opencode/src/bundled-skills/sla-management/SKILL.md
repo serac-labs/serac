@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_sla_definition_create
+  - snow_create_sla_definition
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # SLA Management for ServiceNow
@@ -361,20 +361,21 @@ gs.info("P1 Response SLA Compliance: " + stats.compliance + "%")
 
 ### Available Tools
 
-| Tool                              | Purpose                |
-| --------------------------------- | ---------------------- |
-| `snow_find_artifact`              | Find SLA definitions   |
-| `snow_query_table`                | Query task_sla records |
-| `snow_execute_script_with_output` | Test SLA scripts       |
-| `snow_create_business_rule`       | Create SLA triggers    |
+| Tool                                    | Purpose                |
+| --------------------------------------- | ---------------------- |
+| `snow_artifact_manage` (action='find')  | Find SLA definitions   |
+| `snow_query_table`                      | Query task_sla records |
+| `snow_execute_script`                   | Test SLA scripts       |
+| `snow_create_business_rule`             | Create SLA triggers    |
 
 ### Example Workflow
 
 ```javascript
 // 1. Find existing SLAs
-await snow_find_artifact({
+await snow_artifact_manage({
+  action: "find",
   type: "contract_sla",
-  name: "P1",
+  query: "P1",
 })
 
 // 2. Query SLA breaches
@@ -385,7 +386,7 @@ await snow_query_table({
 })
 
 // 3. Check SLA compliance
-await snow_execute_script_with_output({
+await snow_execute_script({
   script:
     'var stats = getSLAComplianceRate("P1 Response", gs.beginningOfThisMonth(), gs.endOfThisMonth()); gs.info(JSON.stringify(stats));',
 })

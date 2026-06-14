@@ -8,8 +8,8 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_create_scoped_application
-  - snow_update_set_create
+  - snow_create_application
+  - snow_update_set_manage (action='create')
   - snow_query_table
   - snow_property_manager
 ---

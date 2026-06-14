@@ -3,12 +3,11 @@ name: widget-coherence
 description: Build Service Portal widgets (sp_widget) with synchronized server/client/HTML — data.* initialization, ng-click + controller method matching, c.server.get action handlers, and Angular directive usage.
 version: 1.0.0
 tools:
-  - snow_deploy
-  - snow_update
-  - snow_preview_widget
+  - snow_artifact_manage (action='create')
+  - snow_artifact_manage (action='update')
+  - snow_validate_widget_coherence
   - snow_widget_test
-  - snow_find_artifact
-  - snow_edit_artifact
+  - snow_artifact_manage (action='find')
 ---
 
 # Widget Coherence for ServiceNow Service Portal

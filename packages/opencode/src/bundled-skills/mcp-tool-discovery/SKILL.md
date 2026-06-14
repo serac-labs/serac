@@ -151,7 +151,7 @@ Tools follow consistent naming patterns:
 | Pattern         | Example                  | Purpose               |
 | --------------- | ------------------------ | --------------------- |
 | `snow_*`        | `snow_query_table`       | ServiceNow operations |
-| `snow_deploy_*` | `snow_deploy_widget`     | Artifact creation     |
+| `snow_deploy_*` | `snow_artifact_manage` (action='create', type='sp_widget') | Artifact creation     |
 | `snow_update_*` | `snow_update_set_manage` | Update operations     |
 | `jira_*`        | `jira_search_issues`     | Jira integration      |
 | `azdo_*`        | `azdo_search_work_items` | Azure DevOps          |
@@ -198,8 +198,8 @@ Serac includes specialized MCP servers:
 tool_search({ query: "incident" })
 
 // Use discovered tools
-snow_query_incidents({ filters: { active: true, priority: 1 } })
-snow_create_incident({ short_description: "...", caller_id: "..." })
+snow_record_manage({ action: "query", table: "incident", query: "active=true^priority=1" })
+snow_record_manage({ action: "create", table: "incident", short_description: "...", caller_id: "..." })
 ```
 
 ### Finding Widget Tools
@@ -209,8 +209,8 @@ snow_create_incident({ short_description: "...", caller_id: "..." })
 tool_search({ query: "widget" })
 
 // Use discovered tools
-snow_find_artifact({ type: "widget", query: "incident" })
-snow_widget_pull({ widget_name: "incident-dashboard", local_path: "./widgets" })
+snow_artifact_manage({ action: "find", type: "sp_widget", query: "incident" })
+snow_pull_artifact({ sys_id: "<widget sys_id>", table: "sp_widget", output_dir: "./widgets" })
 ```
 
 ### Finding Enterprise Tools

@@ -9,9 +9,8 @@ metadata:
   category: servicenow
 tools:
   - snow_create_script_include
-  - snow_find_artifact
-  - snow_edit_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # Script Include Patterns for ServiceNow
@@ -323,9 +322,9 @@ MyAppUtils.prototype = {
 | Tool                              | Purpose                       |
 | --------------------------------- | ----------------------------- |
 | `snow_create_script_include`      | Create new Script Include     |
-| `snow_find_artifact`              | Find existing Script Includes |
-| `snow_edit_artifact`              | Modify Script Include code    |
-| `snow_execute_script_with_output` | Test Script Include           |
+| `snow_artifact_manage` (action='find')   | Find existing Script Includes |
+| `snow_artifact_manage` (action='update') | Modify Script Include code    |
+| `snow_execute_script`             | Test Script Include           |
 
 ### Example Workflow
 
@@ -339,7 +338,7 @@ await snow_create_script_include({
 })
 
 // 2. Test the Script Include
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var utils = new IncidentUtils();
         var incident = utils.getByNumber('INC0010001');

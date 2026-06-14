@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_query_incidents
+  - snow_record_manage
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # Incident Management for ServiceNow
@@ -433,24 +433,26 @@ function calculateMTTR(startDate, endDate, filters) {
 
 ### Available Tools
 
-| Tool                              | Purpose                    |
-| --------------------------------- | -------------------------- |
-| `snow_query_incidents`            | Query incident records     |
-| `snow_query_table`                | Advanced incident queries  |
-| `snow_execute_script_with_output` | Test incident scripts      |
-| `snow_create_business_rule`       | Create incident automation |
+| Tool                                       | Purpose                    |
+| ------------------------------------------ | -------------------------- |
+| `snow_record_manage` (action='query')      | Query incident records     |
+| `snow_query_table`                         | Advanced incident queries  |
+| `snow_execute_script`                      | Test incident scripts      |
+| `snow_create_business_rule`                | Create incident automation |
 
 ### Example Workflow
 
 ```javascript
 // 1. Query open P1 incidents
-await snow_query_incidents({
+await snow_record_manage({
+  action: "query",
+  table: "incident",
   query: "priority=1^active=true",
   fields: "number,short_description,assigned_to,opened_at",
 })
 
 // 2. Check incident metrics
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var stats = calculateMTTR(gs.beginningOfThisMonth(), gs.endOfThisMonth(), {});
         gs.info('MTTR: ' + stats.mttr_hours + ' hours');

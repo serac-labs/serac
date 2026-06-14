@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_pa_indicator_create
-  - snow_pa_breakdown_create
+  - snow_pa_indicator_manage
+  - snow_pa_create
   - snow_query_table
-  - snow_find_artifact
+  - snow_artifact_manage
 ---
 
 # Performance Analytics for ServiceNow
@@ -319,51 +319,60 @@ job.collectIndicatorScores(indicatorSysId)
 
 ### Available PA Tools
 
-| Tool                          | Purpose            |
-| ----------------------------- | ------------------ |
-| `snow_create_pa_indicator`    | Create indicator   |
-| `snow_create_pa_breakdown`    | Create breakdown   |
-| `snow_create_pa_threshold`    | Create threshold   |
-| `snow_create_pa_widget`       | Create widget      |
-| `snow_get_pa_scores`          | Retrieve scores    |
-| `snow_collect_pa_data`        | Trigger collection |
-| `snow_discover_pa_indicators` | Find indicators    |
+| Tool                                       | Purpose            |
+| ------------------------------------------ | ------------------ |
+| `snow_pa_create` (action='indicator')      | Create indicator   |
+| `snow_pa_create` (action='breakdown')      | Create breakdown   |
+| `snow_pa_create` (action='threshold')      | Create threshold   |
+| `snow_pa_create` (action='widget')         | Create widget      |
+| `snow_pa_operate` (action='get_scores')    | Retrieve scores    |
+| `snow_pa_operate` (action='collect_data')  | Trigger collection |
+| `snow_pa_discover` (action='indicators')   | Find indicators    |
 
 ### Example Workflow
 
 ```javascript
 // 1. Create indicator
-var indicatorId = await snow_create_pa_indicator({
+var indicatorResult = await snow_pa_create({
+  action: "indicator",
   name: "Open P1 Incidents",
   table: "incident",
   conditions: "active=true^priority=1",
   aggregate: "COUNT",
-  direction: "down_is_good",
 })
+var indicatorId = indicatorResult.sys_id
 
 // 2. Create breakdown
-var breakdownId = await snow_create_pa_breakdown({
+var breakdownResult = await snow_pa_create({
+  action: "breakdown",
   name: "By Assignment Group",
   table: "incident",
   field: "assignment_group",
 })
+var breakdownId = breakdownResult.sys_id
 
-// 3. Link breakdown
-await snow_create_pa_indicator_breakdown({
-  indicator: indicatorId,
-  breakdown: breakdownId,
+// 3. Attach the breakdown to the indicator
+//    (add_breakdown creates the breakdown + the indicator link in one step)
+await snow_pa_indicator_manage({
+  action: "add_breakdown",
+  sys_id: indicatorId,
+  breakdown_name: "By Assignment Group",
+  breakdown_table: "incident",
+  breakdown_field: "assignment_group",
 })
 
 // 4. Create threshold
-await snow_create_pa_threshold({
+await snow_pa_create({
+  action: "threshold",
   indicator: indicatorId,
+  type: "critical",
   operator: ">=",
   value: 10,
-  color: "red",
 })
 
 // 5. Create widget
-await snow_create_pa_widget({
+await snow_pa_create({
+  action: "widget",
   name: "P1 Incidents Scorecard",
   type: "scorecard",
   indicator: indicatorId,
@@ -371,8 +380,9 @@ await snow_create_pa_widget({
 })
 
 // 6. Get current scores
-var scores = await snow_get_pa_scores({
-  indicator: indicatorId,
+var scores = await snow_pa_operate({
+  action: "get_scores",
+  indicator_sys_id: indicatorId,
   time_range: "last_30_days",
 })
 ```

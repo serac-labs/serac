@@ -8,9 +8,8 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_find_artifact
-  - snow_execute_script_with_output
-  - snow_analyze_artifact
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # ServiceNow Code Review Checklist

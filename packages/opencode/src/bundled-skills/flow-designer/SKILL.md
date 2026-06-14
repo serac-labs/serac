@@ -9,8 +9,8 @@ metadata:
   category: servicenow
 tools:
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # Flow Designer Patterns for ServiceNow

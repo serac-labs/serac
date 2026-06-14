@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_asset_create
+  - snow_create_asset
   - snow_cmdb_search
   - snow_query_table
-  - snow_find_artifact
+  - snow_artifact_manage
 ---
 
 # Asset Management for ServiceNow
@@ -380,12 +380,12 @@ function getAssetInventorySummary() {
 
 ### Available Tools
 
-| Tool                              | Purpose                   |
-| --------------------------------- | ------------------------- |
-| `snow_query_table`                | Query assets and licenses |
-| `snow_cmdb_search`                | Search CMDB for CIs       |
-| `snow_execute_script_with_output` | Test asset scripts        |
-| `snow_find_artifact`              | Find asset configurations |
+| Tool                   | Purpose                                     |
+| ---------------------- | ------------------------------------------- |
+| `snow_query_table`     | Query assets and licenses                   |
+| `snow_cmdb_search`     | Search CMDB for CIs                         |
+| `snow_execute_script`  | Test asset scripts                          |
+| `snow_artifact_manage` | Find asset configurations (`action: find`)  |
 
 ### Example Workflow
 
@@ -398,7 +398,7 @@ await snow_query_table({
 })
 
 // 2. Check license compliance
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var license = new GlideRecord('alm_license');
         license.addQuery('remainingRELATIVELT@integer@0');

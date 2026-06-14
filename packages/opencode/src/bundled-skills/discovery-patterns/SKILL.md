@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_discovery_schedule_create
+  - snow_asset_discovery
   - snow_cmdb_search
   - snow_query_table
-  - snow_execute_script_with_output
+  - snow_execute_script
 ---
 
 # Discovery Patterns for ServiceNow
@@ -346,12 +346,12 @@ function getDiscoveredDevices(statusSysId) {
 
 ### Available Tools
 
-| Tool                              | Purpose                |
-| --------------------------------- | ---------------------- |
-| `snow_query_table`                | Query discovery tables |
-| `snow_find_artifact`              | Find discovery configs |
-| `snow_execute_script_with_output` | Test discovery scripts |
-| `snow_cmdb_search`                | Search discovered CIs  |
+| Tool                   | Purpose                          |
+| ---------------------- | -------------------------------- |
+| `snow_query_table`     | Query discovery tables           |
+| `snow_artifact_manage` | Find artifacts (`action='find'`) |
+| `snow_execute_script`  | Test discovery scripts           |
+| `snow_cmdb_search`     | Search discovered CIs            |
 
 ### Example Workflow
 
@@ -364,7 +364,7 @@ await snow_query_table({
 })
 
 // 2. Check recent discovery status
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var status = getDiscoveryStatus('schedule_sys_id');
         gs.info(JSON.stringify(status));

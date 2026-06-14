@@ -9,9 +9,9 @@ metadata:
   category: servicenow
 tools:
   - snow_query_table
-  - snow_execute_script_with_output
-  - snow_find_artifact
-  - snow_update_set_create
+  - snow_execute_script
+  - snow_artifact_manage
+  - snow_update_set_manage
 ---
 
 # App Engine Studio & Workspace Builder for ServiceNow
@@ -374,12 +374,12 @@ function prepareAppExport(appScope) {
 
 ### Available Tools
 
-| Tool                              | Purpose              |
-| --------------------------------- | -------------------- |
-| `snow_query_table`                | Query app components |
-| `snow_execute_script_with_output` | Test app scripts     |
-| `snow_find_artifact`              | Find configurations  |
-| `snow_update_set_create`          | Create update sets   |
+| Tool                                  | Purpose              |
+| ------------------------------------- | -------------------- |
+| `snow_query_table`                    | Query app components |
+| `snow_execute_script`                 | Test app scripts     |
+| `snow_artifact_manage` (action='find') | Find configurations  |
+| `snow_update_set_manage` (action='create') | Create update sets   |
 
 ### Example Workflow
 

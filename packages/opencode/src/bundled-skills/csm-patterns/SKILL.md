@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_csm_case_create
+  - snow_create_customer_case
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # Customer Service Management for ServiceNow
@@ -370,12 +370,11 @@ function checkEntitlement(accountSysId, entitlementType) {
 
 ### Available Tools
 
-| Tool                              | Purpose                 |
-| --------------------------------- | ----------------------- |
-| `snow_query_table`                | Query CSM tables        |
-| `snow_find_artifact`              | Find CSM configurations |
-| `snow_execute_script_with_output` | Test CSM scripts        |
-| `snow_deploy`                     | Deploy CSM widgets      |
+| Tool                   | Purpose                                                                                   |
+| ---------------------- | ----------------------------------------------------------------------------------------- |
+| `snow_query_table`     | Query CSM tables                                                                           |
+| `snow_artifact_manage` | Find CSM configurations (`action: "find"`) and deploy CSM widgets (`action: "create"`)     |
+| `snow_execute_script`  | Test CSM scripts                                                                           |
 
 ### Example Workflow
 
@@ -388,7 +387,7 @@ await snow_query_table({
 })
 
 // 2. Check entitlements
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var result = checkEntitlement('account_sys_id', 'premium_support');
         gs.info(JSON.stringify(result));

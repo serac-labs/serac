@@ -4,9 +4,8 @@ description: Write ServiceNow business rules (before/after/async/display) — cu
 version: 1.0.0
 tools:
   - snow_create_business_rule
-  - snow_find_artifact
-  - snow_edit_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # Business Rule Best Practices for ServiceNow

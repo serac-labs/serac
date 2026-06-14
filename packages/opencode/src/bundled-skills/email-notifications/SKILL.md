@@ -8,10 +8,11 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_configure_email
+  - snow_email_notification_manage
+  - snow_create_email_config
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # Email Notifications for ServiceNow

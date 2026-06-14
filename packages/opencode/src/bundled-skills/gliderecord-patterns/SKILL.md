@@ -4,7 +4,7 @@ description: Write efficient ServiceNow GlideRecord queries — addQuery vs addE
 version: 1.0.0
 tools:
   - snow_query_table
-  - snow_execute_script_with_output
+  - snow_execute_script
   - snow_discover_table_fields
 ---
 
