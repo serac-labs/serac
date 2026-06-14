@@ -9,9 +9,9 @@ metadata:
   category: servicenow
 tools:
   - snow_query_table
-  - snow_execute_script_with_output
-  - snow_audit_compliance
-  - snow_assess_risk
+  - snow_execute_script
+  - snow_run_compliance_scan
+  - snow_grc_risk_manage (action='assess')
 ---
 
 # GRC & Compliance for ServiceNow
@@ -409,12 +409,12 @@ function getComplianceSummary() {
 
 ### Available Tools
 
-| Tool                              | Purpose               |
-| --------------------------------- | --------------------- |
-| `snow_query_table`                | Query GRC tables      |
-| `snow_execute_script_with_output` | Test GRC scripts      |
-| `snow_audit_compliance`           | Run compliance audits |
-| `snow_assess_risk`                | Risk assessment       |
+| Tool                                   | Purpose               |
+| -------------------------------------- | --------------------- |
+| `snow_query_table`                     | Query GRC tables      |
+| `snow_execute_script`                  | Test GRC scripts      |
+| `snow_run_compliance_scan`             | Run compliance audits |
+| `snow_grc_risk_manage` (action='assess') | Risk assessment       |
 
 ### Example Workflow
 
@@ -434,7 +434,7 @@ await snow_query_table({
 })
 
 // 3. Get compliance summary
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var summary = getComplianceSummary();
         gs.info(JSON.stringify(summary));

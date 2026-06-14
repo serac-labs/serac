@@ -10,7 +10,7 @@ metadata:
 tools:
   - snow_create_import_set
   - snow_create_transform_map
-  - snow_execute_script_with_output
+  - snow_execute_script
   - snow_query_table
 ---
 
@@ -443,7 +443,7 @@ function bulkDelete(tableName, encodedQuery, maxRecords) {
 | --------------------------------- | ------------------ |
 | `snow_create_import_set`          | Create import sets |
 | `snow_create_transform_map`       | Create transforms  |
-| `snow_execute_script_with_output` | Test import/export |
+| `snow_execute_script`             | Test import/export |
 | `snow_query_table`                | Query data         |
 
 ### Example Workflow
@@ -457,7 +457,7 @@ await snow_query_table({
 })
 
 // 2. Export data
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var csv = exportToCSV('incident', 'active=true', 'number,short_description,state');
         gs.info('Exported ' + csv.split('\\n').length + ' rows');

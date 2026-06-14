@@ -10,8 +10,8 @@ metadata:
 tools:
   - snow_create_event
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # Notification Events for ServiceNow
@@ -338,12 +338,12 @@ function getPendingEvents(eventName) {
 
 ### Available Tools
 
-| Tool                              | Purpose                   |
-| --------------------------------- | ------------------------- |
-| `snow_create_event`               | Queue events              |
-| `snow_query_table`                | Query event queue         |
-| `snow_find_artifact`              | Find event configurations |
-| `snow_execute_script_with_output` | Test event scripts        |
+| Tool                                       | Purpose                   |
+| ------------------------------------------ | ------------------------- |
+| `snow_create_event`                        | Queue events              |
+| `snow_query_table`                         | Query event queue         |
+| `snow_artifact_manage` (action='find')     | Find event configurations |
+| `snow_execute_script`                      | Test event scripts        |
 
 ### Example Workflow
 

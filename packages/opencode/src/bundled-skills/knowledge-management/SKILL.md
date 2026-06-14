@@ -8,10 +8,9 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_knowledge_article_create
-  - snow_knowledge_search
+  - snow_knowledge_article_manage
   - snow_query_table
-  - snow_find_artifact
+  - snow_artifact_manage
 ---
 
 # Knowledge Management for ServiceNow
@@ -369,24 +368,25 @@ function updateArticleRating(articleSysId) {
 
 ### Available Tools
 
-| Tool                              | Purpose               |
-| --------------------------------- | --------------------- |
-| `snow_knowledge_search`           | Search knowledge base |
-| `snow_query_table`                | Query kb_knowledge    |
-| `snow_find_artifact`              | Find articles         |
-| `snow_execute_script_with_output` | Test KB scripts       |
+| Tool                                          | Purpose               |
+| --------------------------------------------- | --------------------- |
+| `snow_knowledge_article_manage` (action='search') | Search knowledge base |
+| `snow_query_table`                            | Query kb_knowledge    |
+| `snow_artifact_manage` (action='find')        | Find articles         |
+| `snow_execute_script`                         | Test KB scripts       |
 
 ### Example Workflow
 
 ```javascript
 // 1. Search for existing articles
-await snow_knowledge_search({
+await snow_knowledge_article_manage({
+  action: "search",
   query: "password reset",
   limit: 5,
 })
 
 // 2. Create new article
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var article = new GlideRecord('kb_knowledge');
         article.initialize();

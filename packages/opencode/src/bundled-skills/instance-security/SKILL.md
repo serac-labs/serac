@@ -8,10 +8,8 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_property_get
-  - snow_property_set
-  - snow_execute_script_with_output
-  - snow_review_access_control
+  - snow_property_manage
+  - snow_execute_script
   - snow_query_table
 ---
 
@@ -388,22 +386,23 @@ function securityHealthCheck() {
 
 ### Available Tools
 
-| Tool                              | Purpose                   |
-| --------------------------------- | ------------------------- |
-| `snow_property_get`               | Check security properties |
-| `snow_execute_script_with_output` | Test security scripts     |
-| `snow_review_access_control`      | Review ACLs               |
+| Tool                                | Purpose                   |
+| ----------------------------------- | ------------------------- |
+| `snow_property_manage` (action=get) | Check security properties |
+| `snow_execute_script`               | Test security scripts     |
+| `snow_query_table`                  | Review ACLs               |
 
 ### Example Workflow
 
 ```javascript
 // 1. Check security properties
-await snow_property_get({
+await snow_property_manage({
+  action: "get",
   name: "glide.security.session.timeout",
 })
 
 // 2. Run security health check
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var health = securityHealthCheck();
         gs.info(JSON.stringify(health));

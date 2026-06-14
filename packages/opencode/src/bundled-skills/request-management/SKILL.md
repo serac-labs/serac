@@ -9,8 +9,8 @@ metadata:
   category: servicenow
 tools:
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
   - snow_create_catalog_item
 ---
 
@@ -344,12 +344,12 @@ function getRequestApprovalStatus(requestSysId) {
 
 ### Available Tools
 
-| Tool                              | Purpose                  |
-| --------------------------------- | ------------------------ |
-| `snow_query_table`                | Query requests and RITMs |
-| `snow_find_artifact`              | Find catalog items       |
-| `snow_execute_script_with_output` | Test request scripts     |
-| `snow_create_catalog_item`        | Create catalog items     |
+| Tool                                       | Purpose                  |
+| ------------------------------------------ | ------------------------ |
+| `snow_query_table`                         | Query requests and RITMs |
+| `snow_artifact_manage` (action='find')     | Find catalog items       |
+| `snow_execute_script`                      | Test request scripts     |
+| `snow_create_catalog_item`                 | Create catalog items     |
 
 ### Example Workflow
 
@@ -362,7 +362,7 @@ await snow_query_table({
 })
 
 // 2. Get request details
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var vars = getRITMVariables('ritm_sys_id');
         gs.info(JSON.stringify(vars));

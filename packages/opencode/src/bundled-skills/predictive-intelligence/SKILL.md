@@ -9,7 +9,7 @@ metadata:
   category: servicenow
 tools:
   - snow_query_table
-  - snow_execute_script_with_output
+  - snow_execute_script
   - ml_predict_change_risk
   - ml_detect_anomalies
 ---
@@ -371,9 +371,9 @@ function getPredictionAccuracy(solutionName, days) {
 
 | Tool                              | Purpose             |
 | --------------------------------- | ------------------- |
-| `snow_query_table`                | Query ML tables     |
-| `snow_execute_script_with_output` | Test predictions    |
-| `ml_predict_change_risk`          | Predict change risk |
+| `snow_query_table`         | Query ML tables     |
+| `snow_execute_script`      | Test predictions    |
+| `ml_predict_change_risk`   | Predict change risk |
 | `ml_detect_anomalies`             | Anomaly detection   |
 
 ### Example Workflow
@@ -394,7 +394,7 @@ await snow_query_table({
 })
 
 // 3. Test prediction
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var result = getClassificationPrediction('incident', 'inc_sys_id', 'incident_classifier');
         gs.info(JSON.stringify(result));

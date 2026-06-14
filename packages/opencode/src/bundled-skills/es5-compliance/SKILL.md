@@ -8,7 +8,7 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_execute_script_with_output
+  - snow_execute_script
   - snow_convert_es6_to_es5
 ---
 

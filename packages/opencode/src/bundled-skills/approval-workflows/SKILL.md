@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_approval_rule_create
+  - snow_approval_chain_manage
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # Approval Workflows for ServiceNow
@@ -351,12 +351,13 @@ function sendApprovalNotification(approvalSysId) {
 
 ### Available Tools
 
-| Tool                              | Purpose                  |
-| --------------------------------- | ------------------------ |
-| `snow_query_table`                | Query approvals          |
-| `snow_find_artifact`              | Find approval rules      |
-| `snow_execute_script_with_output` | Test approval scripts    |
-| `snow_create_business_rule`       | Create approval triggers |
+| Tool                          | Purpose                                            |
+| ----------------------------- | -------------------------------------------------- |
+| `snow_query_table`            | Query approvals and approval rules                 |
+| `snow_approval_chain_manage`  | Define multi-step approval chains (`define_chain`) |
+| `snow_artifact_manage`        | Find approval business rules (`action='find'`)     |
+| `snow_execute_script`         | Test approval scripts                              |
+| `snow_create_business_rule`   | Create approval triggers                           |
 
 ### Example Workflow
 
@@ -376,7 +377,7 @@ await snow_query_table({
 })
 
 // 3. Check delegations
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var delegates = getActiveDelegates(gs.getUserID());
         gs.info('Active delegates: ' + JSON.stringify(delegates));

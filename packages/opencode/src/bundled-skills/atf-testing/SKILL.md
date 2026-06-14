@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_atf_test_create
-  - snow_atf_test_run
+  - snow_create_atf_test
+  - snow_execute_atf_test
   - snow_query_table
-  - snow_find_artifact
+  - snow_artifact_manage
 ---
 
 # Automated Test Framework (ATF) for ServiceNow

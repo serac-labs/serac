@@ -9,8 +9,8 @@ metadata:
   category: servicenow
 tools:
   - snow_cmdb_search
-  - snow_cmdb_ci_create
-  - snow_cmdb_relationship_create
+  - snow_create_ci
+  - snow_create_ci_relationship
   - snow_query_table
 ---
 
@@ -386,19 +386,20 @@ await snow_cmdb_search({
   include_relationships: true,
 })
 
-// 2. Create new CI if not found
+// 2. Create new CI if not found (extra CI fields go in attributes)
 await snow_create_ci({
   ci_class: "cmdb_ci_linux_server",
   name: "PROD-WEB-002",
-  ip_address: "10.0.1.101",
-  operational_status: 1,
+  attributes: { ip_address: "10.0.1.101" },
+  operational_status: "1",
 })
 
-// 3. Create relationship
+// 3. Create relationship (relationship_type is a cmdb_rel_type sys_id,
+//    look it up via snow_query_table on cmdb_rel_type)
 await snow_create_ci_relationship({
-  parent: appSysId,
-  child: serverSysId,
-  type: "Runs on::Runs",
+  parent_ci: appSysId,
+  child_ci: serverSysId,
+  relationship_type: runsOnRelTypeSysId, // sys_id of "Runs on::Runs"
 })
 
 // 4. Impact analysis

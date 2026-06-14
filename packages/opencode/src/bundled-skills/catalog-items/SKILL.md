@@ -8,10 +8,11 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_catalog_item_create
-  - snow_catalog_variable_create
+  - snow_create_catalog_item
+  - snow_create_catalog_variable
+  - snow_create_variable
   - snow_query_table
-  - snow_find_artifact
+  - snow_artifact_manage
 ---
 
 # Service Catalog Development for ServiceNow
@@ -69,15 +70,23 @@ Catalog Item: Request New Laptop
 ### Basic Variable
 
 ```javascript
-// Via MCP
-snow_create_catalog_variable({
-  catalog_item: "laptop_request",
+// Via MCP (snow_create_variable supports reference, checkbox, etc.;
+// snow_create_catalog_variable covers text/choice types only)
+snow_create_variable({
+  cat_item: "<catalog item sys_id>",
   name: "laptop_model",
+  question_text: "Laptop Model",
   type: "reference",
-  reference: "cmdb_model",
-  reference_qual: "category=computer",
   mandatory: true,
   order: 100,
+})
+
+// Set the reference table and qualifier on the created variable
+snow_record_manage({
+  action: "update",
+  table: "item_option_new",
+  sys_id: "<variable sys_id>",
+  data: { reference: "cmdb_model", reference_qual: "category=computer" },
 })
 ```
 

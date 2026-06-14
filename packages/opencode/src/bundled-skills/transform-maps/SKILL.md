@@ -11,7 +11,7 @@ tools:
   - snow_create_transform_map
   - snow_create_import_set
   - snow_query_table
-  - snow_execute_script_with_output
+  - snow_execute_script
 ---
 
 # Transform Maps for ServiceNow
@@ -416,15 +416,16 @@ if (importSetSysId) {
 ### Example Workflow
 
 ```javascript
-// 1. Create import set table
-await snow_create_import_set_table({
+// 1. Create import set table, then add one column per field
+await snow_create_table({
   name: "u_vendor_import",
-  fields: [
-    { name: "u_vendor_id", type: "string" },
-    { name: "u_vendor_name", type: "string" },
-    { name: "u_contact_email", type: "string" },
-  ],
+  label: "Vendor Import",
+  extends_table: "sys_import_set_row",
 })
+
+await snow_create_field({ table: "u_vendor_import", column_name: "u_vendor_id", internal_type: "string" })
+await snow_create_field({ table: "u_vendor_import", column_name: "u_vendor_name", internal_type: "string" })
+await snow_create_field({ table: "u_vendor_import", column_name: "u_contact_email", internal_type: "string" })
 
 // 2. Create transform map
 var transformId = await snow_create_transform_map({
@@ -447,10 +448,17 @@ await snow_create_field_map({
   target: "name",
 })
 
-// 4. Run import
-await snow_execute_import({
-  data_source: dataSourceId,
-  transform_map: transformId,
+// 4. Stage rows into the import set table, then run the transform
+var importResult = await snow_create_import_set({
+  table: "u_vendor_import",
+  data: [
+    { u_vendor_id: "V001", u_vendor_name: "Acme Corp", u_contact_email: "ops@acme.example" },
+  ],
+})
+
+await snow_execute_transform({
+  import_set_sys_id: importResult.import_set,
+  transform_map_sys_id: transformId,
 })
 ```
 

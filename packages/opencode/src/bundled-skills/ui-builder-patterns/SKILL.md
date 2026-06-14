@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_workspace_create
+  - snow_create_workspace
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # UI Builder Patterns for ServiceNow
@@ -369,16 +369,15 @@ Macroponent: incident-summary-card
 
 ### Available UIB Tools
 
-| Tool                               | Purpose               |
-| ---------------------------------- | --------------------- |
-| `snow_create_uib_page`             | Create new page       |
-| `snow_create_uib_component`        | Add component to page |
-| `snow_create_uib_data_broker`      | Create data broker    |
-| `snow_create_uib_client_state`     | Define client state   |
-| `snow_create_uib_event`            | Configure events      |
-| `snow_create_complete_workspace`   | Full workspace        |
-| `snow_update_uib_page`             | Modify page           |
-| `snow_validate_uib_page_structure` | Validate structure    |
+| Tool                                       | Purpose               |
+| ------------------------------------------ | --------------------- |
+| `snow_uib_page_manage` (action='create')   | Create new page       |
+| `snow_uib_page_manage` (action='add_element') | Add component to page |
+| `snow_create_uib_data_broker`              | Create data broker    |
+| `snow_create_uib_client_state`             | Define client state   |
+| `snow_create_uib_event`                    | Configure events      |
+| `snow_create_complete_workspace`           | Full workspace        |
+| `snow_record_manage` (action='update')     | Modify page           |
 
 ### Example Workflow
 
@@ -399,7 +398,8 @@ await snow_create_uib_data_broker({
 })
 
 // 3. Add components
-await snow_create_uib_component({
+await snow_uib_page_manage({
+  action: "add_element",
   page_id: pageId,
   component: "now-record-list",
   properties: listConfig,
@@ -420,6 +420,6 @@ await snow_create_uib_event({
 3. **Events for Communication** - Decouple components via events
 4. **Macroponents for Reuse** - Create reusable building blocks
 5. **GraphQL for Queries** - More efficient than Script brokers
-6. **Validate Structure** - Use validation tools before deployment
+6. **Review Structure** - Manually verify page layout and bindings before deployment
 7. **Mobile Variants** - Create responsive variants
 8. **Accessibility** - Follow WCAG guidelines

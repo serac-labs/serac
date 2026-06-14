@@ -8,10 +8,10 @@ metadata:
   version: "1.0.0"
   category: servicenow
 tools:
-  - snow_hr_case_create
+  - snow_create_hr_case
   - snow_query_table
-  - snow_find_artifact
-  - snow_execute_script_with_output
+  - snow_artifact_manage
+  - snow_execute_script
 ---
 
 # HR Service Delivery for ServiceNow
@@ -370,12 +370,12 @@ function processTemplate(template, data) {
 
 ### Available Tools
 
-| Tool                              | Purpose                       |
-| --------------------------------- | ----------------------------- |
-| `snow_query_table`                | Query HR cases and activities |
-| `snow_find_artifact`              | Find HR configurations        |
-| `snow_execute_script_with_output` | Test HR scripts               |
-| `snow_deploy`                     | Deploy HR widgets             |
+| Tool                                  | Purpose                       |
+| ------------------------------------- | ----------------------------- |
+| `snow_query_table`                    | Query HR cases and activities |
+| `snow_artifact_manage` (action=find)  | Find HR configurations        |
+| `snow_execute_script`                 | Test HR scripts               |
+| `snow_artifact_manage` (action=create)| Deploy HR widgets             |
 
 ### Example Workflow
 
@@ -395,7 +395,7 @@ await snow_query_table({
 })
 
 // 3. Create HR case
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var hrCase = new GlideRecord('sn_hr_core_case');
         hrCase.initialize();

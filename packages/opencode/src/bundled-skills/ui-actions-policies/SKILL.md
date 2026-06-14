@@ -10,8 +10,7 @@ metadata:
 tools:
   - snow_create_ui_action
   - snow_create_ui_policy
-  - snow_find_artifact
-  - snow_edit_artifact
+  - snow_artifact_manage
   - snow_analyze_form
 ---
 
@@ -360,12 +359,12 @@ action.insert()
 
 ### Available Tools
 
-| Tool                    | Purpose                   |
-| ----------------------- | ------------------------- |
-| `snow_create_ui_action` | Create UI Action          |
-| `snow_create_ui_policy` | Create UI Policy          |
-| `snow_find_artifact`    | Find existing UI elements |
-| `snow_edit_artifact`    | Modify UI elements        |
+| Tool                                  | Purpose                   |
+| ------------------------------------- | ------------------------- |
+| `snow_create_ui_action`               | Create UI Action          |
+| `snow_create_ui_policy`               | Create UI Policy          |
+| `snow_artifact_manage` (action=find)  | Find existing UI elements |
+| `snow_artifact_manage` (action=update) | Modify UI elements        |
 
 ### Example Workflow
 

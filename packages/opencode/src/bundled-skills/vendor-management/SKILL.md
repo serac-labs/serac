@@ -9,8 +9,8 @@ metadata:
   category: servicenow
 tools:
   - snow_query_table
-  - snow_execute_script_with_output
-  - snow_find_artifact
+  - snow_execute_script
+  - snow_artifact_manage
 ---
 
 # Vendor Management for ServiceNow
@@ -376,9 +376,9 @@ function getVendorScorecard(vendorSysId) {
 
 | Tool                              | Purpose             |
 | --------------------------------- | ------------------- |
-| `snow_query_table`                | Query vendor tables |
-| `snow_execute_script_with_output` | Test vendor scripts |
-| `snow_find_artifact`              | Find configurations |
+| `snow_query_table`     | Query vendor tables |
+| `snow_execute_script`  | Test vendor scripts |
+| `snow_artifact_manage` (action='find') | Find configurations |
 
 ### Example Workflow
 
@@ -391,7 +391,7 @@ await snow_query_table({
 })
 
 // 2. Find expiring contracts
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var expiring = getExpiringContracts(60);
         gs.info(JSON.stringify(expiring));
@@ -399,7 +399,7 @@ await snow_execute_script_with_output({
 })
 
 // 3. Get vendor scorecard
-await snow_execute_script_with_output({
+await snow_execute_script({
   script: `
         var scorecard = getVendorScorecard('vendor_sys_id');
         gs.info(JSON.stringify(scorecard));

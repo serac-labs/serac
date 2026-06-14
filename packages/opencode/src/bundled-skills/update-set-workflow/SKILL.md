@@ -3,10 +3,10 @@ name: update-set-workflow
 description: Manage ServiceNow update sets — create named sets before any development, ensure auto_switch tracks API changes under the OAuth service account, complete on done, and export for promotion. Mandatory for all change-producing work.
 version: 1.0.0
 tools:
-  - snow_update_set_create
-  - snow_update_set_current
-  - snow_update_set_switch
-  - snow_update_set_complete
+  - snow_update_set_manage (action='create')
+  - snow_update_set_query (action='current')
+  - snow_update_set_manage (action='switch')
+  - snow_update_set_manage (action='complete')
   - snow_ensure_active_update_set
 ---
 
@@ -22,11 +22,12 @@ ALWAYS create or ensure an Update Set is active before making changes:
 
 ```javascript
 // Step 1: Check current Update Set
-var current = await snow_update_set_current()
+var current = await snow_update_set_query({ action: "current" })
 
 // Step 2: If no Update Set or using Default, create one
 if (!current || current.name === "Default") {
-  await snow_update_set_create({
+  await snow_update_set_manage({
+    action: "create",
     name: "Feature: [Descriptive Name]",
     description: "What and why this change is being made",
   })
@@ -36,7 +37,8 @@ if (!current || current.name === "Default") {
 // All changes will be tracked!
 
 // Step 4: When done, complete the Update Set
-await snow_update_set_complete({
+await snow_update_set_manage({
+  action: "complete",
   update_set_id: current.sys_id,
 })
 ```
@@ -83,26 +85,30 @@ Update Sets automatically capture changes to:
 
 ```javascript
 // Create new Update Set
-snow_update_set_create({
+snow_update_set_manage({
+  action: "create",
   name: "Feature: My Feature",
   description: "Description of changes",
 })
 
 // Switch to existing Update Set
-snow_update_set_switch({
+snow_update_set_manage({
+  action: "switch",
   update_set_id: "sys_id_here",
 })
 
 // Get current Update Set
-snow_update_set_current()
+snow_update_set_query({ action: "current" })
 
 // Complete Update Set
-snow_update_set_complete({
+snow_update_set_manage({
+  action: "complete",
   update_set_id: "sys_id_here",
 })
 
 // Export Update Set as XML
-snow_update_set_export({
+snow_update_set_manage({
+  action: "export",
   update_set_id: "sys_id_here",
 })
 ```

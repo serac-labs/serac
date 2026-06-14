@@ -9,8 +9,8 @@ metadata:
   category: servicenow
 tools:
   - snow_query_table
-  - snow_execute_script_with_output
-  - snow_find_artifact
+  - snow_execute_script
+  - snow_artifact_manage
 ---
 
 # Mobile Development for ServiceNow
@@ -424,11 +424,11 @@ function findNearbyAssets(latitude, longitude, radiusMeters) {
 
 ### Available Tools
 
-| Tool                              | Purpose              |
-| --------------------------------- | -------------------- |
-| `snow_query_table`                | Query mobile configs |
-| `snow_execute_script_with_output` | Test mobile scripts  |
-| `snow_find_artifact`              | Find configurations  |
+| Tool                                  | Purpose              |
+| ------------------------------------- | -------------------- |
+| `snow_query_table`                    | Query mobile configs |
+| `snow_execute_script`                 | Test mobile scripts  |
+| `snow_artifact_manage` (action='find')| Find configurations  |
 
 ### Example Workflow
 
