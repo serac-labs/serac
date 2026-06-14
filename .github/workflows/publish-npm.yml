@@ -414,11 +414,36 @@ jobs:
           NPM_TAG="${{ steps.channel.outputs.npm_tag }}"
           echo "Publishing @serac-labs/core with tag: $NPM_TAG (OIDC, signed provenance)"
 
-          if [ "$NPM_TAG" = "latest" ]; then
-            npm publish --access public --provenance
-          else
-            npm publish --access public --tag "$NPM_TAG" --provenance
-          fi
+          publish() {
+            if [ "$NPM_TAG" = "latest" ]; then
+              npm publish --access public --provenance
+            else
+              npm publish --access public --tag "$NPM_TAG" --provenance
+            fi
+          }
+
+          # Sigstore's transparency log occasionally 409s with
+          # TLOG_CREATE_ENTRY_ERROR ("an equivalent entry already exists")
+          # when npm's internal retry races its own first, successfully
+          # landed tlog write (seen on run 27379078821 publishing 1.1.6).
+          # A fresh `npm publish` signs with a new ephemeral cert and goes
+          # through, so retry the whole publish instead of failing the
+          # release on a transient. Any other error stays fatal.
+          for attempt in 1 2 3; do
+            if out=$(publish 2>&1); then
+              echo "$out"
+              exit 0
+            fi
+            echo "$out"
+            if echo "$out" | grep -qiE "TLOG_CREATE_ENTRY_ERROR|transparency log"; then
+              echo "transient sigstore tlog conflict (attempt $attempt) — retrying in 20s"
+              sleep 20
+              continue
+            fi
+            exit 1
+          done
+          echo "npm publish failed after 3 tlog retries" >&2
+          exit 1
 
       - name: Publish @serac-labs/servicenow-mcp to npm (OIDC)
         # Separate npm package (ServiceNow MCP server). Unlike core (which
