@@ -1061,9 +1061,56 @@ async function diagnoseActivationFailure(client: any, flowId: string): Promise<s
         "(omitting trigger_type defaults to record_create_or_update, which would change when the flow fires)."
       )
     }
+    // A flow with a valid trigger but no actions/logic fails to publish with
+    // "At least one Component Instance is required to publish a flow". Pre-empt
+    // that with an actionable hint (parallel to the no-trigger case).
+    var componentCount = await countFlowComponents(client, flowId)
+    if (componentCount === 0) {
+      return (
+        "Diagnosis: the flow has a trigger but no actions — a flow needs at least one " +
+        "component to publish. Add one with action='add_action' before activating."
+      )
+    }
     return ""
   } catch (_) {
     return ""
+  }
+}
+
+/**
+ * Count the action + flow-logic + subflow instances on a flow's WORKING COPY.
+ * Used to detect the empty-flow case ("At least one Component Instance is
+ * required to publish a flow"). Reads the processflow model (the same source
+ * getFlowTriggerInfo uses) rather than the Table API — flow elements do NOT
+ * exist as individual sys_hub_*_instance rows, so a Table API count is
+ * unreliable. Returns -1 when the count can't be determined so callers can
+ * tell "unknown" from "genuinely 0" and avoid a false hint.
+ */
+async function countFlowComponents(client: any, flowId: string): Promise<number> {
+  try {
+    var resp = await client.get("/api/now/processflow/flow/" + flowId)
+    var raw = resp.data
+    // XML response: count the element open-tags directly (rare on modern instances).
+    if (typeof raw === "string") {
+      if (raw.indexOf("<") < 0) return -1
+      var actions = (raw.match(/<actionInstances>/g) || []).length
+      var logics = (raw.match(/<flowLogicInstances>/g) || []).length
+      var subs = (raw.match(/<subflowInstances>/g) || []).length
+      return actions + logics + subs
+    }
+    var model = raw?.result?.data || raw?.result || raw?.data || raw || {}
+    if (model.data && typeof model.data === "object") model = model.data
+    var count = function (v: any): number {
+      return Array.isArray(v) ? v.length : 0
+    }
+    return (
+      count(model.actionInstances) +
+      count(model.flowLogicInstances) +
+      count(model.subflowInstances) +
+      count(model.subFlowInstances)
+    )
+  } catch (_) {
+    return -1
   }
 }
 
@@ -2621,6 +2668,34 @@ async function buildTriggerInputsForInsert(
   return { inputs, outputs, source: source || "none", error: fetchError || undefined }
 }
 
+/**
+ * List the trigger-type identifiers that actually exist on this instance.
+ * Used to turn a "not found" into an actionable error — trigger definition
+ * type/name values vary by instance/version (e.g. "created" vs "record_create"),
+ * so the only reliable list is the one read from sys_hub_trigger_definition.
+ * Returns the deduped, sorted type values (falling back to name), or [] on error.
+ */
+async function listAvailableTriggerTypes(client: any): Promise<string[]> {
+  try {
+    var resp = await client.get("/api/now/table/sys_hub_trigger_definition", {
+      params: {
+        sysparm_fields: "type,name",
+        sysparm_display_value: "false",
+        sysparm_limit: 100,
+      },
+    })
+    var rows = resp.data?.result || []
+    var set: Record<string, boolean> = {}
+    for (var i = 0; i < rows.length; i++) {
+      var val = str(rows[i].type) || str(rows[i].name)
+      if (val) set[val] = true
+    }
+    return Object.keys(set).sort()
+  } catch (_) {
+    return []
+  }
+}
+
 async function addTriggerViaGraphQL(
   client: any,
   flowId: string,
@@ -2698,7 +2773,17 @@ async function addTriggerViaGraphQL(
       if (results[0]?.sys_id) assignFound(results[0], "LIKE " + shortest)
     } catch (_) {}
   }
-  if (!trigDefId) return { success: false, error: "Trigger definition not found for: " + triggerType, steps }
+  if (!trigDefId) {
+    // Don't just say "not found" — list what IS available so the caller (often
+    // an LLM guessing names like "record.created") can immediately self-correct.
+    var available = await listAvailableTriggerTypes(client)
+    var trigHint = available.length > 0 ? " Available trigger types: " + available.join(", ") + "." : ""
+    return {
+      success: false,
+      error: "Trigger definition not found for: " + triggerType + "." + trigHint,
+      steps,
+    }
+  }
 
   // Validate: record-based triggers REQUIRE a table parameter
   var trigNameLC = trigName.toLowerCase()
@@ -2952,6 +3037,52 @@ const FLOW_LOGIC_NOT_ACTION: Record<string, string> = {
   getflowoutput: "GETFLOWOUTPUT",
 }
 
+/**
+ * List common, usable action internal_names that exist on this instance.
+ * Turns an action "not found" into an actionable error so the caller stops
+ * guessing (log/do_nothing/wait/script before landing on a valid one). Prefers
+ * the core global Flow Designer actions; returns whichever of them actually
+ * exist on the instance (capped), or [] on error.
+ */
+async function listAvailableActionTypes(client: any): Promise<string[]> {
+  var CORE = [
+    "create_record",
+    "update_record",
+    "lookup_record",
+    "lookup_records",
+    "delete_record",
+    "log",
+    "ask_for_approval",
+    "send_notification",
+    "wait_for_condition",
+    "create_task",
+  ]
+  try {
+    var resp = await client.get("/api/now/table/sys_hub_action_type_definition", {
+      params: {
+        sysparm_query: "internal_nameIN" + CORE.join(","),
+        sysparm_fields: "internal_name",
+        sysparm_display_value: "false",
+        sysparm_limit: 50,
+      },
+    })
+    var rows = resp.data?.result || []
+    var set: Record<string, boolean> = {}
+    for (var i = 0; i < rows.length; i++) {
+      var n = str(rows[i].internal_name)
+      if (n) set[n] = true
+    }
+    var found = Object.keys(set)
+    // Keep the curated order; fall back to whatever matched if ordering misses.
+    var ordered = CORE.filter(function (c) {
+      return set[c]
+    })
+    return ordered.length > 0 ? ordered : found
+  } catch (_) {
+    return []
+  }
+}
+
 async function addActionViaGraphQL(
   client: any,
   flowId: string,
@@ -3195,9 +3326,20 @@ async function addActionViaGraphQL(
             .map(function (c: any) {
               return c.name + " (" + c.internal_name + ")"
             })
-            .join(", ") +
-          ". Use the exact internal_name or name of the action you want."
+            .join(", ")
       }
+    }
+    // List real, usable action types so the caller stops guessing (the failure
+    // mode is an LLM trying log/do_nothing/wait/script in turn before landing
+    // on a valid one). Prefer the common core actions that exist on THIS instance.
+    var availableActions = await listAvailableActionTypes(client)
+    if (availableActions.length > 0) {
+      notFoundMsg +=
+        ". Common available actions: " +
+        availableActions.join(", ") +
+        ". Pass one of these as action_type (or its exact internal_name)."
+    } else {
+      notFoundMsg += ". Use the exact internal_name or name of the action you want."
     }
     return { success: false, error: notFoundMsg, steps }
   }
