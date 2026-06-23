@@ -40,7 +40,7 @@
     }
   },
   "devDependencies": {
-    "@babel/core": "7.28.4",
+    "@babel/core": "7.29.6",
     "@octokit/webhooks-types": "7.6.1",
     "@opencode-ai/http-recorder": "workspace:*",
     "@standard-schema/spec": "1.0.0",
