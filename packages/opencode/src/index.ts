@@ -35,6 +35,7 @@ import { ServiceNowCommand } from "./cli/cmd/servicenow"
 import { ServiceNowMcpStdioCommand } from "./cli/cmd/x-servicenow-mcp"
 import { ServiceNowEnterpriseMcpStdioCommand } from "./cli/cmd/x-servicenow-enterprise"
 import { Heap } from "./cli/heap"
+import { AnonymousTelemetry } from "./usage/anonymous-telemetry"
 import { ensureProcessMetadata } from "@opencode-ai/core/util/opencode-process"
 import { isRecord } from "@/util/record"
 
@@ -101,6 +102,10 @@ const cli = yargs(args)
     })
 
     Heap.start()
+
+    // Anonymous, content-free usage ping (issue #269). Never blocks and
+    // never throws; opt out with DO_NOT_TRACK / SERAC_TELEMETRY_DISABLED.
+    AnonymousTelemetry.start()
 
     process.env.AGENT = "1"
     process.env.OPENCODE = "1"
