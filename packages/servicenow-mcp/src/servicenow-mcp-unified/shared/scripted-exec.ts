@@ -303,7 +303,7 @@ export async function ensureEndpointDiagnosed(context: ServiceNowContext): Promi
       .get("/api/now/table/sys_ws_operation", {
         params: {
           sysparm_query: `web_service_definition=${svcId}^relative_path=${ENDPOINT_PATH}`,
-          sysparm_fields: "sys_id,operation_uri,active,operation_script,requires_acl_authorization",
+          sysparm_fields: "sys_id,operation_uri,active,operation_script",
           sysparm_limit: 1,
         },
       })
@@ -314,7 +314,6 @@ export async function ensureEndpointDiagnosed(context: ServiceNowContext): Promi
           operation_uri?: string
           active?: string
           operation_script?: string
-          requires_acl_authorization?: string
         }
       | undefined
     if (!op?.sys_id) {
@@ -335,16 +334,12 @@ export async function ensureEndpointDiagnosed(context: ServiceNowContext): Promi
       // credentials that planted the endpoint, so healing it here grants no
       // access that was not already present.
       const hasGuard = (op.operation_script ?? "").includes(OPERATION_SCRIPT_MARKER)
-      const hasAcl = op.requires_acl_authorization === "true"
-      if (!hasGuard || !hasAcl) {
-        diagnostics.push(
-          `existing operation predates the role guard (guard=${hasGuard}, acl=${hasAcl}); rewriting it`,
-        )
+      if (!hasGuard) {
+        diagnostics.push("existing operation predates the role guard; rewriting it")
         await client
           .patch("/api/now/table/sys_ws_operation/" + op.sys_id, {
             operation_script: OPERATION_SCRIPT,
             requires_authentication: true,
-            requires_acl_authorization: true,
           })
           .then(() => diagnostics.push("operation hardened"))
           .catch(() => diagnostics.push("operation hardening patch FAILED — endpoint remains unguarded"))
@@ -361,13 +356,16 @@ export async function ensureEndpointDiagnosed(context: ServiceNowContext): Promi
         relative_path: ENDPOINT_PATH,
         operation_script: OPERATION_SCRIPT,
         active: true,
-        // Belt and braces alongside the in-script role check: make ServiceNow
-        // authorise the call, not merely authenticate it. Left on its own this
-        // is not enough — an instance whose ACLs were never configured for the
-        // resource still lets any authenticated user through — which is why the
-        // script checks the role itself.
         requires_authentication: true,
-        requires_acl_authorization: true,
+        // NOTE: requires_acl_authorization is deliberately NOT set. With it on
+        // and no rest_endpoint ACL defined for the resource, ServiceNow's
+        // behaviour is version-dependent and can deny every caller — including
+        // the admin integration user this endpoint exists to serve. That would
+        // break script execution outright. The in-script role check below is
+        // deterministic, cannot lock out an admin, and already denies exactly
+        // the callers the flag would. Adding the ACL is a follow-up that needs
+        // a PDI test first; shipping it untested trades a known hole for an
+        // unknown outage.
       })
       .catch((err: { response?: { status?: number; data?: { error?: { message?: string } } } }) => {
         diagnostics.push(
