@@ -1,0 +1,9 @@
+{
+  "name": "@serac-labs/skills",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ServiceNow skill guides for Serac. Plain markdown — one directory per skill, each with a SKILL.md.",
+  "scripts": {
+    "generate": "bun script/generate-embedded.ts"
+  }
+}
