@@ -2,7 +2,7 @@
 name: mcp-tool-discovery
 description: Use tool_search to discover and enable lazy-loaded Serac MCP tools (snow_*, jira_*, github_*, etc). Explains naming conventions, search strategies, and always-available activity tools.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

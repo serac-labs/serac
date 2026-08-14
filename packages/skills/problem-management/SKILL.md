@@ -2,7 +2,7 @@
 name: problem-management
 description: Manage ServiceNow problems — create from linked incidents, proactive pattern detection, RCA with 5-Whys, known_error workarounds (KEDB), KEDB search by CI/category/keywords, and permanent-fix linkage to changes.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

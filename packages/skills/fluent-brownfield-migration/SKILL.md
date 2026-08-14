@@ -2,7 +2,7 @@
 name: fluent-brownfield-migration
 description: This skill should be used when the user asks to "convert this app to fluent", "migrate a scoped app to source control", "modernize this servicenow app", "bring an existing app into git", "transform to fluent", or mentions "brownfield" migration of an existing ServiceNow scoped application to the ServiceNow SDK / Fluent.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac-labs
   version: "1.0.0"
@@ -23,7 +23,7 @@ tools:
 
 Take a scoped app that lives only on an instance and move it into a git-managed ServiceNow SDK (Fluent) project — incrementally, with zero functional change at the start. Based on `@servicenow/sdk` 4.x (`now-sdk` CLI). Run `snow_fluent_status` first to see where a project already stands (scope, SDK pin, keys.ts, XML vs Fluent counts); use `snow_fluent_explain` for offline SDK docs on any topic.
 
-> **Where these tools run:** the `snow_fluent_*` tools are local-only — they execute the ServiceNow SDK (`now-sdk`) on the developer's machine via the Serac CLI/TUI. In hosted surfaces without local tool access (e.g. a web chat), do not call them; drive the same flow through git + CI instead: commit the project files, trigger the build/deploy pipeline, and follow the workflow runs.
+> **Where these tools run:** the `snow_fluent_*` tools are local-only — they execute the ServiceNow SDK (`now-sdk`) on the developer's machine, so they only exist when the MCP server runs locally over stdio. Over a hosted HTTP transport (e.g. a web chat) they are not available, so do not call them; drive the same flow through git + CI instead: commit the project files, trigger the build/deploy pipeline, and follow the workflow runs.
 
 
 ## 1. Step zero: pull the app down as-is

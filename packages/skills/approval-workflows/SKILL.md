@@ -2,7 +2,7 @@
 name: approval-workflows
 description: Configure ServiceNow approval rules and sysapproval_approver records — manager/group/script approvers, multi-level routing, delegation via sys_user_delegate, and parent-record state rollup.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

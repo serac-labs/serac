@@ -2,7 +2,7 @@
 name: instance-security
 description: Harden a ServiceNow instance — password complexity, session timeout, MFA enforcement, input sanitization for XSS/injection, security properties, syslog events, and security health checks.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

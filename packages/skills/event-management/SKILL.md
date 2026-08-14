@@ -2,7 +2,7 @@
 name: event-management
 description: Build ServiceNow Event Management — push events to em_event, write event rules with severity transforms, configure alert correlation, dependent-CI rollups, and metric-threshold event generation.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

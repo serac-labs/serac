@@ -2,7 +2,7 @@
 name: asset-management
 description: Manage ServiceNow hardware assets, software licenses, and lifecycle states on alm_hardware/alm_license — license allocation, CMDB-to-asset linking, warranty tracking, inventory aggregation (HAM/SAM).
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

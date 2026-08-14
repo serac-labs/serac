@@ -2,7 +2,7 @@
 name: blast-radius
 description: Trace ServiceNow configuration dependencies — what artifacts touch a given field, what calls a script include, table/app-level config inventory. Use before deletes, renames, or refactors.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "2.0.0"

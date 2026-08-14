@@ -2,7 +2,7 @@
 name: incident-management
 description: Manage ServiceNow incidents — creation with impact/urgency priority calc, auto-assignment by category, reassignment tracking, major incident declaration with bridge calls, time-based escalation, MTTR metrics.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

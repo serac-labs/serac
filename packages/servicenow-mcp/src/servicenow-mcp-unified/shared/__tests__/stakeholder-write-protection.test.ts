@@ -578,7 +578,7 @@ describe("Stakeholder Write Protection - End-to-End", () => {
       try {
         validatePermission(tool, stakeholderJWT)
       } catch (error: any) {
-        expect(error.message).toContain("Write Access Denied")
+        expect(error.message).toContain("Permission Denied")
         expect(error.message).toContain("read-only")
       }
     })

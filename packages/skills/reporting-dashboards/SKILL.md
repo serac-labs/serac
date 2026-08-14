@@ -2,7 +2,7 @@
 name: reporting-dashboards
 description: Build ServiceNow reports (list/bar/pie/line/pivot/single-score) on sys_report, sys_dashboard layouts with widget placement, scheduled report delivery, and drill-down configuration.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

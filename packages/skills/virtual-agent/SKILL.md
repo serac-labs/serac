@@ -2,7 +2,7 @@
 name: virtual-agent
 description: Build ServiceNow Virtual Agent — sys_cs_topic conversations, topic blocks (text/prompt/script/decision/handoff), NLU utterances and custom entities, quick replies, and KB/incident integration scripts.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

@@ -2,7 +2,7 @@
 name: catalog-items
 description: Build ServiceNow Service Catalog items, variables, variable sets, catalog client scripts, record producers, and order guides with reference qualifiers and dynamic pricing.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

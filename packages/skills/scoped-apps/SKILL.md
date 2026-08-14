@@ -2,7 +2,7 @@
 name: scoped-apps
 description: Build ServiceNow scoped applications (x_vendor_app) — scope naming, x_-prefixed tables, cross-scope script include access via GlideScopedEvaluator, application properties, scoped REST APIs, and store-publishing checklist.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

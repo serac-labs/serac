@@ -2,7 +2,7 @@
 name: email-notifications
 description: Create ServiceNow sysevent_email_action notifications — templates with substitution variables, mail scripts for dynamic content/recipients/attachments, custom events, weights, and digest configuration.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

@@ -2,7 +2,7 @@
 name: request-management
 description: Handle ServiceNow service requests — sc_request/sc_req_item creation from catalog items, sc_task fulfillment with auto-close on completion, RITM variable access via sc_item_option_mtom, and approval status rollup.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

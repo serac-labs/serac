@@ -2,7 +2,7 @@
 name: transform-maps
 description: Build ServiceNow transform maps — sys_data_source configurations (CSV/JDBC/REST), sys_transform_map field/reference/script entries, coalesce keys for update-vs-insert, and onBefore/onAfter/onComplete transform scripts.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

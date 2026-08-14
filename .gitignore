@@ -13,6 +13,8 @@ tmp
 dist
 ts-dist
 .turbo
+# junit output from `turbo test:ci`; packages/opencode already ignored its own
+.artifacts
 **/.serena
 .serena/
 **/.omo

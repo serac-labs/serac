@@ -2,7 +2,7 @@
 name: snow-flow-commands
 description: Serac CLI reference — interactive TUI startup, SPARC modes (orchestrator/coder/researcher/TDD), swarm coordination strategies, agent spawning, memory operations, and ServiceNow auth configuration.
 license: Apache-2.0
-compatibility: Designed for Snow-Code CLI
+compatibility: Designed for the Serac ServiceNow MCP
 metadata:
   author: serac
   version: "1.0.0"

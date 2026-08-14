@@ -2,7 +2,7 @@
 name: predictive-intelligence
 description: Use ServiceNow Predictive Intelligence — sn_ml.ClassificationPredictor for auto-categorization, SimilarityPredictor for related records, ClusteringPredictor, model training/retraining, and prediction-feedback accuracy tracking.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"
@@ -10,8 +10,9 @@ metadata:
 tools:
   - snow_query_table
   - snow_execute_script
-  - ml_predict_change_risk
-  - ml_detect_anomalies
+  - snow_ml_predict
+  - snow_list_pi_solutions
+  - snow_train_pi_solution
 ---
 
 # Predictive Intelligence for ServiceNow
@@ -369,12 +370,13 @@ function getPredictionAccuracy(solutionName, days) {
 
 ### Available Tools
 
-| Tool                              | Purpose             |
-| --------------------------------- | ------------------- |
-| `snow_query_table`         | Query ML tables     |
-| `snow_execute_script`      | Test predictions    |
-| `ml_predict_change_risk`   | Predict change risk |
-| `ml_detect_anomalies`             | Anomaly detection   |
+| Tool                       | Purpose                                    |
+| -------------------------- | ------------------------------------------ |
+| `snow_query_table`         | Query ML tables                            |
+| `snow_execute_script`      | Test predictions                           |
+| `snow_ml_predict`          | Run a prediction against a trained model   |
+| `snow_list_pi_solutions`   | List Predictive Intelligence solutions     |
+| `snow_train_pi_solution`   | Train / retrain a solution                 |
 
 ### Example Workflow
 

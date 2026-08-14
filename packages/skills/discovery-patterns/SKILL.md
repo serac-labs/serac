@@ -2,7 +2,7 @@
 name: discovery-patterns
 description: Configure ServiceNow Discovery — schedules, IP ranges, credential affinities, MID Server assignment, custom probes/sensors, identification rules, and run-status monitoring on discovery_* tables.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

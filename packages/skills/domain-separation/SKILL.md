@@ -2,7 +2,7 @@
 name: domain-separation
 description: Configure ServiceNow multi-tenant domain separation — domain hierarchy, sys_user_has_domain membership, domain-aware vs cross-domain queries, MSP tenant onboarding, and domain picker logic.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

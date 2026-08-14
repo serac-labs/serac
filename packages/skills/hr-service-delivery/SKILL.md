@@ -2,7 +2,7 @@
 name: hr-service-delivery
 description: Build ServiceNow HR Service Delivery — sn_hr_core_case from Employee Center or HR catalog, sn_hr_le_lifecycle_event onboarding/offboarding with templated activities, and HR document generation.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

@@ -1,0 +1,9 @@
+# The mcp-http image builds with THIS directory as its context (see
+# .github/workflows/publish-mcp-http-image.yml), so the repo-root .dockerignore
+# never applies. Without this file a local `docker build` uploads node_modules
+# and dist into the build context.
+node_modules
+dist
+.artifacts
+.turbo
+*.log

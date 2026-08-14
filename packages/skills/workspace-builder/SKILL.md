@@ -2,7 +2,7 @@
 name: workspace-builder
 description: Build ServiceNow App Engine Studio applications — sys_scope creation, scoped tables, sys_aw_workspace with lists/forms, UI Builder pages and macroponents, data brokers, and application export readiness checks.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

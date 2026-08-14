@@ -2,7 +2,7 @@
 name: agent-workspace
 description: Build ServiceNow Agent Workspace configurations — workspaces, lists, forms, contextual side panels, Agent Assist similar-record finders, and workspace-specific UI actions on sys_aw_* tables.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

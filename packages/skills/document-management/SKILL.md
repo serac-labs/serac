@@ -2,7 +2,7 @@
 name: document-management
 description: Handle ServiceNow attachments via GlideSysAttachment, copy files between records, generate documents from sys_report_template, produce PDFs, version dms_document records, and enforce attachment access checks.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

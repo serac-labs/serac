@@ -2,7 +2,7 @@
 name: notification-events
 description: Use ServiceNow events (sysevent) — gs.eventQueue dispatch, sysevent_register definitions, sysevent_script_action handlers, delayed events with process_on, and reminder/state-change patterns.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

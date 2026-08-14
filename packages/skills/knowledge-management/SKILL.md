@@ -2,7 +2,7 @@
 name: knowledge-management
 description: Build ServiceNow Knowledge Management — kb_knowledge articles, draft/review/published workflow, kb_category placement, full-text search with snippets, article templates, and kb_feedback rating rollup.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

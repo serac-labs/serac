@@ -2,7 +2,7 @@
 name: integration-hub
 description: Build ServiceNow IntegrationHub spokes — sn_ih_spoke definitions, sn_ih_action with inputs/outputs, REST/script steps, connection and credential aliases (sys_alias), and retry logic for transient failures.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

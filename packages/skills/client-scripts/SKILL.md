@@ -2,7 +2,7 @@
 name: client-scripts
 description: Write ServiceNow client scripts (onLoad/onChange/onSubmit/onCellEdit) using g_form, g_user, GlideAjax, field visibility/mandatory toggles, and validation with debounced server calls.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

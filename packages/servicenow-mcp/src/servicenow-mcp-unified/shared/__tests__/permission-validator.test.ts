@@ -349,7 +349,7 @@ describe("Permission Validator", () => {
         validateJWTExpiry(jwt)
       } catch (error: any) {
         expect(error.message).toContain("Session Expired")
-        expect(error.message).toContain("snow-flow auth login")
+        expect(error.message).toContain("serac auth login")
       }
     })
 

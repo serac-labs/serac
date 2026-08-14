@@ -2,7 +2,7 @@
 name: scheduled-jobs
 description: Create ServiceNow scheduled jobs on sysauto_script — daily/weekly cron patterns, batch processing with time/runtime limits, conditional execution, error notifications, and metrics recording.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

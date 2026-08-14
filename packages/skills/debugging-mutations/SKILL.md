@@ -2,7 +2,7 @@
 name: debugging-mutations
 description: Verify what changed on a ServiceNow instance after a tool call — sys_audit inspection, syslog/transaction logs, session context, Flow Designer execution logs, outbound HTTP traces.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

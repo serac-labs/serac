@@ -2,7 +2,7 @@
 name: performance-analytics
 description: Build ServiceNow Performance Analytics — pa_indicators (count/sum/avg/percentage), pa_breakdowns, pa_thresholds with severity colors, pa_widgets, and pa_dashboards for KPI tracking.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

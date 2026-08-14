@@ -2,7 +2,7 @@
 name: ui-actions-policies
 description: Build ServiceNow UI Actions (form/list buttons, context menus) and UI Policies (conditional mandatory/visible/read-only) with server/client scripts and GlideAjax. Use snow_analyze_form before modifying forms.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

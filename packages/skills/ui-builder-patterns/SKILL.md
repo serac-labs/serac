@@ -2,7 +2,7 @@
 name: ui-builder-patterns
 description: Build ServiceNow UI Builder / Next Experience pages — macroponents, GraphQL/script data brokers, client state parameters, event handlers (NOW_RECORD_LIST etc.), and now-record-list/form component configuration.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

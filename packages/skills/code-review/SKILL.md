@@ -2,7 +2,7 @@
 name: code-review
 description: Review ServiceNow server-side scripts for ES5 violations, ACL/injection/XSS issues, N+1 queries, missing setLimit/error handling, hard-coded sys_ids, and business-rule recursion risks.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

@@ -2,7 +2,7 @@
 name: mobile-development
 description: Configure ServiceNow Mobile (Now Mobile/Agent) — sys_sg_mobile_app screens, card builders, push notifications, offline sync rules, mobile actions for barcode/GPS, and offline-queue change processing.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

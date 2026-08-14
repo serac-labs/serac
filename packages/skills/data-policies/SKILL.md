@@ -2,7 +2,7 @@
 name: data-policies
 description: Manage ServiceNow dictionary (sys_dictionary), table/field creation, choice lists, dictionary overrides, and sys_data_policy2 rules that enforce mandatory/read-only/visible field behavior on the data layer.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

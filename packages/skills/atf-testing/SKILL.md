@@ -2,7 +2,7 @@
 name: atf-testing
 description: Build ServiceNow Automated Test Framework tests and suites — impersonation, form steps, assertions, server-side script steps, test parameters, and execution via snow_create_atf_test / snow_execute_atf_test.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

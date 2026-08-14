@@ -2,7 +2,7 @@
 name: script-include-patterns
 description: Write ServiceNow Script Includes — Class.create utility classes, AbstractAjaxProcessor client-callable APIs for GlideAjax, inheritance via Object.extendsObject, and scoped-app patterns.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

@@ -1,6 +1,6 @@
 import path from "path"
 import fs from "fs"
-import { BUNDLED_SKILLS } from "./bundled-skills-data"
+import { BUNDLED_SKILLS } from "@serac-labs/skills"
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import * as Log from "@opencode-ai/core/util/log"
 import { Global } from "@opencode-ai/core/global"
@@ -10,10 +10,11 @@ const log = Log.create({ service: "plugin.servicenow" })
 
 // Serac's baked-in agent doctrine (identity, MCP discovery, the Two Hard
 // Rules, REVIEWER/INSTANCE/SKILLS conventions, anti-patterns). Composed at
-// build time from ./agent-fragments via the Bun text loader, so the content
-// is embedded in the compiled binary. Written to a stable on-disk file the
-// first time the config hook runs; config.instructions then points at it so
-// 1.16's instruction mechanism injects it into every session's system prompt.
+// build time from @serac-labs/servicenow-mcp/agent-fragments via the Bun text
+// loader, so the content is embedded in the compiled binary. Written to a
+// stable on-disk file the first time the config hook runs; config.instructions
+// then points at it so 1.16's instruction mechanism injects it into every
+// session's system prompt.
 const DOCTRINE_FILE = path.join(Global.Path.data, "serac-agents.md")
 
 function ensureDoctrineFile(): string | undefined {
@@ -32,10 +33,11 @@ function ensureDoctrineFile(): string | undefined {
 
 const SKILLS_DIR = path.join(Global.Path.data, "serac-skills")
 
-// Write the 55 embedded bundled skills to disk and return the dir for
-// config.skills.paths. They're embedded (bundled-skills-data.ts) so they
-// survive into the `bun compile` binary, where a source filesystem dir does
-// not. A fingerprint file avoids rewriting on every startup.
+// Write the embedded bundled skills to disk and return the dir for
+// config.skills.paths. They come from @serac-labs/skills as a string map
+// rather than a directory read, so they survive into the `bun compile`
+// binary, where a source filesystem dir does not. A fingerprint file avoids
+// rewriting on every startup.
 function ensureSkillsDir(): string | undefined {
   try {
     const entries = Object.entries(BUNDLED_SKILLS)
@@ -183,8 +185,7 @@ export async function ServiceNowAuthPlugin(_input: PluginInput): Promise<Hooks> 
 
             return {
               url: `${instance}/oauth_auth.do?${params.toString()}`,
-              instructions:
-                "Authorize in your browser, then paste the `code` value from the redirected URL.",
+              instructions: "Authorize in your browser, then paste the `code` value from the redirected URL.",
               method: "code" as const,
               callback: async (code: string) => {
                 try {

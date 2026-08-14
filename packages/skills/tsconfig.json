@@ -8,10 +8,9 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    "strict": true,
     "skipLibCheck": true,
-    "types": ["bun"],
-    "noUncheckedIndexedAccess": false,
-    "customConditions": ["browser"]
+    "types": ["bun"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "script/**/*", "test/**/*"]
 }

@@ -2,7 +2,7 @@
 name: import-export
 description: Move data in and out of ServiceNow — CSV parsing into import sets, GlideImportSetTransformer runs, CSV/JSON/XML exports, scheduled data sources, bulk update and deleteMultiple safety patterns.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

@@ -2,7 +2,7 @@
 name: cmdb-patterns
 description: Create ServiceNow CIs and cmdb_rel_ci relationships, walk upstream/downstream impact, detect orphan/stale CIs, and align discovered CIs with the proper sys_class_name hierarchy.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

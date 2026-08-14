@@ -2,7 +2,7 @@
 name: fluent-ci-cd
 description: This skill should be used when the user asks to "set up ci for fluent", "github actions for servicenow", "deploy fluent from a pipeline", "fluent pull request checks", "automate now-sdk", or reports "keys.ts out of date" — anything about running the ServiceNow SDK (now-sdk) headless in CI/CD.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac-labs
   version: "1.0.0"
@@ -19,7 +19,7 @@ tools:
 
 How to run a ServiceNow Fluent (SDK 4.x, `now-sdk` CLI) project through version control and CI: what to commit, the PR check that catches stale `keys.ts`, headless auth, a minimal GitHub Actions workflow, and the hard line between CI deploys and production promotion. For the official reference, run `snow_fluent_explain` with topic `ci-integration` (offline `now-sdk explain ci-integration`).
 
-> **Where these tools run:** the `snow_fluent_*` tools are local-only — they execute the ServiceNow SDK (`now-sdk`) on the developer's machine via the Serac CLI/TUI. In hosted surfaces without local tool access (e.g. a web chat), do not call them; drive the same flow through git + CI instead: commit the project files, trigger the build/deploy pipeline, and follow the workflow runs.
+> **Where these tools run:** the `snow_fluent_*` tools are local-only — they execute the ServiceNow SDK (`now-sdk`) on the developer's machine, so they only exist when the MCP server runs locally over stdio. Over a hosted HTTP transport (e.g. a web chat) they are not available, so do not call them; drive the same flow through git + CI instead: commit the project files, trigger the build/deploy pipeline, and follow the workflow runs.
 
 
 ## 1. Repo discipline

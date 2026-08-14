@@ -2,7 +2,7 @@
 name: field-service
 description: Build ServiceNow Field Service Management — wm_order work orders, wm_task tasks, wm_resource technicians with skills/territories, dispatch/auto-assignment, mobile status updates, and time entries.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

@@ -2,7 +2,7 @@
 name: vendor-management
 description: Manage ServiceNow vendors and contracts — core_company vendor records, ast_contract with renewal alerts, ast_contract_sla performance tracking, vendor_risk_assessment scoring, and vendor scorecards.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

@@ -2,7 +2,7 @@
 name: acl-security
 description: Create and debug ServiceNow ACLs (record, field, REST, script-include). Covers role/condition/script patterns, evaluation order, field-level visibility, and impersonation testing for row- and field-level security.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

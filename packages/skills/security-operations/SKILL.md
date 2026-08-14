@@ -2,7 +2,7 @@
 name: security-operations
 description: Build ServiceNow Security Operations — sn_si_incident with NIST-aligned state transitions, sn_vul_vulnerable_item with CVSS/risk scoring, sn_ti_indicator IOC matching, and containment playbooks.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

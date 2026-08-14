@@ -2,7 +2,7 @@
 name: es5-compliance
 description: Enforce ES5-only syntax for ServiceNow server-side scripts (Rhino engine) — convert const/let, arrow functions, template literals, destructuring, for-of, and async/await to ES5 equivalents.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"

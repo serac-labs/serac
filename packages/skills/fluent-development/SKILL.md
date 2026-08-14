@@ -2,7 +2,7 @@
 name: fluent-development
 description: This skill should be used when the user asks to "build a fluent app", "create a servicenow app in typescript", or mentions "servicenow sdk", "now-sdk", "fluent", "scoped app as code", or "pro-code development" — or when the working directory contains a now.config.json or *.now.ts files.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac-labs
   version: "1.0.0"
@@ -22,7 +22,7 @@ tools:
 
 Fluent is ServiceNow's pro-code model: application **metadata as declarative TypeScript**, with **git as the source of truth** instead of the instance. You edit `.now.ts` files locally, compile them (`build`), and push the compiled package to an instance (`install`). The CLI behind the tools is `now-sdk` from `@servicenow/sdk` (4.x, Node 20+).
 
-> **Where these tools run:** the `snow_fluent_*` tools are local-only — they execute the ServiceNow SDK (`now-sdk`) on the developer's machine via the Serac CLI/TUI. In hosted surfaces without local tool access (e.g. a web chat), do not call them; drive the same flow through git + CI instead: commit the project files, trigger the build/deploy pipeline, and follow the workflow runs.
+> **Where these tools run:** the `snow_fluent_*` tools are local-only — they execute the ServiceNow SDK (`now-sdk`) on the developer's machine, so they only exist when the MCP server runs locally over stdio. Over a hosted HTTP transport (e.g. a web chat) they are not available, so do not call them; drive the same flow through git + CI instead: commit the project files, trigger the build/deploy pipeline, and follow the workflow runs.
 
 
 ## 1. Fluent vs the classic snow_* API tools

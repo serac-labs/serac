@@ -1,9 +1,39 @@
 {
+  "$schema": "https://json.schemastore.org/package.json",
   "name": "@serac-labs/skills",
   "version": "0.1.0",
-  "private": true,
   "description": "ServiceNow skill guides for Serac. Plain markdown — one directory per skill, each with a SKILL.md.",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/serac-labs/serac.git"
+  },
+  "homepage": "https://serac.build",
+  "bugs": {
+    "url": "https://github.com/serac-labs/serac/issues"
+  },
+  "type": "module",
+  "private": false,
+  "files": [
+    "src",
+    "*/**",
+    "!.turbo/**",
+    "!test/**"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./root": "./src/root.ts",
+    "./embedded": "./src/embedded.ts"
+  },
   "scripts": {
-    "generate": "bun script/generate-embedded.ts"
+    "typecheck": "tsgo --project tsconfig.json --noEmit",
+    "test": "bun test",
+    "test:ci": "mkdir -p .artifacts/unit && bun test --reporter=junit --reporter-outfile=.artifacts/unit/junit.xml",
+    "generate": "bun script/generate-embedded.ts",
+    "generate:check": "bun script/generate-embedded.ts --check"
+  },
+  "devDependencies": {
+    "@types/bun": "1.3.13",
+    "@typescript/native-preview": "7.0.0-dev.20251207.1"
   }
 }

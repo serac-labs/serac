@@ -9,7 +9,7 @@
     "outDir": "dist",
     "rootDir": "src",
     "skipLibCheck": true,
-    "types": ["bun-types"],
+    "types": ["bun"],
     "noUncheckedIndexedAccess": false
   },
   "include": ["src"],

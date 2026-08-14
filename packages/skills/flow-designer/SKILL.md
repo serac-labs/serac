@@ -2,7 +2,7 @@
 name: flow-designer
 description: Build ServiceNow Flow Designer flows via the dedicated tool — triggers, IF/ELSE/TRY/CATCH placement rules, subflows, script actions with inputs/outputs, and REST step configuration. Never use background scripts on sys_hub_* tables.
 license: Apache-2.0
-compatibility: Designed for Snow-Code and ServiceNow development
+compatibility: Designed for Serac and ServiceNow development
 metadata:
   author: serac
   version: "1.0.0"
