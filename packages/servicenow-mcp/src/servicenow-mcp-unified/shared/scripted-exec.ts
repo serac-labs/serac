@@ -31,7 +31,37 @@ const getEndpointCacheKey = (context: ServiceNowContext): string => {
   return `${tenant}\x00${context.instanceUrl}`
 }
 
-const OPERATION_SCRIPT = `(function process(request, response) {
+/**
+ * Bumped whenever OPERATION_SCRIPT changes in a way that matters for security.
+ * `ensureEndpointDiagnosed` greps the deployed script for this marker and
+ * rewrites the operation when it is absent, so an instance that received an
+ * older endpoint is repaired the next time any tool touches it.
+ */
+export const OPERATION_SCRIPT_MARKER = "SERAC_EXEC_GUARD_V1"
+
+/**
+ * The endpoint evaluates arbitrary server-side script, and
+ * `GlideEvaluator.evaluateString` runs without ACL enforcement — so whoever can
+ * reach this operation is effectively admin. ServiceNow authenticates the
+ * caller but, without an ACL on the operation, authorises every authenticated
+ * user: an ESS account or a phished itil user could grant itself roles.
+ *
+ * The role check below is deliberately IN THE SCRIPT rather than only in the
+ * operation's ACL settings. It travels with the artefact, applies on instances
+ * where the ACL was never attached, and cannot be undone by editing a record
+ * elsewhere. Requiring `admin` costs Serac nothing: creating a scripted REST
+ * resource already requires admin, so any integration user able to install this
+ * endpoint necessarily passes the check.
+ */
+export const OPERATION_SCRIPT = `(function process(request, response) {
+  // ${OPERATION_SCRIPT_MARKER}
+  if (!gs.hasRole('admin')) {
+    gs.warn('[serac] scripted-exec refused for non-admin user ' + gs.getUserName());
+    response.setStatus(403);
+    response.setBody({ success: false, error: 'Forbidden: this endpoint requires the admin role.' });
+    return;
+  }
+
   var body = request.body.data;
   var script = body.script;
   var id = body.execution_id || gs.generateGUID();
@@ -273,12 +303,19 @@ export async function ensureEndpointDiagnosed(context: ServiceNowContext): Promi
       .get("/api/now/table/sys_ws_operation", {
         params: {
           sysparm_query: `web_service_definition=${svcId}^relative_path=${ENDPOINT_PATH}`,
-          sysparm_fields: "sys_id,operation_uri,active",
+          sysparm_fields: "sys_id,operation_uri,active,operation_script",
           sysparm_limit: 1,
         },
       })
       .catch(() => null)
-    const op = opCheck?.data?.result?.[0] as { sys_id?: string; operation_uri?: string; active?: string } | undefined
+    const op = opCheck?.data?.result?.[0] as
+      | {
+          sys_id?: string
+          operation_uri?: string
+          active?: string
+          operation_script?: string
+        }
+      | undefined
     if (!op?.sys_id) {
       diagnostics.push("existing definition has no matching sys_ws_operation; creating one")
       needsOperationCreate = true
@@ -289,6 +326,23 @@ export async function ensureEndpointDiagnosed(context: ServiceNowContext): Promi
         await client
           .patch("/api/now/table/sys_ws_operation/" + op.sys_id, { active: true })
           .catch(() => diagnostics.push("operation reactivation patch failed"))
+      }
+      // Repair endpoints installed by an older Serac. Versions before the
+      // guard shipped an operation any authenticated user could call, and left
+      // it on the instance permanently — so the fix cannot wait for a fresh
+      // install. Anything that reaches this code path already holds the
+      // credentials that planted the endpoint, so healing it here grants no
+      // access that was not already present.
+      const hasGuard = (op.operation_script ?? "").includes(OPERATION_SCRIPT_MARKER)
+      if (!hasGuard) {
+        diagnostics.push("existing operation predates the role guard; rewriting it")
+        await client
+          .patch("/api/now/table/sys_ws_operation/" + op.sys_id, {
+            operation_script: OPERATION_SCRIPT,
+            requires_authentication: true,
+          })
+          .then(() => diagnostics.push("operation hardened"))
+          .catch(() => diagnostics.push("operation hardening patch FAILED — endpoint remains unguarded"))
       }
     }
   }
@@ -302,6 +356,16 @@ export async function ensureEndpointDiagnosed(context: ServiceNowContext): Promi
         relative_path: ENDPOINT_PATH,
         operation_script: OPERATION_SCRIPT,
         active: true,
+        requires_authentication: true,
+        // NOTE: requires_acl_authorization is deliberately NOT set. With it on
+        // and no rest_endpoint ACL defined for the resource, ServiceNow's
+        // behaviour is version-dependent and can deny every caller — including
+        // the admin integration user this endpoint exists to serve. That would
+        // break script execution outright. The in-script role check below is
+        // deterministic, cannot lock out an admin, and already denies exactly
+        // the callers the flag would. Adding the ACL is a follow-up that needs
+        // a PDI test first; shipping it untested trades a known hole for an
+        // unknown outage.
       })
       .catch((err: { response?: { status?: number; data?: { error?: { message?: string } } } }) => {
         diagnostics.push(
