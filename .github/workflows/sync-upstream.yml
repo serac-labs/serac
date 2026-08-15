@@ -8,9 +8,13 @@ name: Sync from opencode
 # compare link. On conflicts it notifies the same way. Nothing reaches main
 # without a human merge. The job never fails on a missing notification channel.
 
+# SCHEDULE REMOVED 2026-08-15. serac is being reduced to the ServiceNow MCP and
+# the skills; everything inherited from opencode is on its way out. A weekly job
+# that merges upstream back in works directly against that — it re-entangles the
+# code being detangled and generates review work for a base we are removing.
+# Left dispatchable rather than deleted: turning it back on is one click if the
+# direction changes, and the merge machinery here is not trivial to rebuild.
 on:
-  schedule:
-    - cron: "0 6 * * 1" # Mondays 06:00 UTC
   workflow_dispatch:
 
 permissions:

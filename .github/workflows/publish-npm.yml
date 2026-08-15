@@ -18,13 +18,15 @@ name: Release
 #   postinstall.cjs -> downloads serac-core-<suffix>.{tar.gz,zip} for v<version>, verifies, extracts to bin/.opencode
 #   bin/opencode    -> execs bin/.opencode (its `cached` hook)
 
+# TRIGGER: tags only. Until 2026-08-15 this also fired on every push to main,
+# and "Determine release channel" mapped main straight to channel=stable /
+# npm_tag=latest — so any merge published a stable CLI release to `latest`
+# without anyone deciding to. That is how you ship by accident. A release is a
+# decision; tag it, or dispatch it.
 on:
   push:
     tags:
       - "v*"
-    branches:
-      - main
-      - dev
   workflow_dispatch:
     inputs:
       version:
@@ -64,6 +66,8 @@ jobs:
             echo "prerelease=false" >> $GITHUB_OUTPUT
             echo "🏷️ Tag push - stable release"
           elif [[ $GITHUB_REF == refs/heads/main || $GITHUB_REF == refs/heads/production ]]; then
+            # Only reachable via workflow_dispatch now that the branch trigger
+            # is gone. Kept so a deliberate dispatch from main still works.
             echo "channel=stable" >> $GITHUB_OUTPUT
             echo "npm_tag=latest" >> $GITHUB_OUTPUT
             echo "prerelease=false" >> $GITHUB_OUTPUT
@@ -84,8 +88,14 @@ jobs:
         with:
           node-version: "20"
 
+      # Pinned to a major, not `@latest`. npm 12 raised its floor to node >= 22
+      # and `@latest` picked it up the day it shipped, which killed this job with
+      # EBADENGINE in 27 seconds — and it stayed dead, because a release that
+      # fails is only noticed when someone goes looking. A major pin still clears
+      # the >= 11.5.1 that OIDC trusted publishing needs, without an engine
+      # requirement moving underneath us again.
       - name: Upgrade npm (required for OIDC)
-        run: npm install -g npm@latest
+        run: npm install -g npm@^11.5.1
 
       - name: Configure npm for OIDC publishing
         # Trusted Publisher is wired up on @serac-labs/core, so OIDC

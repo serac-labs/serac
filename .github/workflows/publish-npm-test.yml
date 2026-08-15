@@ -46,8 +46,14 @@ jobs:
         with:
           node-version: "20"
 
+      # Pinned to a major, not `@latest`. npm 12 raised its floor to node >= 22
+      # and `@latest` picked it up the day it shipped, which killed this job with
+      # EBADENGINE in 27 seconds — and it stayed dead, because a release that
+      # fails is only noticed when someone goes looking. A major pin still clears
+      # the >= 11.5.1 that OIDC trusted publishing needs, without an engine
+      # requirement moving underneath us again.
       - name: Upgrade npm (required for OIDC)
-        run: npm install -g npm@latest
+        run: npm install -g npm@^11.5.1
 
       - name: Configure npm for OIDC publishing
         run: |
