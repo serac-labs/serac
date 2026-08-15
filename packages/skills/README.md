@@ -4,9 +4,8 @@ The bundled ServiceNow skill guides. One directory per skill, each holding a
 single `SKILL.md` with YAML frontmatter (`name`, `description`, and the
 `snow_*` tools the skill expects to be available).
 
-Skills and the ServiceNow MCP server are the two things this repository ships;
-everything else is being removed. So the layout here is a contract, not an
-implementation detail.
+Skills and the ServiceNow MCP server are the two things this repository ships.
+The layout here is a contract, not an implementation detail.
 
 ## Consuming them
 
@@ -30,8 +29,9 @@ skills root (`incident-management/SKILL.md`) to that file's contents:
 import { BUNDLED_SKILLS } from "@serac-labs/skills"
 ```
 
-This exists only for `bun compile` binaries, which have no source filesystem
-alongside them. It is generated — do not edit `src/embedded.ts` by hand.
+This exists for consumers with no source filesystem alongside them — a bundled
+single file, a `bun build --compile` binary, a serverless deploy. It is
+generated: do not edit `src/embedded.ts` by hand.
 
 ## After changing a skill
 

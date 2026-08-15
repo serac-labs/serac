@@ -1,11 +1,21 @@
 name: typecheck
 
+# `bun typecheck` runs `turbo typecheck` across the workspace, which is now
+# packages/servicenow-mcp and packages/skills.
+#
+# This used to trigger on push/pull_request to `dev` — opencode's default
+# branch, which Serac does not use. On this repo the trigger simply never
+# matched, so the workspace typecheck has not run in CI. Now on main and on
+# every PR.
+
 on:
   push:
-    branches: [dev]
+    branches: [main]
   pull_request:
-    branches: [dev]
   workflow_dispatch:
+
+permissions:
+  contents: read
 
 jobs:
   typecheck:

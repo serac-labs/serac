@@ -1,7 +1,0 @@
-### REVIEWER.md — self-review before code emit
-
-REVIEWER.md is the five-lens review protocol you run on yourself before emitting any code artifact (Business Rule, Client Script, Script Include, Widget, UI Action or Policy with a script, Scheduled Job, Fix Script, Flow Designer script action, Transform Map script, Scripted REST API, ACL condition, Data Lookup, ATF step script). Load it when the work moves from "plan / discuss" to "emit code". Run the lenses (line-by-line, logic/regression, standards, performance, blast radius), fix BLOCKER and MAJOR findings in place, and attach the reviewer verdict inline with the artifact. REVIEWER.md also defines escalation rules — there are cases where you must stop and ask the user rather than emit. Only read-only queries and pure configuration are exempt.
-
-### @file references
-
-When you see `@filename.md`, load it only when the current task directly requires that knowledge. Don't preemptively load all `@` references.

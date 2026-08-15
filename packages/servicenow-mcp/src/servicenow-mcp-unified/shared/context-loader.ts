@@ -41,7 +41,9 @@ export const loadFromAuthJson = (): ServiceNowContext | undefined => {
     // 4. Serac specific auth (~/.serac, falling back to legacy ~/.snow-flow)
     path.join(os.homedir(), ".serac", "auth.json"),
     path.join(os.homedir(), ".snow-flow", "auth.json"),
-    // 5. OpenCode (fallback for compatibility)
+    // 5. The removed CLI's data dir. Kept on purpose: deleting that package
+    //    does not delete the auth.json it wrote on users' machines, and this is
+    //    where an existing install's ServiceNow credentials still live.
     path.join(os.homedir(), ".local", "share", "opencode", "auth.json"),
   ]
 

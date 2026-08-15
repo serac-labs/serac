@@ -174,11 +174,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 /**
  * Start MCP Server with stdio transport.
  *
- * Exposed as an importable function (not auto-run on import) so the opencode
- * CLI can launch the proxy in-process from the `x-servicenow-enterprise` hidden
- * subcommand inside the compiled serac binary — mirroring how `startStdio`
- * (transports/stdio.ts) is consumed by `x-servicenow-mcp`. The standalone bin
- * path below still calls it directly.
+ * Exposed as an importable function (not auto-run on import) so a host process
+ * can launch the proxy in-process instead of spawning a second one — mirroring
+ * how `startStdio` (transports/stdio.ts) is consumed. The standalone bin path
+ * below still calls it directly.
  */
 export async function startEnterpriseProxy(): Promise<void> {
   mcpDebug("[Enterprise Proxy] Starting Enterprise Proxy MCP Server", {
@@ -212,8 +211,8 @@ process.on("SIGTERM", () => {
 })
 
 // Standalone entry: when this module is the process entrypoint (the package's
-// own bin), start immediately. When imported (e.g. by the opencode CLI), the
-// caller invokes startEnterpriseProxy() itself and keeps the process alive.
+// own bin), start immediately. When imported by a host process, the caller
+// invokes startEnterpriseProxy() itself and keeps the process alive.
 if (import.meta.url === `file://${process.argv[1]}`) {
   startEnterpriseProxy().catch((error) => {
     mcpDebug("[Enterprise Proxy] Startup failed:", error instanceof Error ? error.message : String(error))

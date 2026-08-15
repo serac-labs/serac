@@ -1,5 +1,8 @@
 blank_issues_enabled: false
 contact_links:
-  - name: 💬 Discord Community
-    url: https://discord.gg/opencode
-    about: For quick questions or real-time discussion. Note that issues are searchable and help others with the same question.
+  - name: Tool reference and docs
+    url: https://docs.serac.build
+    about: The full list of snow_* tools, what each one does, and the ServiceNow role it needs.
+  - name: Serac
+    url: https://serac.build
+    about: The product this server and these skills were built for.

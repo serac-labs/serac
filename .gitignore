@@ -1,36 +1,29 @@
 .DS_Store
 node_modules
 .worktrees
-.sst
 .env
 .env.local
+
+# Editor / tooling local state
 .idea
 .vscode
 .codex
-*~
-playground
-tmp
-dist
-ts-dist
-.turbo
-# junit output from `turbo test:ci`; packages/opencode already ignored its own
-.artifacts
-**/.serena
 .serena/
-**/.omo
+**/.serena
 .omo/
-/result
-refs
+**/.omo
 Session.vim
-/opencode.json
-a.out
-target
-.scripts
-.direnv/
+*~
 
-# Local dev files
-opencode-dev
-UPCOMING_CHANGELOG.md
-logs/
+# Build + task output
+dist
+.turbo
+# junit written by `turbo test:ci`
+.artifacts
 *.bun-build
 tsconfig.tsbuildinfo
+
+# Scratch
+tmp
+logs/
+playground

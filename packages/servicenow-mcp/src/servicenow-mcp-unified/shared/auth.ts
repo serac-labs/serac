@@ -83,8 +83,8 @@ export class ServiceNowAuthManager {
    * Load and validate enterprise license (from enterprise package if available)
    */
   private loadEnterpriseLicense(): void {
-    // Enterprise license enrichment is provided by the host (opencode) at runtime,
-    // not by this standalone package. Default to community tier.
+    // Enterprise license enrichment is provided by the host application at
+    // runtime, not by this standalone package. Default to community tier.
     ;(this as any)._enterpriseLicense = this.getCommunityLicense()
   }
 

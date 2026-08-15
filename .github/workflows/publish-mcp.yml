@@ -2,20 +2,17 @@ name: Publish servicenow-mcp
 
 # Standalone release for @serac-labs/servicenow-mcp.
 #
-# Until now this package was published by a STEP inside publish-npm.yml's
-# opencode job: it took its version from packages/opencode/package.json, its
-# increment from "npm view @serac-labs/core", and its toolchain from a
-# monorepo-root install. It also carried "continue-on-error: true", so every
-# release went green while publishing nothing — npm still has only 0.1.0 from
-# 2026-06-08. As opencode is removed, that step loses its version source and
-# its publish path in the same commit, so the release moves here and depends
-# on nothing outside packages/servicenow-mcp.
+# This package used to be published by a STEP inside the old publish-npm.yml:
+# it took its version from the CLI package's manifest, its increment from "npm
+# view @serac-labs/core", and its toolchain from a monorepo-root install. It
+# also carried "continue-on-error: true", so every release went green while
+# publishing nothing. That workflow and the CLI it released are gone; this one
+# depends on nothing outside packages/servicenow-mcp.
 #
 # IMPORTANT: npm binds a Trusted Publisher to owner + repo + WORKFLOW FILENAME.
 # This file must stay named "publish-mcp.yml", and a trusted publisher for
 # @serac-labs/servicenow-mcp pointing at serac-labs/serac + publish-mcp.yml
 # (environment blank) must exist on npmjs.com before the first real publish.
-# The one for @serac-labs/core is bound to publish-npm.yml and is unaffected.
 #
 # TRIGGER: workflow_dispatch, deliberately, not a tag or a branch push.
 #   - The version is read from packages/servicenow-mcp/package.json and
@@ -32,11 +29,27 @@ name: Publish servicenow-mcp
 # publishing, so the release path is exercised on every PR that touches the
 # package instead of being discovered broken at release time.
 
+# PROMOTION IS NOT A DISPATCH OF THIS WORKFLOW. The dist_tag input chooses the
+# tag a NEW version is published under; it cannot re-tag a version that is
+# already on npm. Re-dispatching a published version with dist_tag=latest hits
+# the pre-flight below and fails with "already on npm. Bump the version" —
+# verified against the registry for 0.2.0. Moving `latest` onto an existing
+# version is one command, run by a human with npm write access:
+#
+#   npm dist-tag add @serac-labs/servicenow-mcp@<version> latest
+#
+# That re-points the tag without rebuilding, so the bits under `latest` stay
+# the exact provenance-signed artifact this workflow published. It is not
+# automated here on purpose: npm's OIDC trusted publishing mints credentials
+# as part of `npm publish` itself, so `npm dist-tag` in this job would have no
+# token to authenticate with. An unauthenticated "promote" step that 401s is
+# the kind of release machinery that gets a continue-on-error bolted onto it.
+
 on:
   workflow_dispatch:
     inputs:
       dist_tag:
-        description: "npm dist-tag. Stage on next, promote to latest once verified."
+        description: "npm dist-tag for the version in package.json. Cannot re-tag an already-published version — see the header."
         type: choice
         options:
           - next
@@ -55,7 +68,7 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   # A publish is not idempotent, so an in-flight release must never be
   # cancelled out from under itself by a newer run. PR verification is
-  # disposable and does cancel. (publish-npm.yml shares one
+  # disposable and does cancel. (The old CLI release workflow shared one
   # cancel-in-progress: true across everything, which can kill a live publish.)
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
@@ -64,8 +77,8 @@ permissions:
 
 defaults:
   run:
-    # Every shell step runs inside the package. Nothing here reads
-    # packages/opencode, the repo-root node_modules, or the root install.
+    # Every shell step runs inside the package. Nothing here reads the repo
+    # root's node_modules or its install.
     working-directory: packages/servicenow-mcp
 
 jobs:
@@ -117,7 +130,7 @@ jobs:
 
       - name: Read version from packages/servicenow-mcp/package.json
         id: version
-        # The ONLY version source. No tag name, no packages/opencode, no
+        # The ONLY version source. No tag name, no sibling package, no
         # registry-derived increment: what the manifest says is what publishes,
         # so "git show <sha>:packages/servicenow-mcp/package.json" always
         # explains a published version.
@@ -130,7 +143,12 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "$NAME@$VERSION (from packages/servicenow-mcp/package.json)"
 
+      # Only on the publish path. On a pull_request run nothing is published, so
+      # "this version already exists" is not a problem to report — it is the
+      # normal state between releases, and failing on it would paint every PR
+      # that touches this package red for no reason.
       - name: Pre-flight — version is publishable
+        if: github.event_name != 'pull_request'
         env:
           NAME: ${{ steps.version.outputs.name }}
           VERSION: ${{ steps.version.outputs.version }}
@@ -175,17 +193,17 @@ jobs:
       - name: Install dependencies
         # This resolves through the WORKSPACE, not just this directory: `bun
         # install` inside a workspace member walks up to the repo-root
-        # package.json, installs all ~2400 packages and writes the root
-        # bun.lock. An earlier version of this step claimed the opposite ("it
-        # installs standalone"), which was wrong in a way that mattered — it
-        # also meant `-f bun.lock` (cwd = this package) was always false, so
-        # --frozen-lockfile never engaged and every release resolved fresh.
+        # package.json and writes the root bun.lock. An earlier version of this
+        # step claimed the opposite ("it installs standalone"), which was wrong
+        # in a way that mattered — it also meant `-f bun.lock` (cwd = this
+        # package) was always false, so --frozen-lockfile never engaged and
+        # every release resolved fresh.
         #
-        # --ignore-scripts is what actually decouples the release from
-        # opencode: without it the root `postinstall` (bun run --cwd
-        # packages/core fix-node-pty) and `prepare` (husky) run here, and a
-        # broken or deleted packages/core takes the MCP release down with it.
-        # Nothing in this package's dependency tree declares an install script.
+        # --ignore-scripts keeps the release independent of whatever lifecycle
+        # scripts the repo root grows: a root `postinstall` running in a
+        # sibling package used to run here, so a broken sibling could take the
+        # MCP release down with it. Nothing in this package's dependency tree
+        # declares an install script.
         #
         # Standalone-ness is not asserted by comment — the gate below proves it
         # by building and testing the package with no repo root in sight.
@@ -196,9 +214,10 @@ jobs:
         run: bun run test:ci
 
       - name: Gate — the package builds and tests with no monorepo around it
-        # The whole point of moving the release out of publish-npm.yml is that
-        # this package must survive `rm -rf packages/opencode`. Copy it out of
-        # the workspace and do a real install/build/test there: no repo-root
+        # The whole point of moving the release out of the old publish-npm.yml
+        # is that this package must survive the rest of the monorepo being
+        # deleted around it — which has now happened. Copy it out of the
+        # workspace and do a real install/build/test there: no repo-root
         # package.json, no root node_modules, no hoisting, no workspace: links.
         # A missing devDependency or an accidental cross-package import fails
         # here, on every PR, instead of the first release after the deletion.

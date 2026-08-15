@@ -1,2 +1,13 @@
-sst-env.d.ts
-packages/desktop/src/bindings.ts
+# Generated manifests. Both are written by their generators in
+# packages/servicenow-mcp/script and compared byte-for-byte by
+# `generate:tools-json --check`; letting prettier reformat them would make the
+# drift check fail on a file nobody edited.
+packages/servicenow-mcp/tools.json
+packages/servicenow-mcp/sn-roles.manifest.json
+packages/skills/src/embedded.ts
+
+# Skill guides are product content, not source: their markdown is embedded
+# verbatim into an agent's system prompt by packages/skills/src/embedded.ts.
+# Prettier rewrapping a table or renumbering a list changes what the model is
+# told, so these are edited by hand and left alone by tooling.
+packages/skills/**/*.md

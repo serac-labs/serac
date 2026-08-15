@@ -1,11 +1,17 @@
 # @serac-labs/servicenow-mcp
 
-A [Model Context Protocol](https://modelcontextprotocol.io) server for ServiceNow: ~426 `snow_*` tools over
+A [Model Context Protocol](https://modelcontextprotocol.io) server for ServiceNow: 437 `snow_*` tools over
 stdio or streamable HTTP, plus blast-radius impact analysis. Part of [Serac](https://serac.build).
 
 ```bash
-npm install -g @serac-labs/servicenow-mcp
+npm install -g @serac-labs/servicenow-mcp@next
 ```
+
+> **Why `@next`:** the `latest` tag still points at 0.1.0, whose main entrypoint cannot be imported
+> under Node — it does a named import of `machineIdSync` from `node-machine-id`, a CJS module Node's
+> lexer cannot read named exports from, which takes out 4 of 11 subpaths and both bins. 0.2.0 on
+> `next` is the fixed build. Promote it (`npm dist-tag add @serac-labs/servicenow-mcp@0.2.0 latest`,
+> see the header of `.github/workflows/publish-mcp.yml`), then drop the `@next` and this note.
 
 ## Use it as an MCP server
 
@@ -52,17 +58,17 @@ const result = await snow_blast_radius_dependents_exec(
 
 Each tool is exported as a `*_def` / `*_exec` pair: the MCP tool definition and the executor.
 
-| Subpath            | What it is                                                     |
-| ------------------ | -------------------------------------------------------------- |
-| `.`                | Everything — the barrel                                        |
-| `/server`          | `createServer()`, to embed the MCP server in your own process   |
-| `/stdio`           | The stdio transport                                            |
-| `/http`            | The streamable-HTTP transport, as a Hono app                    |
-| `/blast-radius`    | Impact-analysis tools, usable without the MCP layer             |
-| `/types`           | `ServiceNowContext`, `MCPToolDefinition`, …                     |
-| `/auth`            | OAuth + basic auth, token cache, authenticated Axios client     |
-| `/error-handler`   | Result envelopes and error classification                       |
-| `/enterprise-proxy`| Client for the licensed enterprise tool catalog                 |
+| Subpath             | What it is                                                    |
+| ------------------- | ------------------------------------------------------------- |
+| `.`                 | Everything — the barrel                                       |
+| `/server`           | `createServer()`, to embed the MCP server in your own process |
+| `/stdio`            | The stdio transport                                           |
+| `/http`             | The streamable-HTTP transport, as a Hono app                  |
+| `/blast-radius`     | Impact-analysis tools, usable without the MCP layer           |
+| `/types`            | `ServiceNowContext`, `MCPToolDefinition`, …                   |
+| `/auth`             | OAuth + basic auth, token cache, authenticated Axios client   |
+| `/error-handler`    | Result envelopes and error classification                     |
+| `/enterprise-proxy` | Client for the licensed enterprise tool catalog               |
 
 ## A note on tenancy
 
@@ -81,13 +87,65 @@ the credentials, which is safe but colder.
 None of this state is shared between processes, so an HTTP deployment should run **single-replica** or
 supply its own shared store.
 
+## Published manifests — read before moving them
+
+Two generated JSON files live at the root of this package. They are **not** part
+of the npm tarball; they are published _by being committed_, because live
+services fetch them straight from `main` over `raw.githubusercontent.com`:
+
+| File                     | Fetched at runtime by                                                         | If the URL 404s                                                                                                                                                                     |
+| ------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `tools.json`             | `docs.serac.build` — the Complete Tool Reference                              | Hard and immediate. The fetch `throw`s and the whole section renders an error box for every visitor.                                                                                |
+| `sn-roles.manifest.json` | The Serac Portal's tool-permissions API **and** `docs.serac.build` separately | Silent and delayed. The portal caches for 30 min and serves stale, so it breaks on the next cold start, not at deploy. The docs copy null-guards and quietly drops the role column. |
+
+So: **changing the path of either file is a production change, not a refactor.**
+It needs the consumer repointed and deployed first, then the old path removed in
+a separate commit. Never both in one.
+
+"Published by being committed" also means **`git add` is part of the release.**
+When these two files were moved here out of `packages/opencode`, they spent a
+while as untracked files: every gate — install, typecheck, tests, build, the
+standalone packaging gate — passed, because nothing in this package imports
+them. A `git commit -am` at that moment would have shipped the deletion of the
+old path with nothing at the new one, and the first symptom would have been
+docs.serac.build erroring for every visitor.
+
+`script/__tests__/published-manifests.test.ts` is the backstop: it fails if
+either manifest is missing, unparseable, or has lost the top-level shape its
+consumers destructure. It asserts nothing about freshness — that is
+`generate:tools-json:check`, which `.github/workflows/test.yml` runs on every
+push and PR.
+
+### Regenerating them
+
+```bash
+bun run --cwd packages/servicenow-mcp generate:tools-json         # writes tools.json
+bun run --cwd packages/servicenow-mcp generate:tools-json:check   # drift gate, no write
+bun run --cwd packages/servicenow-mcp probe:sn-roles              # writes sn-roles.manifest.json
+```
+
+`generate-tools-json.ts` walks `src/servicenow-mcp-unified/tools/`, imports each
+tool and reads its `toolDefinition` — it is pure and safe to run in CI, and it
+refuses to write a partial manifest if any tool file fails to import.
+
+`probe-sn-roles/` cannot run in CI: it resolves each tool's minimum ServiceNow
+role by reading `sys_security_acl` on a **live instance**, so it needs OAuth
+credentials and is a deliberate manual run. Re-run and diff it after a
+ServiceNow family upgrade. See `script/probe-sn-roles/README.md`.
+
+Both generators were stranded on an unmerged branch for two months while the
+manifests they own sat frozen on `main` — that is why they now live next to the
+tools they describe, and why `generate:tools-json:check` exists.
+
 ## Requirements
 
 Node 20+ or Bun 1.2+. ESM only — there is no CommonJS `require` entrypoint.
 
 ## Links
 
-- [Serac](https://serac.build) — the CLI and agent this catalog was built for
+- [docs.serac.build](https://docs.serac.build) — the full tool reference, generated from `tools.json`
+- [`@serac-labs/skills`](../skills) — the ServiceNow skill guides that teach an agent to drive these tools
+- [Serac](https://serac.build) — the product this catalog was built for
 - [Issues](https://github.com/serac-labs/serac/issues)
 - [Source](https://github.com/serac-labs/serac/tree/main/packages/servicenow-mcp)
 
