@@ -93,8 +93,14 @@ jobs:
           # reads. Action inputs are not affected by defaults.run.
           bun-version-file: package.json
 
+      # `npm@latest` is npm 12, which requires node >= 22 and hard-fails
+      # EBADENGINE on this runner's node 20. Pin to the 11.x line: it is the
+      # newest npm that runs here and it already satisfies the >= 11.5.1 that
+      # OIDC trusted publishing needs. Bumping node instead would change the
+      # engine the package is built and tested against, which is a bigger
+      # decision than a publish prerequisite should be making.
       - name: Upgrade npm (OIDC trusted publishing needs npm >= 11.5.1)
-        run: npm install -g npm@latest
+        run: npm install -g npm@^11.5.1
 
       - name: Configure npm for OIDC publishing
         # The empty _authToken line is required for npm to recognise OIDC mode;
