@@ -14,6 +14,11 @@ await $`bun tsc --project tsconfig.build.json`
 const pkg = await import("../package.json").then((m) => m.default)
 if (!pkg.exports || !pkg.bin) throw new Error("package.json must declare exports and bin to rewrite for publish")
 for (const [key, value] of Object.entries(pkg.exports)) {
+  // Non-TypeScript exports (the agent-fragment .txt assets, exposed as a
+  // subpath pattern) ship verbatim from src/ — `files` includes that dir and
+  // tsc never emits them into dist/, so rewriting them to ./dist/ would point
+  // the published package at files that do not exist.
+  if (!value.endsWith(".ts")) continue
   const file = value.replace("./src/", "./dist/").replace(".ts", "")
   // @ts-ignore
   pkg.exports[key] = { import: file + ".js", types: file + ".d.ts" }

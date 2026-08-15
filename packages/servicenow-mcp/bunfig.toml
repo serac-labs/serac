@@ -1,2 +1,13 @@
+# Mirrors the supply-chain guards in the repo-root bunfig.toml. They are
+# duplicated rather than inherited because this package is meant to build and
+# install on its own — outside the monorepo (its Docker context is this
+# directory, not the repo root) the root bunfig is not present, and the
+# hardening would silently disappear on the one package that talks to customer
+# ServiceNow instances.
+[install]
+exact = true
+# Only install newly resolved package versions published at least 3 days ago.
+minimumReleaseAge = 259200
+
 [test]
 timeout = 10000  # 10 seconds (default is 5000ms)

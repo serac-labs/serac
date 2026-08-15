@@ -20,16 +20,22 @@ FROM oven/bun:1.3 AS builder
 
 WORKDIR /app
 
-# bun.lockb is at the repo root in this monorepo, but the opencode package
-# has its own package.json with all the deps needed for the MCP server.
+# The build context is this package directory, not the repo root — nothing
+# from outside packages/servicenow-mcp is reachable here, and nothing from
+# outside is needed: this package declares all 7 of its runtime deps itself
+# and has no workspace dependencies.
 COPY package.json ./
 COPY bunfig.toml ./bunfig.toml
 COPY tsconfig.json ./
 
-# Install only what the MCP server + its tool catalog needs.
-# `--ignore-scripts` skips snow-flow's own postinstall (which sets up the
-# CLI bin shim — not needed for the MCP-server runtime and the script file
-# isn't copied into this build stage).
+# Install only what the MCP server + its tool catalog needs. `--ignore-scripts`
+# blocks dependency postinstall scripts — this package has no postinstall of
+# its own, and none of its deps need one to run the server.
+#
+# NOTE: there is no lockfile in this context (bun.lock lives at the repo root
+# and the context is this directory), so the transitive tree is re-resolved on
+# every image build and can drift from what CI tested. Fix is to commit a
+# package-local bun.lock, COPY it here and add --frozen-lockfile.
 RUN bun install --production --ignore-scripts
 
 COPY src/ ./src/

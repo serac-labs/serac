@@ -14,9 +14,13 @@
   },
   "type": "module",
   "private": false,
-  "files": ["dist"],
+  "files": [
+    "dist",
+    "src/agent-fragments"
+  ],
   "exports": {
     ".": "./src/index.ts",
+    "./agent-fragments/*": "./src/agent-fragments/*",
     "./server": "./src/servicenow-mcp-unified/shared/server-factory.ts",
     "./http": "./src/servicenow-mcp-unified/transports/http.ts",
     "./stdio": "./src/servicenow-mcp-unified/transports/stdio.ts",
@@ -36,7 +40,8 @@
   "scripts": {
     "typecheck": "tsgo --project tsconfig.json --noEmit",
     "build": "tsc --project tsconfig.build.json",
-    "test": "bun test"
+    "test": "bun test",
+    "test:ci": "mkdir -p .artifacts/unit && bun test --reporter=junit --reporter-outfile=.artifacts/unit/junit.xml"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.26.0",
@@ -48,6 +53,9 @@
     "zod": "4.1.8"
   },
   "devDependencies": {
-    "@jest/globals": "^29"
+    "@jest/globals": "^29",
+    "@types/bun": "1.3.13",
+    "@typescript/native-preview": "7.0.0-dev.20251207.1",
+    "typescript": "5.8.2"
   }
 }
