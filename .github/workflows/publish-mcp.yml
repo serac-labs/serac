@@ -258,7 +258,19 @@ jobs:
             import { readFileSync } from "node:fs"
 
             const pkg = JSON.parse(readFileSync("package.json", "utf8"))
-            const packed = JSON.parse(readFileSync(process.argv[2], "utf8"))[0]
+
+            // `npm pack --json` changed shape between majors: npm 11 emits an
+            // array of results, npm 12 emits the object directly. Reading
+            // [0].files crashed on npm 12 with "Cannot read properties of
+            // undefined". Accept both rather than pinning the gate to one npm,
+            // since this gate exists precisely to survive the tooling moving.
+            const raw = JSON.parse(readFileSync(process.argv[2], "utf8"))
+            const packed = Array.isArray(raw) ? raw[0] : raw
+            if (!packed?.files) {
+              console.error("::error::could not read the file list from `npm pack --json`")
+              console.error(`top-level keys: ${Object.keys(packed ?? {}).join(", ") || "(none)"}`)
+              process.exit(1)
+            }
             const files = new Set(packed.files.map((f) => f.path))
 
             const targets = [
