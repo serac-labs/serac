@@ -19,6 +19,12 @@ import { startStdio } from "./transports/stdio.js"
 import * as dotenv from "dotenv"
 import * as path from "path"
 import { mcpDebug } from "../shared/mcp-debug.js"
+// Anonymous, content-free usage telemetry. This import lives in the stdio
+// entry point and nowhere else: the HTTP transport must never emit, because
+// it is the platform's multi-tenant server and its "sessions" are our own
+// infrastructure, not people who installed anything. See the module header
+// and transports/__tests__/telemetry-stdio-only.test.ts.
+import { AnonymousTelemetry } from "../telemetry/anonymous-telemetry.js"
 
 /**
  * Main entry point
@@ -82,24 +88,40 @@ async function main() {
       mcpDebug(`[Main] SNOW_TOOL_DOMAINS=${process.env.SNOW_TOOL_DOMAINS}`)
     }
 
-    // Bootstrap + connect stdio transport
-    const { stop } = await startStdio()
+    // Start the anonymous session ping. Deliberately after dotenv, so an
+    // opt-out written into a project's .env (DO_NOT_TRACK,
+    // SERAC_TELEMETRY_DISABLED) is honoured, and before the transport, so a
+    // session that dies during bootstrap is still counted. Never awaited.
+    AnonymousTelemetry.start()
 
-    // Graceful shutdown handlers
+    // Bootstrap + connect stdio transport
+    const { stop } = await startStdio({ onToolCall: AnonymousTelemetry.recordToolCall })
+
+    // Graceful shutdown handlers. The end ping is fired before `stop()` so it
+    // travels while the server closes, then given a capped moment to settle
+    // after — without that, `process.exit` kills the request mid-flight and
+    // the delivered-but-unconfirmed ping gets re-sent on the next launch as a
+    // duplicate. Nothing user-facing waits on this; the server is already down.
     process.on("SIGINT", async () => {
       mcpDebug("\n[Main] Received SIGINT, shutting down gracefully...")
+      AnonymousTelemetry.finish("interrupt")
       await stop()
+      await AnonymousTelemetry.settle()
       process.exit(0)
     })
 
     process.on("SIGTERM", async () => {
       mcpDebug("\n[Main] Received SIGTERM, shutting down gracefully...")
+      AnonymousTelemetry.finish("interrupt")
       await stop()
+      await AnonymousTelemetry.settle()
       process.exit(0)
     })
   } catch (error: any) {
     mcpDebug("[Main] Fatal error:", error.message)
     mcpDebug(error.stack)
+    AnonymousTelemetry.finish("error", error)
+    await AnonymousTelemetry.settle()
     process.exit(1)
   }
 }
