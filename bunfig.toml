@@ -1,8 +1,14 @@
 [install]
 exact = true
-# Only install newly resolved package versions published at least 3 days ago.
+# Only install newly resolved package versions published at least 3 days ago —
+# the window in which most malicious npm releases are caught and unpublished.
+# packages/servicenow-mcp repeats this in its own bunfig.toml, because it is
+# built and installed outside this workspace too (its Docker context is that
+# directory, not the repo root).
 minimumReleaseAge = 259200
-minimumReleaseAgeExcludes = ["@ai-sdk/amazon-bedrock", "@opentui/core", "@opentui/core-darwin-arm64", "@opentui/core-darwin-x64", "@opentui/core-linux-arm64", "@opentui/core-linux-arm64-musl", "@opentui/core-linux-x64", "@opentui/core-linux-x64-musl", "@opentui/core-win32-arm64", "@opentui/core-win32-x64", "@opentui/keymap", "@opentui/solid", "gitlab-ai-provider", "@ff-labs/fff-node", "@ff-labs/fff-bun", "@ff-labs/fff-bin-darwin-arm64", "@ff-labs/fff-bin-darwin-x64", "@ff-labs/fff-bin-linux-arm64-gnu", "@ff-labs/fff-bin-linux-arm64-musl", "@ff-labs/fff-bin-linux-x64-gnu", "@ff-labs/fff-bin-linux-x64-musl", "@ff-labs/fff-bin-win32-arm64", "@ff-labs/fff-bin-win32-x64"]
 
 [test]
+# `bun test` from the root would walk every package at once and pick up the two
+# suites' fixtures in one process. Run tests from the package directory, or use
+# `bun test` at the root only through turbo (`bun run test`).
 root = "./do-not-run-tests-from-root"

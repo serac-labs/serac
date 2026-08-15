@@ -8,12 +8,14 @@ LICENSE file).
 Third-party attributions
 ------------------------------------------------------------------------
 
-This product is built on and includes software from the opencode project
+This repository began as a fork of the opencode project
 (https://github.com/anomalyco/opencode), which is licensed under the MIT
-License. Serac extends opencode with a ServiceNow-native tool layer, agents,
-skills, and related additions. Portions of this product derived from opencode
-remain subject to the MIT License terms reproduced below; Serac's own additions
-are licensed under the Apache License, Version 2.0.
+License. Serac's ServiceNow tool layer, agents and skills were built on top of
+it. The opencode code itself has since been removed from this repository — what
+remains is the ServiceNow MCP server and its skill guides — but this project's
+history derives from opencode, and any portions still derived from it remain
+subject to the MIT License terms reproduced below. Serac's own work is licensed
+under the Apache License, Version 2.0.
 
     MIT License
 

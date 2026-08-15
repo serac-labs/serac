@@ -13,5 +13,5 @@
     "noUncheckedIndexedAccess": false,
     "customConditions": ["browser"]
   },
-  "include": ["src/**/*"]
+  "include": ["src/**/*", "script/**/*"]
 }

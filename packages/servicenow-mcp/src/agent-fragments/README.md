@@ -1,42 +1,45 @@
 # Agent prompt fragments
 
-The end-user agent's `AGENTS.md` doctrine is composed from the fragments in
-this directory instead of being one monolithic file. This keeps the
-ServiceNow doctrine that must never drift (the Two Hard Rules, silent tool
-discovery, the core anti-patterns, …) in a single canonical place that
-downstream products can consume.
+An end-user agent's `AGENTS.md` doctrine is composed from the fragments in this
+directory instead of being one monolithic file. This keeps the ServiceNow
+doctrine that must never drift (the Two Hard Rules, silent tool discovery, the
+core anti-patterns, …) in a single canonical place that downstream products can
+consume.
 
-They live in `@serac-labs/servicenow-mcp` rather than next to the CLI because
-the MCP server and the skills are the two things the OSS repo is being reduced
-to — every consumer of this doctrine (the Serac Portal build, any future MCP
-surface) must be able to reach it without the CLI package existing. They are
-plain assets: the MCP's own TypeScript never imports them, but they are listed
-in `files` and re-exported under the `./agent-fragments/*` subpath, so they
-ship in the npm tarball as well as in a git clone.
+They live in `@serac-labs/servicenow-mcp` because the MCP server and the skills
+are the two things this repository ships — every consumer of this doctrine must
+be able to reach it without any other package existing. They are plain assets:
+the MCP's own TypeScript never imports them, but they are listed in `files` and
+re-exported under the `./agent-fragments/*` subpath, so they ship in the npm
+tarball as well as in a git clone.
 
 ## Folders
 
-| Folder | Who consumes it | Notes |
-|---|---|---|
-| `shared/` | **The TUI agent doctrine** (`packages/opencode/src/plugin/servicenow/agents-template.ts`) **and** the Serac Portal | Environment-invariant ServiceNow doctrine. Editing a file here changes the agent's behaviour in every product. Treat changes as you would a prompt change anywhere — they ship to users. |
-| `oss/` | The TUI agent doctrine only | CLI/TUI-specific overlay (identity line, REVIEWER.md, `sn_render_preview` / local-sync workflows, the CLI anti-patterns and checklist). |
-| `prompt-blocks/` | Downstream products only (the Serac Portal) | Canonical source for non-`AGENTS.md` system-prompt pieces the portal assembles at runtime — chart-rendering instructions, the bundled-skills catalog preamble, and the plan/explore mode prefixes. Hosted here so the prompting that reaches portal end users is open-source and single-sourced, even though the TUI does not import these itself. |
+| Folder           | Who consumes it  | Notes                                                                                                                                                                                                                                                                                         |
+| ---------------- | ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `shared/`        | The Serac Portal | Environment-invariant ServiceNow doctrine. Editing a file here changes the agent's behaviour in every product that syncs it. Treat changes as you would a prompt change anywhere — they ship to users.                                                                                        |
+| `prompt-blocks/` | The Serac Portal | Canonical source for the non-`AGENTS.md` system-prompt pieces the portal assembles at runtime — chart-rendering instructions, the bundled-skills catalog preamble, and the plan/explore mode prefixes. Hosted here so the prompting that reaches end users is open-source and single-sourced. |
+
+There was a third folder, `oss/`, holding a CLI/TUI-specific overlay (identity
+line, REVIEWER.md, local-sync dev workflows, CLI anti-patterns and checklist).
+Its only consumer was the terminal agent that used to live in this repository,
+and the portal sync has always excluded it by name. It was removed with that
+agent; recover it from git history if a future host wants an overlay to start
+from.
 
 ## How it's assembled
 
-`packages/opencode/src/plugin/servicenow/agents-template.ts` imports the
-`shared/` + `oss/` fragments as
-`@serac-labs/servicenow-mcp/agent-fragments/<folder>/<name>.txt` via Bun's
-text-file loader and joins them in a fixed order into `AGENTS_TEMPLATE`. The
-Serac auth plugin (`packages/opencode/src/plugin/servicenow/auth.ts`) writes
-that composed doctrine to a stable on-disk file under the global data dir and
-points `config.instructions` at it, so opencode 1.16's standard instruction
-mechanism (`session/instruction.ts`) injects it into every session's system
-prompt.
+These are plain `.txt` assets — nothing in this package imports them. The
+consumer reaches in from outside, which is why the directory layout is a
+contract rather than an implementation detail.
 
-The Serac Portal syncs `shared/` + `prompt-blocks/` at build time (see its
-`scripts/sync-oss-prompts.ts`) and composes its own `AGENTS.md` from
-`shared/` + a portal-specific overlay. It resolves this directory by path out
-of a git clone of the repo, so the `shared/` and `prompt-blocks/` folder names
-are a contract with the portal — do not rename them without changing the
-portal first.
+**The Serac Portal** syncs `shared/` + `prompt-blocks/` at build time (its
+`portal/backend/scripts/sync-oss-prompts.ts`) and composes its own `AGENTS.md`
+from `shared/` plus a portal-specific overlay. It resolves this directory **by
+path**, out of an unpinned `git clone` of this repo run inside its Docker build,
+and the sync script `process.exit(1)`s when the path is missing — inside a `&&`
+chain, so a rename here turns the portal's image build red. **Do not rename or
+move `shared/` or `prompt-blocks/` without landing the portal change first.**
+The path has moved once already and the portal had to grow fallbacks to survive
+it; those fallbacks point at paths that no longer exist, so there is nothing
+left to catch a second move.

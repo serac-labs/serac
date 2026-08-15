@@ -1,28 +1,60 @@
 name: Bug report
-description: Report an issue that should be fixed (avoid pasting giant AI generated summaries or your issue may be closed/ignored)
+description: Report something that is broken (avoid pasting giant AI generated summaries or your issue may be closed/ignored)
 body:
   - type: textarea
     id: description
     attributes:
       label: Description
       description: Describe the bug you encountered
-      placeholder: What happened?
+      placeholder: What happened, and what did you expect instead?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Where
+      options:
+        - servicenow-mcp (a snow_* tool)
+        - servicenow-mcp (server, transport or auth)
+        - skills (a SKILL.md guide)
+        - build / CI / packaging
+        - not sure
     validations:
       required: true
 
   - type: input
-    id: plugins
+    id: tool
     attributes:
-      label: Plugins
-      description: What plugins are you using?
+      label: Tool name
+      description: If a specific tool misbehaved, which one?
+      placeholder: e.g., snow_query_table
     validations:
       required: false
 
   - type: input
-    id: opencode-version
+    id: version
     attributes:
-      label: OpenCode version
-      description: What version of OpenCode are you using?
+      label: Package version
+      description: Output of `npm ls @serac-labs/servicenow-mcp`, or the commit you are on
+    validations:
+      required: false
+
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      description: What is connected to the server?
+      placeholder: e.g., Claude Code, Claude Desktop, Cursor, custom
+    validations:
+      required: false
+
+  - type: input
+    id: servicenow
+    attributes:
+      label: ServiceNow release
+      description: Which family, and is it a developer instance or a real one?
+      placeholder: e.g., Xanadu, developer instance
     validations:
       required: false
 
@@ -30,7 +62,7 @@ body:
     id: reproduce
     attributes:
       label: Steps to reproduce
-      description: How can we reproduce this issue?
+      description: How can we reproduce this?
       placeholder: |
         1.
         2.
@@ -39,28 +71,12 @@ body:
       required: false
 
   - type: textarea
-    id: screenshot-or-link
+    id: logs
     attributes:
-      label: Screenshot and/or share link
-      description: Run `/share` to get a share link, or attach a screenshot
-      placeholder: Paste link or drag and drop screenshot here
-    validations:
-      required: false
-
-  - type: input
-    id: os
-    attributes:
-      label: Operating System
-      description: what OS are you using?
-      placeholder: e.g., macOS 26.0.1, Ubuntu 22.04, Windows 11
-    validations:
-      required: false
-
-  - type: input
-    id: terminal
-    attributes:
-      label: Terminal
-      description: what terminal are you using?
-      placeholder: e.g., iTerm2, Ghostty, Alacritty, Windows Terminal
+      label: Output
+      description: |
+        The error or unexpected response. Set `SNOW_MCP_DEBUG=true` for verbose server logging.
+        Redact instance URLs, credentials and record data before pasting.
+      render: text
     validations:
       required: false

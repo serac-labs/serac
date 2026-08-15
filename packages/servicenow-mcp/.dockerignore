@@ -7,3 +7,13 @@ dist
 .artifacts
 .turbo
 *.log
+
+# Repo artifacts, not runtime assets. tools.json and sn-roles.manifest.json are
+# published by being committed — docs.serac.build and the portal's
+# tool-permissions proxy fetch them from raw.githubusercontent.com, not from
+# this image — and script/ only holds their generators. The Dockerfile COPYs
+# src/ explicitly, so none of this was ever in the image; this just keeps ~1.3 MB
+# out of the build context.
+tools.json
+sn-roles.manifest.json
+script
