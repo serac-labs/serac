@@ -1,0 +1,465 @@
+name: Publish servicenow-mcp
+
+# Standalone release for @serac-labs/servicenow-mcp.
+#
+# Until now this package was published by a STEP inside publish-npm.yml's
+# opencode job: it took its version from packages/opencode/package.json, its
+# increment from "npm view @serac-labs/core", and its toolchain from a
+# monorepo-root install. It also carried "continue-on-error: true", so every
+# release went green while publishing nothing — npm still has only 0.1.0 from
+# 2026-06-08. As opencode is removed, that step loses its version source and
+# its publish path in the same commit, so the release moves here and depends
+# on nothing outside packages/servicenow-mcp.
+#
+# IMPORTANT: npm binds a Trusted Publisher to owner + repo + WORKFLOW FILENAME.
+# This file must stay named "publish-mcp.yml", and a trusted publisher for
+# @serac-labs/servicenow-mcp pointing at serac-labs/serac + publish-mcp.yml
+# (environment blank) must exist on npmjs.com before the first real publish.
+# The one for @serac-labs/core is bound to publish-npm.yml and is unaffected.
+#
+# TRIGGER: workflow_dispatch, deliberately, not a tag or a branch push.
+#   - The version is read from packages/servicenow-mcp/package.json and
+#     nowhere else. A tag would be a second version source that can disagree
+#     with the manifest — the same class of coupling that made this package
+#     inherit opencode's version number.
+#   - Publishing is not idempotent: npm 403s on a republish. An automatic
+#     trigger therefore makes most runs guaranteed failures, and the pressure
+#     to silence those failures is exactly how continue-on-error got added.
+#   - GitHub records who dispatched a run, so releases stay attributable.
+#   - The npm trusted publisher binds to the workflow file, not to the event,
+#     so dispatch is fully compatible with OIDC provenance.
+# pull_request runs the SAME build/test/gate steps and stops short of
+# publishing, so the release path is exercised on every PR that touches the
+# package instead of being discovered broken at release time.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dist_tag:
+        description: "npm dist-tag. Stage on next, promote to latest once verified."
+        type: choice
+        options:
+          - next
+          - latest
+        default: next
+      dry_run:
+        description: "Build, test and gate, but stop before npm publish"
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - "packages/servicenow-mcp/**"
+      - ".github/workflows/publish-mcp.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # A publish is not idempotent, so an in-flight release must never be
+  # cancelled out from under itself by a newer run. PR verification is
+  # disposable and does cancel. (publish-npm.yml shares one
+  # cancel-in-progress: true across everything, which can kill a live publish.)
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    # Every shell step runs inside the package. Nothing here reads
+    # packages/opencode, the repo-root node_modules, or the root install.
+    working-directory: packages/servicenow-mcp
+
+jobs:
+  publish:
+    name: build, gate and publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC trusted publishing + signed provenance
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: "20"
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          # Repo-root package.json — its packageManager field is the single bun
+          # pin for the monorepo, the same source .github/actions/setup-bun
+          # reads. Action inputs are not affected by defaults.run.
+          bun-version-file: package.json
+
+      - name: Upgrade npm (OIDC trusted publishing needs npm >= 11.5.1)
+        run: npm install -g npm@latest
+
+      - name: Configure npm for OIDC publishing
+        # The empty _authToken line is required for npm to recognise OIDC mode;
+        # without it the CLI falls back to anonymous and 401s.
+        run: |
+          rm -f ~/.npmrc .npmrc
+          echo "registry=https://registry.npmjs.org/" > ~/.npmrc
+          echo "//registry.npmjs.org/:_authToken=" >> ~/.npmrc
+          echo "npm $(npm --version) configured for OIDC"
+
+      - name: Read version from packages/servicenow-mcp/package.json
+        id: version
+        # The ONLY version source. No tag name, no packages/opencode, no
+        # registry-derived increment: what the manifest says is what publishes,
+        # so "git show <sha>:packages/servicenow-mcp/package.json" always
+        # explains a published version.
+        run: |
+          set -euo pipefail
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          test -n "$VERSION" || { echo "::error::package.json has no version"; exit 1; }
+          echo "name=$NAME" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "$NAME@$VERSION (from packages/servicenow-mcp/package.json)"
+
+      - name: Pre-flight — version is publishable
+        env:
+          NAME: ${{ steps.version.outputs.name }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DIST_TAG: ${{ github.event.inputs.dist_tag || 'next' }}
+        # Fail here, before a full build, rather than on npm's 403 at the very
+        # end. "npm view pkg@missing-version" exits non-zero with E404, so
+        # empty stdout is the "not published yet" signal.
+        run: |
+          set -euo pipefail
+          PUBLISHED=$(npm view "$NAME@$VERSION" version 2>/dev/null || true)
+          if [ -n "$PUBLISHED" ]; then
+            echo "::error::$NAME@$VERSION is already on npm. Bump the version in packages/servicenow-mcp/package.json."
+            exit 1
+          fi
+          case "$VERSION" in
+            *-*)
+              if [ "$DIST_TAG" = "latest" ]; then
+                echo "::error::$VERSION is a prerelease; publishing it as latest would hand it to every plain npm install. Use dist_tag=latest only for a stable version."
+                exit 1
+              fi
+              ;;
+          esac
+
+          CURRENT=$(npm view "$NAME" version 2>/dev/null || true)
+          echo "current registry latest: ${CURRENT:-none}"
+
+          # Monotonicity. "Not yet published" is not the same as "newer": a
+          # hotfix branch can hold an unpublished 0.1.1 long after 0.2.0 went
+          # out, and dispatching that with dist_tag=latest walks the tag
+          # BACKWARDS — every plain `npm install` silently downgrades. The
+          # check applies to `latest` only; staging an older line on `next` is
+          # legitimate.
+          if [ "$DIST_TAG" = "latest" ] && [ -n "$CURRENT" ]; then
+            NEWEST=$(printf '%s\n%s\n' "$CURRENT" "$VERSION" | sort -V | tail -1)
+            if [ "$NEWEST" != "$VERSION" ]; then
+              echo "::error::$VERSION is older than the registry's current latest ($CURRENT). Publishing it as latest would downgrade every consumer. Use dist_tag=next."
+              exit 1
+            fi
+          fi
+          echo "$NAME@$VERSION is unpublished; will go out under dist-tag '$DIST_TAG'"
+
+      - name: Install dependencies
+        # This resolves through the WORKSPACE, not just this directory: `bun
+        # install` inside a workspace member walks up to the repo-root
+        # package.json, installs all ~2400 packages and writes the root
+        # bun.lock. An earlier version of this step claimed the opposite ("it
+        # installs standalone"), which was wrong in a way that mattered — it
+        # also meant `-f bun.lock` (cwd = this package) was always false, so
+        # --frozen-lockfile never engaged and every release resolved fresh.
+        #
+        # --ignore-scripts is what actually decouples the release from
+        # opencode: without it the root `postinstall` (bun run --cwd
+        # packages/core fix-node-pty) and `prepare` (husky) run here, and a
+        # broken or deleted packages/core takes the MCP release down with it.
+        # Nothing in this package's dependency tree declares an install script.
+        #
+        # Standalone-ness is not asserted by comment — the gate below proves it
+        # by building and testing the package with no repo root in sight.
+        run: bun install --frozen-lockfile --ignore-scripts
+        working-directory: .
+
+      - name: Run tests
+        run: bun run test:ci
+
+      - name: Gate — the package builds and tests with no monorepo around it
+        # The whole point of moving the release out of publish-npm.yml is that
+        # this package must survive `rm -rf packages/opencode`. Copy it out of
+        # the workspace and do a real install/build/test there: no repo-root
+        # package.json, no root node_modules, no hoisting, no workspace: links.
+        # A missing devDependency or an accidental cross-package import fails
+        # here, on every PR, instead of the first release after the deletion.
+        run: |
+          set -euo pipefail
+          STANDALONE="$RUNNER_TEMP/standalone"
+          rm -rf "$STANDALONE"
+          mkdir -p "$STANDALONE"
+          tar -cf - --exclude=node_modules --exclude=dist . | tar -xf - -C "$STANDALONE"
+          cd "$STANDALONE"
+          test ! -e ../package.json || { echo "::error::standalone dir has a parent manifest; the test is meaningless"; exit 1; }
+          bun install --frozen-lockfile
+          bun run typecheck
+          bun run build
+          bun test
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: servicenow-mcp-unit-${{ github.run_attempt }}
+          include-hidden-files: true
+          if-no-files-found: ignore
+          retention-days: 7
+          path: packages/servicenow-mcp/.artifacts/unit/junit.xml
+
+      - name: Build and rewrite exports to dist/
+        # Compiles to dist/ and repoints package.json exports/bin from
+        # ./src/*.ts to ./dist/*.js. Bun's $ throws on a non-zero tsc, which
+        # aborts before anything is rewritten or published.
+        run: bun run script/build-for-publish.ts
+
+      - name: Gate — tarball contains every published entrypoint
+        env:
+          # Passed as an env value rather than a heredoc: a quoted heredoc
+          # terminator has to sit at column 0, which is not expressible inside
+          # a YAML block scalar, and this way nothing in the script is exposed
+          # to shell expansion.
+          GATE_JS: |
+            // Every entrypoint package.json advertises must really be inside
+            // the tarball npm is about to publish. Reads what npm pack wrote.
+            //
+            // Checking the TARBALL rather than the working directory is
+            // deliberate: it is the only check that also catches a "files"
+            // field that forgot to ship dist/. And tsc writes dist/ even when
+            // it exits non-zero, so "dist/index.js exists" is not evidence of
+            // a good build.
+            //
+            // For the record, since the old guard's weakness is the reason
+            // this exists: 0.1.0 on npm is NOT a src-pointing tarball. It has
+            // a proper dist/ with fully rewritten exports. What went wrong for
+            // two months was upstream of that — the publish step carried
+            // continue-on-error, so runs went green having published nothing
+            // at all, and 0.1.0 simply stayed the newest thing on the
+            // registry. This gate covers the failure the old one could not
+            // see; it is not evidence that the old one ever shipped one.
+            import { readFileSync } from "node:fs"
+
+            const pkg = JSON.parse(readFileSync("package.json", "utf8"))
+            const packed = JSON.parse(readFileSync(process.argv[2], "utf8"))[0]
+            const files = new Set(packed.files.map((f) => f.path))
+
+            const targets = [
+              ...Object.entries(pkg.exports ?? {}).flatMap(([key, value]) =>
+                typeof value === "string"
+                  ? [[`exports["${key}"]`, value]]
+                  : Object.entries(value).map(([condition, file]) => [`exports["${key}"].${condition}`, file]),
+              ),
+              ...Object.entries(pkg.bin ?? {}).map(([key, value]) => [`bin["${key}"]`, value]),
+              ["files", "dist/index.js"],
+            ]
+
+            const inTarball = (file) => {
+              const path = file.replace(/^\.\//, "")
+              const star = path.indexOf("*")
+              if (star === -1) return files.has(path)
+              return [...files].some((f) => f.startsWith(path.slice(0, star)))
+            }
+
+            // The agent-fragment .txt assets ship verbatim from src/ and are
+            // the one deliberate exception. Anything else still pointing into
+            // src/*.ts means the export rewrite never ran.
+            const unbuilt = targets.filter(([, file]) => file.startsWith("./src/") && file.endsWith(".ts"))
+            const missing = targets.filter(([, file]) => !inTarball(file))
+
+            for (const [name, file] of targets) console.log(`${inTarball(file) ? "ok  " : "MISS"}  ${name} -> ${file}`)
+            console.log(`\n${packed.name}@${packed.version}: ${packed.entryCount} files, ${(packed.size / 1024).toFixed(1)} kB packed`)
+
+            if (unbuilt.length > 0) {
+              console.error(`\n::error::package.json still points at TypeScript source — the export rewrite did not run`)
+              for (const [name, file] of unbuilt) console.error(`  ${name} -> ${file}`)
+            }
+            if (missing.length > 0) {
+              console.error(`\n::error::${missing.length} published entrypoint(s) are not in the tarball`)
+              for (const [name, file] of missing) console.error(`  ${name} -> ${file}`)
+            }
+            if (unbuilt.length + missing.length > 0) process.exit(1)
+            console.log(`gate: all ${targets.length} published entrypoints are present in the tarball`)
+        run: |
+          set -euo pipefail
+          printf '%s' "$GATE_JS" > "$RUNNER_TEMP/gate.mjs"
+          npm pack --pack-destination "$RUNNER_TEMP" --json > "$RUNNER_TEMP/pack.json"
+          node "$RUNNER_TEMP/gate.mjs" "$RUNNER_TEMP/pack.json"
+
+      - name: Gate — every published subpath and bin loads under node
+        env:
+          NAME: ${{ steps.version.outputs.name }}
+          SMOKE_JS: |
+            // Every published subpath AND every bin must load under node.
+            // Bun's CJS interop is more forgiving than Node's, so a package
+            // that runs fine under bun — and in the GHCR mcp-http image, whose
+            // CMD is bun — can still be dead on arrival for `npm install`
+            // users. That was literally true here: a named import of
+            // node-machine-id (a webpack-bundled CJS file whose named exports
+            // cjs-module-lexer cannot see) took out 5 of 13 subpaths and both
+            // bins under node while every bun-based check stayed green.
+            //
+            // The bins are checked separately because NOTHING in exports
+            // reaches them: `servicenow-mcp-stdio` is not imported by any
+            // published subpath, so a subpath-only sweep declares the package
+            // healthy while its headline binary cannot start.
+            //
+            // A bin cannot be checked by importing it — both bins start an MCP
+            // server at module scope, so the import never resolves. They are
+            // spawned instead and driven with a real JSON-RPC `initialize`,
+            // which is a stronger check anyway: it proves the binary boots,
+            // speaks MCP, and — because stdout IS the protocol channel on
+            // stdio — that nothing prints noise onto it. (dotenv v17's startup
+            // banner went to stdout and corrupted the stream for strict
+            // clients; that is why the JSON-purity assert is here.)
+            import { spawn, spawnSync } from "node:child_process"
+            import { readFileSync } from "node:fs"
+            import { resolve } from "node:path"
+
+            const name = process.argv[2]
+            // Read the INSTALLED manifest — package.json is not itself an
+            // export, so it cannot be resolved through the exports map.
+            const root = `node_modules/${name}`
+            const pkg = JSON.parse(readFileSync(`${root}/package.json`, "utf8"))
+
+            const subpaths = Object.keys(pkg.exports)
+              .filter((key) => !key.includes("*"))
+              .map((key) => (key === "." ? name : `${name}/${key.slice(2)}`))
+
+            const importResults = subpaths.map((subpath) => {
+              const child = spawnSync(process.execPath, ["--input-type=module", "-e", `await import(${JSON.stringify(subpath)})`], {
+                encoding: "utf8",
+                timeout: 60000,
+              })
+              return { label: subpath, ok: child.status === 0, err: (child.stderr ?? "").trim() }
+            })
+
+            const handshake = JSON.stringify({
+              jsonrpc: "2.0",
+              id: 1,
+              method: "initialize",
+              params: { protocolVersion: "2024-11-05", capabilities: {}, clientInfo: { name: "smoke", version: "0" } },
+            })
+
+            const driveBin = (binName, file) =>
+              new Promise((done) => {
+                const child = spawn(process.execPath, [resolve(root, file)], { stdio: ["pipe", "pipe", "pipe"] })
+                let out = ""
+                let err = ""
+                const finish = (ok, detail) => {
+                  clearTimeout(timer)
+                  clearInterval(poll)
+                  child.kill("SIGKILL")
+                  done({ label: `bin:${binName}`, ok, err: detail })
+                }
+                child.stdout.on("data", (d) => (out += d))
+                child.stderr.on("data", (d) => (err += d))
+                child.on("error", (e) => finish(false, e.message))
+                child.on("exit", (code) => finish(false, `exited with ${code} before responding\n${err.trim()}`))
+                const timer = setTimeout(() => finish(false, `no initialize response in 30s\n${err.trim()}`), 30000)
+                const poll = setInterval(() => {
+                  const lines = out.split("\n").filter((l) => l.trim().length > 0)
+                  // Every line on stdout must be JSON: on stdio, stdout is the
+                  // protocol. A banner or a stray console.log breaks clients.
+                  const noise = lines.find((l) => { try { JSON.parse(l); return false } catch { return true } })
+                  if (noise) return finish(false, `non-JSON written to stdout (stdio's protocol channel): ${noise.slice(0, 120)}`)
+                  if (lines.some((l) => JSON.parse(l).id === 1)) finish(true, "")
+                }, 100)
+                child.stdin.write(handshake + "\n")
+              })
+
+            const binResults = []
+            for (const [binName, file] of Object.entries(pkg.bin ?? {})) binResults.push(await driveBin(binName, file))
+
+            const results = [...importResults, ...binResults]
+            for (const { label, ok } of results) console.log(`${ok ? "ok  " : "FAIL"}  ${label}`)
+
+            const failed = results.filter((r) => !r.ok)
+            if (failed.length > 0) {
+              console.error(`\n::error::${failed.length} of ${results.length} published entrypoints are broken under node ${process.version}`)
+              for (const { label, err } of failed) console.error(`  ${label}\n      ${err.split("\n").slice(0, 2).join("\n      ")}`)
+              process.exit(1)
+            }
+            console.log(`\nsmoke: ${subpaths.length} subpaths import and ${binResults.length} bins complete an MCP handshake under node ${process.version}`)
+        run: |
+          set -euo pipefail
+          printf '%s' "$SMOKE_JS" > "$RUNNER_TEMP/smoke.mjs"
+          TARBALL=$(ls "$RUNNER_TEMP"/*.tgz)
+          CONSUMER="$RUNNER_TEMP/consumer"
+          mkdir -p "$CONSUMER"
+          cd "$CONSUMER"
+          node -e 'require("fs").writeFileSync("package.json", JSON.stringify({ name: "mcp-smoke", private: true, type: "module" }))'
+          npm install --no-audit --no-fund "$TARBALL"
+          node "$RUNNER_TEMP/smoke.mjs" "$NAME"
+
+      - name: Publish to npm (OIDC, signed provenance)
+        # No continue-on-error. A publish that cannot happen must turn the run
+        # red; continue-on-error on the old step is what let two months of
+        # releases report success while npm stayed on 0.1.0.
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true' && github.repository == 'serac-labs/serac'
+        env:
+          NAME: ${{ steps.version.outputs.name }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DIST_TAG: ${{ github.event.inputs.dist_tag }}
+        run: |
+          set -euo pipefail
+          echo "Publishing $NAME@$VERSION with tag: $DIST_TAG"
+
+          # Sigstore's transparency log occasionally 409s with
+          # TLOG_CREATE_ENTRY_ERROR when npm's internal retry races its own
+          # first, successfully landed tlog write (seen on the core publish of
+          # 1.1.6). A fresh publish signs with a new ephemeral cert and goes
+          # through, so retry the whole publish on that transient only.
+          for attempt in 1 2 3; do
+            if out=$(npm publish --access public --provenance --tag "$DIST_TAG" 2>&1); then
+              echo "$out"
+              exit 0
+            fi
+            echo "$out"
+            if echo "$out" | grep -qiE "TLOG_CREATE_ENTRY_ERROR|transparency log"; then
+              echo "transient sigstore tlog conflict (attempt $attempt) — retrying in 20s"
+              sleep 20
+              continue
+            fi
+            exit 1
+          done
+          echo "::error::npm publish failed after 3 tlog retries"
+          exit 1
+
+      - name: Verify the published version carries provenance
+        # A publish can succeed with a classic token and no attestation — that
+        # is how 0.1.0 got there. Assert the trusted publisher actually signed
+        # this one, so a mis-wired binding is loud instead of invisible.
+        if: github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run != 'true' && github.repository == 'serac-labs/serac'
+        env:
+          NAME: ${{ steps.version.outputs.name }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DIST_TAG: ${{ github.event.inputs.dist_tag }}
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3; do
+            ATTESTATIONS=$(npm view "$NAME@$VERSION" dist.attestations --json 2>/dev/null || true)
+            if [ -n "$ATTESTATIONS" ]; then
+              echo "$ATTESTATIONS"
+              echo "$NAME@$VERSION published under dist-tag '$DIST_TAG' with signed provenance"
+              exit 0
+            fi
+            echo "no attestation visible yet (attempt $attempt) — waiting 10s"
+            sleep 10
+          done
+          echo "::error::$NAME@$VERSION published WITHOUT provenance. The npm Trusted Publisher for $NAME is probably not bound to serac-labs/serac + .github/workflows/publish-mcp.yml."
+          exit 1
+
+      - name: Summary (nothing published)
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.dry_run == 'true' || github.repository != 'serac-labs/serac'
+        env:
+          NAME: ${{ steps.version.outputs.name }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: echo "$NAME@$VERSION built, tested and gated. Not published (pull request, dry run, or fork)."

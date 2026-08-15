@@ -14,7 +14,17 @@
 
 import axios, { AxiosError } from "axios"
 import crypto from "crypto"
-import { machineIdSync } from "node-machine-id"
+// Default import, NOT `import { machineIdSync }`. node-machine-id ships a
+// webpack-bundled CommonJS file; cjs-module-lexer sees only `default` and
+// `electron-machine-id` on it, so Node throws
+// `SyntaxError: Named export 'machineIdSync' not found` at import time — before
+// any of this module's code runs. That killed five of the published subpaths
+// (".", "/server", "/http", "/stdio", "/enterprise-proxy") and both bins for
+// every `npm install` consumer, while staying invisible under Bun (whose CJS
+// interop is more forgiving) and therefore in the GHCR mcp-http image, whose
+// CMD is bun. `.github/workflows/publish-mcp.yml`'s smoke gate now imports
+// every subpath and both bins under node so this cannot silently return.
+import nodeMachineId from "node-machine-id"
 import fs from "fs"
 import path from "path"
 import os from "os"
@@ -88,7 +98,7 @@ function getConfiguredLicenseKey(): string | undefined {
 // Generate unique machine ID for tracking
 let INSTANCE_ID: string
 try {
-  INSTANCE_ID = machineIdSync()
+  INSTANCE_ID = nodeMachineId.machineIdSync()
 } catch {
   // Fallback if machine ID generation fails
   INSTANCE_ID = `fallback-${Date.now()}-${crypto.randomBytes(6).toString("hex")}`

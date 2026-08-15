@@ -266,4 +266,43 @@ describe("guard state — session lifecycle", () => {
     expect(needsCurrentReassert(driftScope("43", "https://dev1.service-now.com"), "x")).toBe(true)
     expect(needsCurrentReassert(driftScope("42", "https://dev2.service-now.com"), "x")).toBe(true)
   })
+
+  test("observeUpdateSetTool records drift under the scope driftScope() computes", () => {
+    // The guard key and the drift scope are built by two different functions;
+    // observeUpdateSetTool has only the guard key and has to derive the scope
+    // from it. If those two derivations disagree, drift is recorded in a slot
+    // nothing reads and every write re-asserts the current set forever.
+    // A colon-bearing tenant id is the shape the portal actually emits.
+    const key = guardKey("c:42", "chat-a", "https://dev1.service-now.com")
+    observeUpdateSetTool(
+      "snow_ensure_active_update_set",
+      { name: "US-A" },
+      { success: true, data: { sys_id: "us-a", name: "US-A" } },
+      key,
+    )
+    expect(needsCurrentReassert(driftScope("c:42", "https://dev1.service-now.com"), "us-a")).toBe(false)
+  })
+})
+
+describe("guard keys — separator spoofing", () => {
+  beforeEach(() => resetUpdateSetState())
+
+  test("a tenant id carrying the separator cannot inherit another tenant's lifted guard", () => {
+    // Naive `${tenant}\x00${session}\x00${url}` concatenation flattens both of
+    // these to "42\x00chat-a\x00https://dev1..." — so the spoofer would read
+    // the honest tenant's guard state and skip the update-set prompt.
+    const honest = guardKey("42", "chat-a", "https://dev1.service-now.com")
+    const spoofer = guardKey("42\x00chat-a", "https://dev1.service-now.com", undefined)
+    expect(spoofer).not.toBe(honest)
+
+    recordUpdateSetSkip(honest)
+    expect(updateSetActive(honest)).toBe(true)
+    expect(updateSetActive(spoofer)).toBe(false)
+  })
+
+  test("tenant ids differing only in a separator character stay distinct", () => {
+    // The old `.replace(/[\x00:]/g, "_")` sanitiser mapped both to "1_2".
+    expect(guardKey("1:2", "s", "u")).not.toBe(guardKey("1\x002", "s", "u"))
+    expect(driftScope("1:2", "u")).not.toBe(driftScope("1\x002", "u"))
+  })
 })

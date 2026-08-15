@@ -445,33 +445,15 @@ jobs:
           echo "npm publish failed after 3 tlog retries" >&2
           exit 1
 
-      - name: Publish @serac-labs/servicenow-mcp to npm (OIDC)
-        # Separate npm package (ServiceNow MCP server). Unlike core (which
-        # ships .ts source), this ships a built dist/, so build + rewrite
-        # exports/bin from ./src/*.ts to ./dist/*.js first. Publishes via the
-        # same OIDC trusted-publisher path as core (the .npmrc above already
-        # put npm in OIDC mode). REQUIRES its OWN Trusted Publisher to be
-        # configured on npm for @serac-labs/servicenow-mcp pointing at this
-        # repo + workflow. Already independently published at 0.1.0.
-        #
-        # continue-on-error keeps a not-yet-configured trusted publisher (401)
-        # from failing the whole release (and the core publish above). REMOVE
-        # it in a follow-up once the trusted publisher is live and the first
-        # OIDC publish is confirmed green.
-        continue-on-error: true
-        run: |
-          cd packages/servicenow-mcp
-          VERSION="${{ steps.version.outputs.version }}"
-          sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"$VERSION\"/" package.json
-          bun run script/build-for-publish.ts
-          test -f dist/index.js || { echo "build produced no dist/index.js — aborting publish"; exit 1; }
-          NPM_TAG="${{ steps.channel.outputs.npm_tag }}"
-          echo "Publishing @serac-labs/servicenow-mcp@$VERSION with tag: $NPM_TAG (OIDC, signed provenance)"
-          if [ "$NPM_TAG" = "latest" ]; then
-            npm publish --access public --provenance
-          else
-            npm publish --access public --tag "$NPM_TAG" --provenance
-          fi
+      # NOTE: @serac-labs/servicenow-mcp is NOT published here. It used to be
+      # the last step of this job, which gave it opencode's version number, a
+      # root install for its toolchain, and this job's whole cross-compile
+      # chain as a prerequisite — under a continue-on-error that reported
+      # success for two months while npm stayed on 0.1.0. It now has its own
+      # workflow, .github/workflows/publish-mcp.yml, which reads its version
+      # from packages/servicenow-mcp/package.json and shares nothing with this
+      # file. Do not add it back: two publish paths for one package is how the
+      # version confusion started.
 
       # NOTE: there is deliberately NO "push a version bump back to main"
       # step here anymore. The main ruleset's required status checks reject

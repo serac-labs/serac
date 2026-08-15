@@ -15,12 +15,37 @@
  * - Enabled tools are persisted to disk and restored on restart
  * - This allows filtering tools/list to only show enabled tools
  *
+ * ...but only where enablement is actually honoured. See
+ * `enablementIsHonoured()` below: on a server that registered its catalog as
+ * non-deferred (which is exactly what transports/http-entry.ts does, so the
+ * portal gets the full tool list) enabling a tool changes nothing, and
+ * `tool_search` must not report that it did.
+ *
+ * Transport split, stated once:
+ * - stdio is single-tenant — one process, one user — so per-session state is
+ *   real state and lives on disk (`FileToolSessionStore`).
+ * - HTTP is multi-tenant — one process, every customer — so a request we
+ *   cannot place in a tenant gets no shared session state at all.
+ *
+ * The enabled-tools store is reached through `resolveTenantScope()` from
+ * `shared/tenant-scope.ts` here AND in both of its readers
+ * (`handlers/list-tools.ts`, `handlers/call-tool.ts`) — writer and readers have
+ * to agree on the scope string or this tool reports `[ENABLED]` for tools the
+ * next `tools/list` omits. Flat cache keys elsewhere in the package
+ * (`shared/auth.ts`, `shared/scripted-exec.ts`, `shared/update-set-guard.ts`,
+ * `tools/blast-radius/.../deep-search.ts`) compose that scope with
+ * `tenantScopedKey()`. Note what is NOT claimed: `handlers/call-tool.ts`
+ * deliberately skips the deferred check on HTTP (the portal budgets tools
+ * client-side), so the enabled set is a stdio mechanism that HTTP merely
+ * refuses to corrupt.
+ *
  * @see https://www.anthropic.com/engineering/advanced-tool-use
  */
 
 import { type MCPToolDefinition, type ServiceNowContext } from "../../shared/types.js"
 import { toolRegistry } from "../../shared/tool-registry.js"
 import { ToolSearch } from "../../shared/tool-search.js"
+import { STDIO_TENANT, resolveTenantScope } from "../../shared/tenant-scope.js"
 import { isWriteTool } from "../../shared/instance-map-hook.js"
 import {
   guardKey,
@@ -57,12 +82,21 @@ This tool searches through ALL 235+ available tools including:
 - Reporting (dashboards, KPIs, reports)
 - And many more specialized tools
 
-IMPORTANT: After this tool returns, the found tools become IMMEDIATELY AVAILABLE.
-You can call them directly via tool_execute by their exact tool name.
+Each hit carries a status, and that status — not this description — is the
+authority on whether you can call it:
+- [AVAILABLE] — already callable on this server; nothing had to be enabled.
+- [ENABLED]   — deferred, and enabled for this session (by this call or an
+                earlier one). Callable now.
+- [DEFERRED]  — still NOT callable. This happens when the request carries no
+                session id, or no resolvable tenant on a multi-tenant server;
+                usage_hint says which. tool_execute will refuse it.
+
+The response also reports what this call actually changed: enabled_tools lists
+the tools it wrote into session state, and is empty when it wrote nothing.
 
 Example workflow:
 1. tool_search({query: "incident query"})
-   → Returns: snow_query_incidents, snow_query_table, ... [ENABLED]
+   → Returns: snow_query_incidents [ENABLED], snow_query_table [ENABLED]
 2. tool_execute({tool: "snow_query_incidents", args: {query: "priority=1"}})
    → Executes the tool and returns results`,
   inputSchema: {
@@ -81,7 +115,8 @@ Example workflow:
       enable: {
         type: "boolean",
         description:
-          "Enable found tools for this session (default: true). When enabled, tools are marked [ENABLED] and can be called directly.",
+          "Enable found deferred tools for this session (default: true). Only tools this server actually gates on the enabled set are written; " +
+          "on a server that lists its whole catalog there is nothing to enable and the hits come back [AVAILABLE]. Set false to search without touching session state.",
         default: true,
       },
     },
@@ -101,16 +136,127 @@ function allowedOnTransport(definition: { transports?: string[] } | undefined, o
   return transports.includes(origin ?? "http")
 }
 
+/**
+ * Does enabling this tool change anything the rest of the server will honour?
+ *
+ * Only two kinds of tool are gated on the enabled-set:
+ *   - index entries flagged `deferred: true` — handlers/list-tools.ts hides
+ *     them until they are enabled, and canExecuteTool() refuses them;
+ *   - tools missing from the index entirely — both of those code paths
+ *     default an unknown tool to deferred.
+ *
+ * Everything else is already listed and already callable, so writing it into
+ * the session store is a write nobody reads. `transports/http-entry.ts`
+ * registers the entire catalog with `deferred: false` (deliberately: the
+ * portal does its own client-side tool budgeting), which means on the shipped
+ * HTTP server this returns false for every tool and `tool_search` stops
+ * touching session state altogether — matching the "no session state is
+ * retained between requests" contract in transports/http.ts.
+ */
+const enablementIsHonoured = (toolId: string): boolean => ToolSearch.getToolFromIndex(toolId)?.deferred ?? true
+
+interface EnablementOutcome {
+  /** Tool IDs actually written to the session store by this call. */
+  enabled: string[]
+  /** Everything enabled for this (tenant, session) after the write. */
+  enabledSet: Set<string>
+  /** Hits that needed enabling but did not get it — see `reason`. */
+  pending: number
+  reason: "enabled" | "nothing-deferred" | "no-session" | "no-tenant-scope" | "not-requested"
+}
+
+/**
+ * Write the subset of `toolIds` whose enablement is honoured, then read the
+ * store back so reported statuses come from the store rather than from what
+ * we hoped we did.
+ *
+ * Fail closed on a missing tenant scope: enabling into a shared bucket is how
+ * one tenant ends up steering another tenant's tool list, so we skip the write
+ * and report the refusal instead of quietly claiming success.
+ */
+async function applyEnablement(
+  toolIds: string[],
+  sessionId: string | undefined,
+  tenantScope: string | undefined,
+  enableRequested: boolean,
+): Promise<EnablementOutcome> {
+  const honoured = toolIds.filter(enablementIsHonoured)
+  // Read the store even when we write nothing: a tool an earlier tool_search
+  // enabled is still [ENABLED], and saying otherwise is the same class of lie.
+  const readEnabled = async (): Promise<Set<string>> =>
+    sessionId && tenantScope ? await ToolSearch.getEnabledTools(sessionId, tenantScope) : new Set<string>()
+
+  if (!enableRequested) {
+    return { enabled: [], enabledSet: await readEnabled(), pending: 0, reason: "not-requested" }
+  }
+  if (honoured.length === 0) {
+    return { enabled: [], enabledSet: await readEnabled(), pending: 0, reason: "nothing-deferred" }
+  }
+  if (!sessionId) {
+    return { enabled: [], enabledSet: new Set<string>(), pending: honoured.length, reason: "no-session" }
+  }
+  if (!tenantScope) {
+    return { enabled: [], enabledSet: new Set<string>(), pending: honoured.length, reason: "no-tenant-scope" }
+  }
+  await ToolSearch.enableTools(sessionId, honoured, tenantScope)
+  console.error(`[tool_search] Enabled ${honoured.length} deferred tool(s) for ${tenantScope}/${sessionId}`)
+  return { enabled: honoured, enabledSet: await readEnabled(), pending: 0, reason: "enabled" }
+}
+
+/**
+ * Status label for one hit, derived from the same two facts the rest of the
+ * server uses (`ToolSearch.getToolStatus`): is it deferred, and is it in this
+ * (tenant, session)'s enabled set.
+ */
+const statusFor = (toolId: string, enabledSet: Set<string>): "[AVAILABLE]" | "[ENABLED]" | "[DEFERRED]" => {
+  if (!enablementIsHonoured(toolId)) return "[AVAILABLE]"
+  return enabledSet.has(toolId) ? "[ENABLED]" : "[DEFERRED]"
+}
+
+/**
+ * The sentence appended to `usage_hint`. It states what this call did to
+ * session state — including "nothing", which is the honest answer on a server
+ * whose catalog is not deferred.
+ */
+const enablementNote = (outcome: EnablementOutcome, firstTool: string | undefined): string => {
+  if (outcome.reason === "enabled") {
+    return (
+      `\n\n✓ ${outcome.enabled.length} tool(s) are now ENABLED for this session.\n` +
+      `Call them via tool_execute. Example:\ntool_execute({tool: "${outcome.enabled[0]}", args: {...}})`
+    )
+  }
+  if (outcome.reason === "no-tenant-scope") {
+    return (
+      `\n\n⚠ ${outcome.pending} deferred tool(s) were NOT enabled: this request carries no tenant scope, ` +
+      `and session state shared across tenants is a leak. Re-issue with a resolved tenantId (HTTP) or over stdio.`
+    )
+  }
+  if (outcome.reason === "no-session") {
+    return (
+      `\n\n⚠ ${outcome.pending} deferred tool(s) were NOT enabled: this request carries no session id, ` +
+      `so there is nothing to attach the enablement to. They stay [DEFERRED] and tool_execute will refuse them.`
+    )
+  }
+  if (outcome.reason === "nothing-deferred") {
+    return (
+      `\n\nNo session state was changed — these tools are already available on this server. ` +
+      `Call them directly: tool_execute({tool: "${firstTool ?? "snow_query_table"}", args: {...}})`
+    )
+  }
+  return ""
+}
+
 export async function tool_search_exec(
   args: { query: string; limit?: number; enable?: boolean },
   context: ServiceNowContext,
 ): Promise<any> {
   const limit = args.limit || 10
-  const enableTools = args.enable !== false // Default to true
+  const enableRequested = args.enable !== false // Default to true
   const sessionId = context.sessionId
   // Tenant-scope every ToolSearch call so two HTTP tenants with the same
-  // session ID cannot enable each other's tools. Stdio fallback is "stdio".
-  const tenantId = context.tenantId ?? "stdio"
+  // session ID cannot enable each other's tools. `undefined` means the caller
+  // cannot be placed in a tenant — it then gets no shared session state.
+  const tenantScope = resolveTenantScope(context)
 
   // Use ToolSearch.search() for consistent behavior with snow-flow
   // This searches the tool index populated at server startup
@@ -167,12 +313,16 @@ export async function tool_search_exec(
       }
     }
 
-    // Enable and format fallback results
-    if (enableTools && sessionId) {
-      const toolNames = fallbackResults.map((r) => r.tool.name)
-      await ToolSearch.enableTools(sessionId, toolNames, tenantId)
-      console.error(`[tool_search] Enabled ${toolNames.length} tools for session ${sessionId}`)
-    }
+    // Enable and format fallback results. These hits come from the registry,
+    // not the index, so many of them have no index entry at all — those DO
+    // need enabling (list-tools and canExecuteTool treat unknown tools as
+    // deferred), which is why the decision is per-tool and not per-branch.
+    const outcome = await applyEnablement(
+      fallbackResults.map((r) => r.tool.name),
+      sessionId,
+      tenantScope,
+      enableRequested,
+    )
 
     const formattedTools = fallbackResults.map((r, i) => {
       const params = r.tool.inputSchema?.properties || {}
@@ -182,11 +332,10 @@ export async function tool_search_exec(
         const type = prop.type || "any"
         return `    ${isRequired ? "*" : ""}${name}: ${type}${prop.description ? ` - ${prop.description.substring(0, 80)}` : ""}`
       })
-      const status = enableTools && sessionId ? "[ENABLED]" : "[AVAILABLE]"
       return {
         rank: i + 1,
         name: r.tool.name,
-        status,
+        status: statusFor(r.tool.name, outcome.enabledSet),
         domain: r.domain,
         description: r.tool.description.substring(0, 200) + (r.tool.description.length > 200 ? "..." : ""),
         parameters: paramList.length > 0 ? paramList.slice(0, 5) : ["(no parameters)"],
@@ -194,29 +343,32 @@ export async function tool_search_exec(
       }
     })
 
-    const enabledMsg =
-      enableTools && sessionId
-        ? `\n\n✓ ${fallbackResults.length} tool(s) are now ENABLED for this session.\nCall them via tool_execute. Example:\ntool_execute({tool: "${fallbackResults[0]?.tool.name}", args: {...}})`
-        : ""
+    const enabledMsg = enablementNote(outcome, fallbackResults[0]?.tool.name)
 
     return {
       success: true,
       query: args.query,
       count: fallbackResults.length,
-      enabled: enableTools && !!sessionId,
+      // Reports what this call did to session state, not what it was asked to do.
+      enabled: outcome.enabled.length > 0,
+      enabled_tools: outcome.enabled,
       sessionId: sessionId || null,
       tools: formattedTools,
       usage_hint: `To use a tool, call: tool_execute({tool: "${fallbackResults[0]?.tool.name}", args: {...}})${enabledMsg}`,
     }
   }
 
-  // Process results from ToolSearch.search()
-  // Enable found tools for this session if requested and sessionId is available
-  if (enableTools && sessionId) {
-    const toolIDs = searchResults.map((t) => t.id)
-    await ToolSearch.enableTools(sessionId, toolIDs, tenantId)
-    console.error(`[tool_search] Enabled ${toolIDs.length} tools for session ${sessionId}`)
-  }
+  // Process results from ToolSearch.search().
+  // Only the deferred hits are written to the session store — enabling a tool
+  // that is already listed and already callable is a write nobody reads, and
+  // reporting it as "now ENABLED" would be a promise the next request cannot
+  // keep. See enablementIsHonoured().
+  const outcome = await applyEnablement(
+    searchResults.map((t) => t.id),
+    sessionId,
+    tenantScope,
+    enableRequested,
+  )
 
   // Format results with schema info from toolRegistry
   const formattedTools = searchResults.map((entry, i) => {
@@ -231,13 +383,12 @@ export async function tool_search_exec(
       return `    ${isRequired ? "*" : ""}${name}: ${type}${prop.description ? ` - ${prop.description.substring(0, 80)}` : ""}`
     })
 
-    // Determine status based on deferred flag and enable setting
-    const status = entry.deferred ? (enableTools && sessionId ? "[ENABLED]" : "[DEFERRED]") : "[AVAILABLE]"
-
     return {
       rank: i + 1,
       name: entry.id,
-      status,
+      // Read out of the session store, so [ENABLED] also covers tools a
+      // previous tool_search in this session enabled.
+      status: statusFor(entry.id, outcome.enabledSet),
       domain: entry.category,
       description: entry.description + (entry.description.length >= 200 ? "..." : ""),
       parameters: paramList.length > 0 ? paramList.slice(0, 5) : ["(no parameters)"],
@@ -245,17 +396,15 @@ export async function tool_search_exec(
     }
   })
 
-  // Build enabled message (consistent with snow-flow)
-  const enabledMsg =
-    enableTools && sessionId
-      ? `\n\n✓ ${searchResults.length} tool(s) are now ENABLED for this session.\nCall them via tool_execute. Example:\ntool_execute({tool: "${searchResults[0]?.id}", args: {...}})`
-      : ""
+  const enabledMsg = enablementNote(outcome, searchResults[0]?.id)
 
   return {
     success: true,
     query: args.query,
     count: searchResults.length,
-    enabled: enableTools && !!sessionId,
+    // Reports what this call did to session state, not what it was asked to do.
+    enabled: outcome.enabled.length > 0,
+    enabled_tools: outcome.enabled,
     sessionId: sessionId || null,
     tools: formattedTools,
     usage_hint: `To use a tool, call: tool_execute({tool: "${searchResults[0]?.id}", args: {...}})${enabledMsg}`,
@@ -307,8 +456,8 @@ export async function tool_execute_exec(
   const toolName = args.tool
   const toolArgs = args.args || {}
   const sessionId = context.sessionId
-  // See tool_search_exec — tenantId scopes every ToolSessionStore lookup.
-  const tenantId = context.tenantId ?? "stdio"
+  // See tool_search_exec — the tenant scope keys every ToolSessionStore lookup.
+  const tenantScope = resolveTenantScope(context)
 
   // Get tool from registry
   const tool = toolRegistry.getTool(toolName)
@@ -388,10 +537,16 @@ export async function tool_execute_exec(
     }
   }
 
-  // Check if tool is deferred and needs to be enabled first
-  const canExecute = await ToolSearch.canExecuteTool(sessionId, toolName, tenantId)
+  // Check if tool is deferred and needs to be enabled first.
+  // Without a provable tenant we must not read some other tenant's enabled
+  // set, so we look the tool up with no session: always-available tools still
+  // run, deferred ones fail closed. (`tenantScope ?? STDIO_TENANT` is then
+  // never consulted — no session means no store lookup.)
+  const enablementSession = tenantScope ? sessionId : undefined
+  const storeScope = tenantScope ?? STDIO_TENANT
+  const canExecute = await ToolSearch.canExecuteTool(enablementSession, toolName, storeScope)
   if (!canExecute) {
-    const toolStatus = await ToolSearch.getToolStatus(sessionId, toolName, tenantId)
+    const toolStatus = await ToolSearch.getToolStatus(enablementSession, toolName, storeScope)
     const queryHint = toolName.replace("snow_", "").replace(/_/g, " ")
     return {
       success: false,

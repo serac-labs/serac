@@ -15,9 +15,11 @@
  * (discovered dynamically via sys_dictionary).
  */
 
+import { createHash, randomBytes } from "crypto"
 import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult } from "../../shared/error-handler.js"
+import { resolveTenantScope, tenantScopedKey } from "../../shared/tenant-scope.js"
 import { ARTIFACT_TABLE_MAP } from "./shared/metadata-tables.js"
 import { searchDependents, type SearchPattern } from "./shared/deep-search.js"
 
@@ -42,6 +44,96 @@ const OUT_OF_SCOPE_SURFACES: string[] = [
 const SCOPE_CAVEAT =
   "Scan covers all script-bearing fields ServiceNow's sys_dictionary marks as script/condition. " +
   "Surfaces listed in out_of_scope_surfaces are NOT searched — verify those manually before any delete or rename decision."
+
+/**
+ * Per-process salt for the credential fingerprint below. Random per boot, so a
+ * digest carries no meaning outside this process and cannot be matched against
+ * a precomputed table if it ever surfaces in a heap dump. Immutable and
+ * tenant-agnostic: safe module-level state.
+ */
+const FINGERPRINT_SALT = randomBytes(16).toString("hex")
+
+/**
+ * Fingerprint of the identity whose ACLs decide what Phase 2 can see. Two
+ * callers share a fingerprint only when they are literally the same
+ * ServiceNow identity on the same instance, in which case a shared cache
+ * entry discloses nothing either side could not read itself.
+ *
+ * `accessToken` is in here and it is the field that matters most. The one
+ * embedder that reaches this fallback is serac-platform's
+ * `runOssBlastRadius()`, which passes `{instanceUrl, accessToken, clientId,
+ * clientSecret, sessionId}` and no tenantId. Its clientId/clientSecret come
+ * off the *instance* record, so two tenants pointed at one shared instance
+ * present identical OAuth client credentials — the access token is their only
+ * distinguishing secret. Leaving it out of the digest merged them into one
+ * cache entry and handed tenant B tenant A's private `u_*` table names.
+ *
+ * A rotated token yields a new fingerprint, i.e. a cold cache rather than a
+ * stale one. That is the safe direction, and `pruneDiscoveryCache()` in
+ * deep-search.ts caps the entries a rotating token can accumulate.
+ */
+const credentialFingerprint = (context: ServiceNowContext): string =>
+  createHash("sha256")
+    .update(
+      [
+        FINGERPRINT_SALT,
+        context.instanceUrl ?? "",
+        context.clientId ?? "",
+        context.clientSecret ?? "",
+        context.accessToken ?? "",
+        context.refreshToken ?? "",
+        context.username ?? "",
+        context.password ?? "",
+      ].join("\x00"),
+    )
+    .digest("hex")
+
+/**
+ * Key for the Phase-2 `sys_dictionary` discovery cache in deep-search.ts.
+ *
+ * That cache is a process-global Map, so this key *is* the isolation boundary.
+ * What it holds is every script-bearing (table, field) pair visible to the
+ * credentials that made the request — up to 5000 rows, custom `u_*` tables
+ * included. Sharing an entry across tenants breaks in both directions:
+ *
+ *   - confidentiality: tenant B inherits tenant A's schema and then issues
+ *     Phase-3 queries against A's private table names;
+ *   - correctness, and this is the worse one: a tenant whose integration user
+ *     sees little primes a short (or empty) pair list, and for the next five
+ *     minutes every other tenant on that instance silently scans zero
+ *     long-tail tables. Phase 1 still runs, so the answer looks complete —
+ *     an under-reported blast radius on the one tool whose output decides
+ *     "is it safe to delete this?".
+ *
+ * The correct axis is (tenant, instance), never session. Within a tenant every
+ * user authenticates as the same ServiceNow integration user per instance, so
+ * their dictionary view is identical and sharing is the whole point; a session
+ * id neither isolates tenants (it is not a tenant) nor reuses anything (a key
+ * per chat guarantees a cold cache). The previous key —
+ * `sessionId || instanceUrl || "default"` — got both halves wrong: it fell
+ * back to a bare instance URL that every tenant on a shared instance collides
+ * on, and to the literal `"default"` that every caller collides on.
+ */
+export const discoveryCacheKey = (context: ServiceNowContext): string => {
+  const tenant = resolveTenantScope(context)
+  // stdio resolves to the "stdio" sentinel: that transport is single-tenant by
+  // construction (one process, one user, one credential set), so in-process
+  // sharing across requests is legitimate there. HTTP always carries a real
+  // tenant id — handlers/call-tool.ts refuses the request otherwise.
+  //
+  // tenantScopedKey escapes both halves, so a tenant id containing the NUL
+  // separator cannot address another tenant's slot: tenant `1042` on instance
+  // `X\x00Y` and tenant `1042\x00X` on instance `Y` are distinct keys.
+  if (tenant) return tenantScopedKey(tenant, context.instanceUrl)
+  // No provable tenant (an embedder calling this executor directly). Falling
+  // back to a shared literal is exactly the leak described above, so fail
+  // closed onto the identity that actually governs visibility. Bounded: one
+  // entry per distinct credential set, not one per call. Colliding with the
+  // tenant branch would take a tenant literally named "cred" whose instanceUrl
+  // equals the digest — and FINGERPRINT_SALT is random per boot, so that
+  // digest is not predictable from outside the process.
+  return tenantScopedKey("cred", credentialFingerprint(context))
+}
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_blast_radius_dependents",
@@ -221,9 +313,10 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       return createErrorResult("Could not determine search patterns for the artifact")
     }
 
-    // Step 2: Deep search via 3-phase engine.
-    const cacheKey = context.sessionId || context.instanceUrl || "default"
-    const { dependents, stats } = await searchDependents(client, cacheKey, {
+    // Step 2: Deep search via 3-phase engine. The key scopes the shared
+    // Phase-2 discovery cache — see discoveryCacheKey() for why it is
+    // (tenant, instance) and not the session.
+    const { dependents, stats } = await searchDependents(client, discoveryCacheKey(context), {
       patterns,
       limit,
       scopeFilterSysId: search_scope === "same_app" && artifactScope ? artifactScope : undefined,

@@ -84,6 +84,39 @@ interface DiscoveryCacheEntry {
 const discoveryCache = new Map<string, DiscoveryCacheEntry>()
 const DISCOVERY_TTL_MS = 5 * 60 * 1000
 
+/**
+ * Hard ceiling on distinct cache keys. The TTL only gated freshness on read:
+ * an expired entry was overwritten if the same key came back and otherwise
+ * retained forever. Each entry holds up to 5000 (table, field) rows, and the
+ * credential-fingerprint fallback in `discoveryCacheKey()` mints a fresh key
+ * on every OAuth token rotation, so "one entry per (tenant, instance)" was not
+ * in fact a bound. Prune on write, expired-first.
+ */
+const MAX_DISCOVERY_ENTRIES = 500
+
+function pruneDiscoveryCache(): void {
+  if (discoveryCache.size < MAX_DISCOVERY_ENTRIES) return
+  const now = Date.now()
+  for (const [key, value] of discoveryCache) {
+    if (value.expiresAt <= now) discoveryCache.delete(key)
+  }
+  // Every entry still live: evict oldest-first (Map iterates in insertion
+  // order) until back under the ceiling, so the cache cannot grow without
+  // limit even under continuous token rotation.
+  for (const key of discoveryCache.keys()) {
+    if (discoveryCache.size < MAX_DISCOVERY_ENTRIES) break
+    discoveryCache.delete(key)
+  }
+}
+
+/**
+ * Drop every cached discovery entry. Test-only seam — the cache is otherwise
+ * process-global, so a test that primes it would leak into the next one.
+ */
+export function clearDiscoveryCache(): void {
+  discoveryCache.clear()
+}
+
 /** Types in sys_dictionary.internal_type that indicate script-bearing fields. */
 const SCRIPT_INTERNAL_TYPES = ["script", "script_plain", "script_server", "xml", "condition_string"]
 
@@ -223,6 +256,7 @@ async function getDiscoveredPairs(
         internal_type: String(r.internal_type || ""),
       }))
       .filter((p: any) => p.table && p.field)
+    pruneDiscoveryCache()
     discoveryCache.set(cacheKey, { pairs, expiresAt: Date.now() + DISCOVERY_TTL_MS })
     return { pairs, cached: false }
   } catch {

@@ -18,6 +18,7 @@ import * as fs from "fs"
 import * as path from "path"
 import * as os from "os"
 import { mcpDebug } from "../../shared/mcp-debug.js"
+import { STDIO_TENANT } from "./tenant-scope.js"
 import { TenantScopedCache } from "./tenant-scoped-cache.js"
 
 export interface ToolSessionStore {
@@ -52,13 +53,28 @@ const getStdioDataDir = (): string => {
 const sanitize = (id: string): string => id.replace(/[^a-zA-Z0-9-_]/g, "_")
 
 /**
- * File-backed store used by the stdio transport.
+ * File-backed store used by the stdio transport. **stdio only.**
  *
  * Layout: `{dataDir}/enabled-tools/{sanitize(tenantId)}/{sanitize(sessionId)}.json`
  *
  * The tenant directory is included even for stdio (where tenantId is the
  * sentinel `"stdio"`) so that a future multi-user stdio deployment — or
  * dev-switching between stdio contexts — never crosses streams.
+ *
+ * It is not usable in a multi-tenant server, and now says so instead of
+ * silently doing the wrong thing. Two reasons:
+ *
+ *   1. `sanitize()` is lossy — `c:1042` and `c_1042` both become `c_1042`, so
+ *      the directory that is supposed to be the tenant boundary can merge two
+ *      tenants;
+ *   2. it writes tenant state to container-local disk, which for a horizontally
+ *      scaled HTTP deployment is neither shared nor cleaned up.
+ *
+ * `transports/http.ts` installs `MemoryToolSessionStore` for exactly this
+ * reason, but it does so as a side effect of `createHttpApp()`. An embedder
+ * that builds its own server from the `./server` export never triggers that
+ * and would otherwise inherit this store by default. The guard below turns
+ * that footgun into an error at the first write.
  */
 export class FileToolSessionStore implements ToolSessionStore {
   private readonly baseDir: string
@@ -68,6 +84,13 @@ export class FileToolSessionStore implements ToolSessionStore {
   }
 
   private fileFor(tenantId: string, sessionId: string): string {
+    if (tenantId !== STDIO_TENANT) {
+      throw new Error(
+        `FileToolSessionStore is stdio-only and was asked for tenant "${tenantId}". ` +
+          `A multi-tenant server must install a tenant-safe store — ` +
+          `setSessionStore(new MemoryToolSessionStore()) — before serving requests.`,
+      )
+    }
     return path.join(this.baseDir, sanitize(tenantId), `${sanitize(sessionId)}.json`)
   }
 
