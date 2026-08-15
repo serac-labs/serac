@@ -688,7 +688,7 @@
     },
     "packages/servicenow-mcp": {
       "name": "@serac-labs/servicenow-mcp",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "bin": {
         "servicenow-mcp-stdio": "./src/servicenow-mcp-unified/index.ts",
         "servicenow-mcp-enterprise-proxy": "./src/enterprise-proxy/index.ts",
@@ -703,7 +703,7 @@
         "zod": "4.1.8",
       },
       "devDependencies": {
-        "@jest/globals": "^29",
+        "@jest/globals": "29.7.0",
         "@types/bun": "1.3.13",
         "@typescript/native-preview": "7.0.0-dev.20251207.1",
         "typescript": "5.8.2",

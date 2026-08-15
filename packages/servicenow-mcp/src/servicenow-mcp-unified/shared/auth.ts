@@ -20,6 +20,7 @@ import * as os from "node:os"
 import { seracHomePath } from "./serac-home.js"
 import { type ServiceNowContext, type OAuthTokenResponse, type EnterpriseLicense } from "./types.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
+import { STDIO_TENANT, tenantScopedKey } from "./tenant-scope.js"
 
 /**
  * Extract a human-readable error message from a ServiceNow error response.
@@ -620,14 +621,20 @@ export class ServiceNowAuthManager {
    * Stdio callers without a tenantId fall back to the sentinel `"stdio"`.
    */
   private getCacheKey(context: ServiceNowContext): string {
-    // Disallow NUL and colon in tenantId so the separator can't be spoofed.
-    const rawTenant = context.tenantId ?? "stdio"
-    const tenant = rawTenant.replace(/[\x00:]/g, "_")
     const urlKey = context.instanceUrl
       .replace(/^https?:\/\//, "")
       .replace(/\/$/, "")
       .toLowerCase()
-    return `${tenant}\x00${urlKey}`
+    // Escape, don't sanitise. This used to be
+    // `rawTenant.replace(/[\x00:]/g, "_")` before the join, which mapped
+    // `c:1042` and `c_1042` onto the same key — and the value behind this key
+    // is an OAuth access token plus an authenticated Axios client, so that
+    // collision hands one tenant another tenant's credentials. Percent-encoding
+    // is injective, so distinct tenant ids stay distinct while the NUL
+    // separator still cannot appear inside a component.
+    // (serac-platform's deriveTenantId() emits `c:<id>` / `o:<id>` / `si:<n>`,
+    // so colon-bearing tenant ids are the normal case, not an exotic one.)
+    return tenantScopedKey(context.tenantId ?? STDIO_TENANT, urlKey)
   }
 
   /**

@@ -15,6 +15,7 @@
 
 import { type MCPToolDefinition } from "./types.js"
 import { isWriteTool, SKIP_ACTIONS, SKIP_TOOLS } from "./instance-map-hook.js"
+import { STDIO_TENANT, tenantScopedKey } from "./tenant-scope.js"
 
 // Write tools in these categories mutate process data (incidents, CIs,
 // assets, cases, ...), not configuration — ServiceNow does not capture them
@@ -87,12 +88,16 @@ const MAX_ENTRIES = 5000
 // never cross tenants; pruned by age once the map grows.
 const guardState = new Map<string, GuardEntry>()
 
+// Composed through tenantScopedKey so no component can address another's slot:
+// with raw concatenation, tenant `42` + session `a\x00https://x` and tenant
+// `42\x00a` + session `https://x` were the same key, which for a *guard* means
+// one caller inheriting another's lifted prod-write / update-set state.
 export function guardKey(
   tenantId: string | undefined,
   sessionId: string | undefined,
   instanceUrl: string | undefined,
 ): string {
-  return `${tenantId ?? "stdio"}\x00${sessionId ?? "stdio"}\x00${instanceUrl ?? ""}`
+  return tenantScopedKey(tenantId ?? STDIO_TENANT, sessionId ?? STDIO_TENANT, instanceUrl)
 }
 
 function entry(key: string): GuardEntry {
@@ -167,7 +172,22 @@ function pruneAsserted(): void {
 }
 
 export function driftScope(tenantId: string | undefined, instanceUrl: string | undefined): string {
-  return `${tenantId ?? "stdio"}\x00${instanceUrl ?? ""}`
+  return tenantScopedKey(tenantId ?? STDIO_TENANT, instanceUrl)
+}
+
+/**
+ * The drift scope for a guard key, i.e. the same key with the session segment
+ * dropped. `observeUpdateSetTool` only has the guard key to hand.
+ *
+ * Both keys are built from already-escaped segments joined by NUL, so taking
+ * segments 0 and 2 and re-joining them reproduces `driftScope()` exactly —
+ * which is only true because the escaping happens per segment, before the
+ * join. Doing this by hand on raw segments is how a tenant id containing the
+ * separator would shift the segment boundaries.
+ */
+function driftScopeOfGuardKey(key: string): string {
+  const parts = key.split("\x00")
+  return `${parts[0] ?? encodeURIComponent(STDIO_TENANT)}\x00${parts[2] ?? ""}`
 }
 
 /** True when the instance current we last asserted differs from `sysId`. */
@@ -219,8 +239,7 @@ export function observeUpdateSetTool(
     // sync-off variants returned early above), so the instance current for
     // this (tenant, instance) is now this set. Record it for drift detection.
     if (typeof data.sys_id === "string") {
-      const parts = key.split("\x00")
-      markCurrentAsserted(`${parts[0] ?? "stdio"}\x00${parts[2] ?? ""}`, data.sys_id)
+      markCurrentAsserted(driftScopeOfGuardKey(key), data.sys_id)
     }
   }
   // NOTE: a "current" observation deliberately does NOT lift the guard.

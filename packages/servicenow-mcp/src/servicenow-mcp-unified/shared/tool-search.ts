@@ -14,6 +14,18 @@
  * stdio context; HTTP callers must always pass the resolved tenant ID
  * (`ctx.serviceNow.tenantId`). See also `ToolSessionStore`.
  *
+ * Callers should derive that ID with `resolveTenantScope()` from
+ * `shared/tenant-scope.ts` (re-exported below) rather than writing
+ * `context.tenantId ?? "stdio"` inline: the helper fails closed on a
+ * multi-tenant transport instead of quietly parking an unidentified caller in
+ * the shared stdio bucket. The default parameter is kept only for the
+ * single-tenant stdio embedders (`src/enterprise-proxy/*`) that call these
+ * functions with no tenant at all.
+ *
+ * The store keys on (tenant, session) with nested maps, never with a composed
+ * string, so the scope goes in verbatim. Caches that DO flatten a tenant into
+ * one string key must compose it with `tenantScopedKey()`.
+ *
  * @see https://www.anthropic.com/engineering/advanced-tool-use
  */
 
@@ -22,6 +34,13 @@ import * as path from "path"
 import * as os from "os"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 import { FileToolSessionStore, type ToolSessionStore } from "./tool-session-store.js"
+import { STDIO_TENANT } from "./tenant-scope.js"
+
+// Re-exported so callers that already reach for the tenancy rule through this
+// module keep working. `shared/tenant-scope.ts` is the definition; it is
+// import-free so that low-level modules (auth.ts, scripted-exec.ts) can key on
+// a tenant without depending on the tool index.
+export { STDIO_TENANT, resolveTenantScope, tenantScopedKey } from "./tenant-scope.js"
 
 /**
  * Tool index entry - lightweight representation for search
@@ -33,12 +52,6 @@ export interface ToolIndexEntry {
   keywords: string[]
   deferred: boolean
 }
-
-/**
- * Sentinel tenant ID used when no explicit tenant is provided. Safe for
- * stdio (single-user) but never valid in HTTP context.
- */
-const STDIO_TENANT = "stdio"
 
 /**
  * Active session store. Defaults to file-backed for stdio; the HTTP

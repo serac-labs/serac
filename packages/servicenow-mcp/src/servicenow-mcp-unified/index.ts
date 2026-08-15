@@ -40,12 +40,19 @@ async function main() {
 
     // Load environment variables from .env file
     // Note: dotenv should NOT override existing vars, but we preserve them anyway for safety
-    const result = dotenv.config()
+    //
+    // `quiet: true` is load-bearing, not cosmetic. This is the stdio transport:
+    // stdout IS the JSON-RPC channel, and dotenv v17 prints an "[dotenv@17.2.3]
+    // injecting env (0) from .env -- tip: ..." banner there on every call. That
+    // banner is not JSON, so a strict MCP client fails to parse the stream
+    // before the server has answered anything. Diagnostics belong on stderr,
+    // which is what mcpDebug() below uses.
+    const result = dotenv.config({ quiet: true })
 
     if (result.error) {
       // Try loading from parent directory (common when MCP server is in subdirectory)
       const parentEnvPath = path.resolve(process.cwd(), "..", ".env")
-      const parentResult = dotenv.config({ path: parentEnvPath })
+      const parentResult = dotenv.config({ path: parentEnvPath, quiet: true })
 
       if (parentResult.error) {
         mcpDebug("[Main] No .env file found - using environment variables from MCP configuration")

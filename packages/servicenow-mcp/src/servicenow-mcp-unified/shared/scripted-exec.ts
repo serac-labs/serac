@@ -13,6 +13,7 @@ import { randomBytes } from "crypto"
 import type { AxiosInstance } from "axios"
 import type { ServiceNowContext } from "./types.js"
 import { getAuthenticatedClient } from "./auth.js"
+import { STDIO_TENANT, tenantScopedKey } from "./tenant-scope.js"
 
 const ENDPOINT_SERVICE_ID = "snow_flow_exec"
 const ENDPOINT_PATH = "/execute"
@@ -25,11 +26,12 @@ const ENDPOINT_PATH = "/execute"
  */
 const endpointCache = new Map<string, { url: string }>()
 
-const getEndpointCacheKey = (context: ServiceNowContext): string => {
-  const rawTenant = context.tenantId ?? "stdio"
-  const tenant = rawTenant.replace(/[\x00:]/g, "_")
-  return `${tenant}\x00${context.instanceUrl}`
-}
+const getEndpointCacheKey = (context: ServiceNowContext): string =>
+  // Was `rawTenant.replace(/[\x00:]/g, "_")` before joining. That is lossy:
+  // `c:1042` and `c_1042` mapped to one key, so the sanitiser meant to stop a
+  // separator spoof introduced a collision of its own. tenantScopedKey escapes
+  // instead of replacing, which is injective.
+  tenantScopedKey(context.tenantId ?? STDIO_TENANT, context.instanceUrl)
 
 /**
  * Bumped whenever OPERATION_SCRIPT changes in a way that matters for security.

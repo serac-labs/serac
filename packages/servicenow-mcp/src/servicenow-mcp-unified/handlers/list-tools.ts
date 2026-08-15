@@ -11,6 +11,7 @@ import { toolRegistry } from "../shared/tool-registry.js"
 import { filterToolsByRole } from "../shared/permission-validator.js"
 import { META_TOOLS } from "../tools/meta/index.js"
 import { ToolSearch } from "../shared/tool-search.js"
+import { resolveTenantScope } from "../shared/tenant-scope.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 import { type MCPToolDefinition } from "../shared/types.js"
 import { type HandlerDeps } from "./types.js"
@@ -26,10 +27,16 @@ export const listTools = (deps: HandlerDeps) => async (request: any, extra?: any
     )
   }
   const sessionId = ctx.sessionId
-  const tenantId = ctx.serviceNow.tenantId ?? "stdio"
+  // Same helper `tools/meta/index.ts` uses to WRITE the enabled set. Both ends
+  // of the store must compute the scope the same way or tool_search reports
+  // [ENABLED] for tools this handler then omits — writer and reader silently in
+  // different namespaces. The check above already guarantees a tenantId on
+  // HTTP, so `undefined` here means stdio-without-origin only.
+  const tenantScope = resolveTenantScope({ tenantId: ctx.serviceNow.tenantId, origin: ctx.origin })
 
   // Get enabled tools for this session (scoped by tenant to prevent cross-tenant leaks)
-  const enabledToolIds = sessionId ? await ToolSearch.getEnabledTools(sessionId, tenantId) : new Set<string>()
+  const enabledToolIds =
+    sessionId && tenantScope ? await ToolSearch.getEnabledTools(sessionId, tenantScope) : new Set<string>()
 
   // Debug: Log session info and sources
   mcpDebug(`[Server] ListTools request - sessionId: ${sessionId || "none"}`)

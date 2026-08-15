@@ -41,7 +41,7 @@ const ALLOWLIST: AllowedPattern[] = [
   {
     file: "scripted-exec.ts",
     pattern: /^const endpointCache = new Map</,
-    reason: "Keys are composed as tenantId\\x00instanceUrl — see getEndpointCacheKey()",
+    reason: "Keys are tenantScopedKey(tenantId, instanceUrl) — see getEndpointCacheKey()",
   },
   {
     file: "error-handler.ts",
@@ -61,7 +61,12 @@ const ALLOWLIST: AllowedPattern[] = [
   {
     file: "update-set-guard.ts",
     pattern: /^const guardState = new Map</,
-    reason: "Keys are composed as tenantId\\x00sessionId\\x00instanceUrl — see guardKey()",
+    reason: "Keys are tenantScopedKey(tenantId, sessionId, instanceUrl) — see guardKey()",
+  },
+  {
+    file: "update-set-guard.ts",
+    pattern: /^const assertedCurrent = new Map</,
+    reason: "Keys are tenantScopedKey(tenantId, instanceUrl) — see driftScope()",
   },
 ]
 
@@ -102,7 +107,14 @@ describe("Multi-tenant invariants in shared/", () => {
         if (/^(export\s+)?(async\s+)?(function|class|interface|type|namespace|enum)\s/.test(stripped)) continue
 
         const isMutableLet = /^(export\s+)?(let|var)\s+/.test(stripped)
-        const isNewMapSet = /new\s+(Map|Set|WeakMap|WeakSet)\(/.test(stripped)
+        // `[<(]`, not `\(`: every cache in this codebase is written
+        // `new Map<string, X>()`, which a bare `\(` never matches. With the
+        // narrow matcher this test caught none of them — the ALLOWLIST entries
+        // for `endpointCache` and `guardState` were dead code proving it, and
+        // `assertedCurrent` in update-set-guard.ts was neither detected nor
+        // allowlisted. A guard that cannot see the pattern it exists for is
+        // worse than no guard: it reads as coverage.
+        const isNewMapSet = /new\s+(Map|Set|WeakMap|WeakSet)\s*[<(]/.test(stripped)
 
         if (!isMutableLet && !isNewMapSet) continue
 

@@ -13,6 +13,7 @@ import { executeWithErrorHandling, SnowFlowError, classifyError } from "../share
 import { validatePermission, validateJWTExpiry } from "../shared/permission-validator.js"
 import { tool_search_exec, tool_execute_exec } from "../tools/meta/index.js"
 import { ToolSearch } from "../shared/tool-search.js"
+import { resolveTenantScope, STDIO_TENANT } from "../shared/tenant-scope.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 import { formatArgsForLogging, isRetryableOperation } from "../shared/handler-helpers.js"
 import { reportArtifactToInstanceMap, isWriteTool } from "../shared/instance-map-hook.js"
@@ -129,11 +130,16 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
     // duplicate enablement state over HTTP, which they currently don't.
     // So we skip the check on HTTP and let permission/feature gates
     // below do the real access control.
-    const tenantId = context.tenantId ?? "stdio"
+    //
+    // Scope resolution goes through the same helper tools/meta/index.ts writes
+    // with — see list-tools.ts. This branch only runs on stdio, where the
+    // scope is always the "stdio" sentinel, but computing it a second way here
+    // is how writer and reader drift apart.
+    const tenantScope = resolveTenantScope({ tenantId: context.tenantId, origin: ctx.origin })
     if (ctx.origin !== "http") {
-      const canExecute = await ToolSearch.canExecuteTool(sessionId, name, tenantId)
+      const canExecute = await ToolSearch.canExecuteTool(sessionId, name, tenantScope ?? STDIO_TENANT)
       if (!canExecute) {
-        const toolStatus = await ToolSearch.getToolStatus(sessionId, name, tenantId)
+        const toolStatus = await ToolSearch.getToolStatus(sessionId, name, tenantScope ?? STDIO_TENANT)
         throw new McpError(
           ErrorCode.InvalidRequest,
           `Tool "${name}" is ${toolStatus} and must be enabled first. ` +
