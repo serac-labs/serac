@@ -143,7 +143,12 @@ jobs:
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "$NAME@$VERSION (from packages/servicenow-mcp/package.json)"
 
+      # Only on the publish path. On a pull_request run nothing is published, so
+      # "this version already exists" is not a problem to report — it is the
+      # normal state between releases, and failing on it would paint every PR
+      # that touches this package red for no reason.
       - name: Pre-flight — version is publishable
+        if: github.event_name != 'pull_request'
         env:
           NAME: ${{ steps.version.outputs.name }}
           VERSION: ${{ steps.version.outputs.version }}
