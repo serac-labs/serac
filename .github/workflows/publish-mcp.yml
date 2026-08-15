@@ -83,7 +83,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          node-version: "20"
+          node-version: "24"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
@@ -93,14 +93,18 @@ jobs:
           # reads. Action inputs are not affected by defaults.run.
           bun-version-file: package.json
 
-      # `npm@latest` is npm 12, which requires node >= 22 and hard-fails
-      # EBADENGINE on this runner's node 20. Pin to the 11.x line: it is the
-      # newest npm that runs here and it already satisfies the >= 11.5.1 that
-      # OIDC trusted publishing needs. Bumping node instead would change the
-      # engine the package is built and tested against, which is a bigger
-      # decision than a publish prerequisite should be making.
+      # node 24 matches test.yml, so the package publishes on the same engine it
+      # is tested on. The three publish workflows were the only place still on
+      # 20. This does NOT change the artifact: tsc emits according to `target`
+      # in tsconfig.build.json (ESNext), not according to whichever node runs
+      # the compiler.
+      #
+      # npm pinned to a major rather than `@latest`: npm 12 requires node >= 22,
+      # so `@latest` silently broke this job the moment npm 12 shipped. A major
+      # pin still satisfies the >= 11.5.1 that OIDC trusted publishing needs and
+      # will not jump an engine requirement underneath us.
       - name: Upgrade npm (OIDC trusted publishing needs npm >= 11.5.1)
-        run: npm install -g npm@^11.5.1
+        run: npm install -g npm@^12
 
       - name: Configure npm for OIDC publishing
         # The empty _authToken line is required for npm to recognise OIDC mode;
