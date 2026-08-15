@@ -49,6 +49,15 @@ COPY --from=builder /app /app
 USER bun
 
 ENV MCP_HTTP_PORT=8082
+
+# Belt and braces for the stdio-only telemetry rule. The HTTP entry point has
+# no import path to src/telemetry (see telemetry-stdio-only.test.ts), but this
+# image also contains the stdio entry, and only the CMD below keeps it
+# unreached — `docker run <image> bun run src/servicenow-mcp-unified/index.ts`,
+# or a compose file overriding `command:`, would emit pings from platform
+# infrastructure on behalf of tenants who installed nothing.
+ENV SERAC_TELEMETRY_DISABLED=1
+
 EXPOSE 8082
 
 # Health endpoint lives on /health — docker-compose healthcheck probes it.

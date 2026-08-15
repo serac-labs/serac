@@ -34,11 +34,43 @@ export interface StdioHandle {
   stop: () => Promise<void>
 }
 
+export interface StdioOptions {
+  /**
+   * Called once per `tools/call` request with the name of the tool being
+   * invoked. Injected by the stdio entry point to feed the anonymous
+   * telemetry counter; nothing here retains or forwards the name.
+   *
+   * This is dependency injection, not a feature flag: the HTTP transport
+   * (`createHttpApp`) has no equivalent parameter, so there is nothing to
+   * switch on there by accident.
+   */
+  onToolCall?: (toolName: string) => void
+}
+
+/**
+ * The tool a `tools/call` request actually invokes, or undefined for any
+ * other request.
+ *
+ * In lazy-tools mode (the default) nearly every ServiceNow call arrives
+ * wrapped as `tool_execute({ tool: "snow_...", args })`. Unwrapping the
+ * target keeps a per-category count truthful; without it all real work would
+ * look like meta-tool traffic. Only `params.arguments.tool` — a tool name —
+ * is read, never `args`, which carries the user's actual data.
+ */
+export const invokedToolName = (request: any): string | undefined => {
+  if (request?.method !== "tools/call") return undefined
+  const called = request?.params?.name
+  if (typeof called !== "string" || !called) return undefined
+  if (called !== "tool_execute") return called
+  const target = request?.params?.arguments?.tool
+  return typeof target === "string" && target ? target : called
+}
+
 /**
  * Build, bootstrap, and connect the stdio-transport MCP server.
  * Returns a handle with the Server instance and a `stop()` for graceful shutdown.
  */
-export const startStdio = async (): Promise<StdioHandle> => {
+export const startStdio = async (options: StdioOptions = {}): Promise<StdioHandle> => {
   const promptManager = new MCPPromptManager("servicenow-unified")
   // Lock the prompt registry — nobody should be mutating it past bootstrap.
   promptManager.freeze()
@@ -49,6 +81,14 @@ export const startStdio = async (): Promise<StdioHandle> => {
   let context: ServiceNowContext = loadContext()
 
   const resolveContext = async (request: any, _extra?: any): Promise<RequestContext> => {
+    // Notify the caller of tool invocations. `resolveContext` also runs for
+    // `tools/list` (filtered out by invokedToolName) and runs before dispatch,
+    // so this counts attempted calls including ones that later fail.
+    if (options.onToolCall) {
+      const invoked = invokedToolName(request)
+      if (invoked) options.onToolCall(invoked)
+    }
+
     // stdio has no HTTP headers; `request.headers` is undefined here. We keep
     // the lookup for symmetry with the HTTP resolver and because some test
     // harnesses pass a hand-crafted request with inline headers.
