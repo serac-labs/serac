@@ -16,7 +16,8 @@
   "private": false,
   "files": [
     "dist",
-    "src/agent-fragments"
+    "src/agent-fragments",
+    "sn-roles.manifest.json"
   ],
   "exports": {
     ".": "./src/index.ts",

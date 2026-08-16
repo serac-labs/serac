@@ -65,7 +65,8 @@ export SNOW_CLIENT_SECRET=…
 
 Developer instances hibernate after a few days of inactivity and then answer with an HTML login page instead
 of JSON, which makes failures look like parse errors. If a tool starts returning nonsense, wake the instance
-first.
+first — `bun packages/servicenow-mcp/src/servicenow-mcp-unified/index.ts --doctor` says whether that is what
+happened, along with which credentials it picked up and from where.
 
 ### Adding a tool or a skill
 
