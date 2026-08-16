@@ -22,17 +22,26 @@ import { fileURLToPath } from "node:url"
 export type SnRolesOperation = "read" | "create" | "write" | "delete"
 
 /**
- * How the ACL that answered for a primitive was found:
- * `direct` on the table itself, `inherited` from a `sys_db_object.super_class`
- * ancestor, or `wildcard` from the `*` ACL.
+ * How the ACL that answered for a primitive was found: `direct` on the table
+ * itself, `inherited` from a `sys_db_object.super_class` ancestor, `wildcard`
+ * from the `*` ACL, or `none` — nothing matched at any level, and the probe
+ * falls back to ServiceNow's implicit deny, so `roles` is `["admin"]` by
+ * assumption rather than by measurement. The probed instance had a `*` ACL for
+ * every operation, so no entry is `none` today.
  */
-export type SnRolesSource = "direct" | "inherited" | "wildcard"
+export type SnRolesSource = "direct" | "inherited" | "wildcard" | "none"
 
 /** One (table, operation) pair a tool performs, with the roles the instance's ACLs accept for it. */
 export interface SnRolesPrimitive {
   table: string
   operation: SnRolesOperation
-  /** Roles OR-combined across every matching ACL: holding any one of them satisfies this primitive. */
+  /**
+   * Roles OR-combined across every matching ACL: holding any one of them
+   * satisfies this primitive. Empty means the ACL rows exist but name no role,
+   * which any authenticated caller passes — not the same as needing admin.
+   * `public` is ServiceNow's "no authentication required" marker, not a
+   * grantable role.
+   */
   roles: string[]
   source: SnRolesSource
   /** Only present when `source` is `inherited`: the ancestor table the ACL came from. */
@@ -50,14 +59,17 @@ export interface SnRolesRequirement {
   /**
    * Single roles that ALONE suffice for the whole tool — the intersection of every
    * primitive's role list, plus `admin`, which bypasses ACLs entirely. `["admin"]`
-   * on its own means no single non-admin role covers the tool.
+   * on its own means no single non-admin role covers the tool. May contain
+   * `public`, which is not a grantable role.
    */
   anyOf: string[]
   /**
    * Smallest set of roles a user needs TOGETHER to cover every primitive (greedy
-   * set-cover). `[]` means the tool needs no authenticated role at all; `["admin"]`
-   * means some primitive is admin-only. `admin` remains an implicit alternative
-   * whatever this says.
+   * set-cover over the primitives that are not `public`). `[]` means the tool needs
+   * no authenticated role at all. `["admin"]` means some primitive had nothing
+   * non-admin left in its role list — either a genuinely admin-only ACL or an ACL
+   * with no roles on it, and the rollup cannot tell you which, so read that
+   * primitive's `roles`. `admin` remains an implicit alternative whatever this says.
    */
   minimumBundle: string[]
 }

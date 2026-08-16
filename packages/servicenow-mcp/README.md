@@ -93,7 +93,8 @@ supply its own shared store.
 `sn-roles.manifest.json` answers "which ServiceNow role do I need to run this tool?" It is empirical, not
 documentation-derived: `script/probe-sn-roles` extracts every `(table, operation)` pair each tool performs,
 then resolves it against a live instance's `sys_security_acl` — the rows ServiceNow's own auth engine reads
-at request time. It ships inside the npm tarball, and the `/sn-roles` subpath types it:
+at request time. `files` ships it inside the npm tarball as of the next release — 0.2.1 and earlier did not
+contain it at all — and the `/sn-roles` subpath types it:
 
 ```ts
 import { loadSnRolesManifest } from "@serac-labs/servicenow-mcp/sn-roles"
@@ -130,16 +131,23 @@ Each tool is one of two shapes. Resolved:
 
 - **`anyOf`** — single roles that ALONE suffice for the whole tool: the intersection of every primitive's
   role list, plus `admin`, which bypasses ACLs outright. Just `["admin"]` means no single non-admin role
-  covers it.
-- **`minimumBundle`** — the smallest set of roles a user needs _together_ (greedy set-cover). `[]` means the
-  tool needs no authenticated role at all; `["admin"]` means some primitive is admin-only. `admin` stays an
-  implicit alternative either way.
+  covers it. `public` shows up here too; it is ServiceNow's "no authentication required" marker, not a role
+  anyone can be granted, so do not render it as one.
+- **`minimumBundle`** — the smallest set of roles a user needs _together_ (greedy set-cover), computed with
+  the `public` primitives dropped — which is why a tool whose every primitive is `public` comes out as `[]`,
+  needing no authenticated role at all. `["admin"]` means some primitive had nothing non-admin left in its
+  role list, and that happens two ways: a genuinely admin-only ACL, or an ACL carrying no roles at all,
+  which any authenticated caller passes. They are indistinguishable in the rollup, so check that
+  primitive's own `roles` before telling someone they need admin. `admin` stays an implicit alternative
+  either way.
 - **`primitives`** — one entry per table call the tool makes, so a table read three times appears three
-  times. `roles` is OR-combined across every matching ACL. `source` is how the ACL was found: `direct` on
-  the table, `inherited` from a `sys_db_object.super_class` ancestor (then `inheritedFrom` names it), or
-  `wildcard` from the `*` ACL. `scriptAcls` counts matching ACLs that carry a condition or advanced script —
-  above zero, the role list is necessary but may not be sufficient, because those scripts run per record and
-  the probe cannot evaluate them.
+  times. `roles` is OR-combined across every matching ACL, and an empty `roles` means the ACL rows exist but
+  name no role — any authenticated caller passes. `source` is how the ACL was found: `direct` on the table,
+  `inherited` from a `sys_db_object.super_class` ancestor (then `inheritedFrom` names it), `wildcard` from
+  the `*` ACL, or `none` — nothing matched at any level, and `roles` is then ServiceNow's implicit
+  admin-only deny, assumed rather than measured. `scriptAcls` counts matching ACLs that carry a condition or
+  advanced script — above zero, the role list is necessary but may not be sufficient, because those scripts
+  run per record and the probe cannot evaluate them.
 
 Untestable:
 
@@ -151,10 +159,11 @@ Untestable:
 }
 ```
 
-**`untestable` means "not measurable by this method", not "needs no role"** — 128 of the 428 entries are in
-this state. The extractor only sees literal `/api/now/table/<table>` endpoints passed to `client.get/post/…`,
-so tools that go through Scripted REST or another API, tools that only compute locally, and tools that build
-their table name at runtime all land here with no roles at all.
+**`untestable` means "not measurable by this method", not "needs no role"** — `stats.untestable` is how many
+entries are in this state, and it is a large share of them. The extractor only sees literal
+`/api/now/table/<table>` endpoints passed to `client.get/post/…`, so tools that go through Scripted REST or
+another API, tools that only compute locally, and tools that build their table name at runtime all land here
+with no roles at all.
 
 `stats` mirrors the run: `tools` and `untestable` are entry counts; `primitivesTotal` is the number of
 distinct `(table, operation)` pairs and `primitivesResolved` how many of them the instance answered for
@@ -169,9 +178,9 @@ and sometimes between patches, so the manifest is exact for the release it names
 elsewhere. Nothing refreshes it automatically — `probe:sn-roles` needs OAuth credentials for a live
 instance, so it is a human running it after a family upgrade and diffing the result.
 
-Tools added since the last run therefore have no entry. Today that is 9 of 437 (the `snow_fluent_*` family
-and `snow_blast_radius_sys_properties`); `src/__tests__/sn-roles.test.ts` names them and fails if that set
-changes in either direction, so the gap stays visible instead of silently growing.
+Tools added since the last run therefore have no entry — there are some today. `src/__tests__/sn-roles.test.ts`
+names the current set and fails if it changes in either direction, so the gap stays visible instead of
+silently growing.
 
 ## Published manifests — read before moving them
 

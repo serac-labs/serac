@@ -14,8 +14,8 @@
  *  3. It has to describe the same tools as `tools.json`.
  *
  * (3) is the one that has already gone wrong in this repo, on the other
- * manifest: `tools.json` sat at 429 tools while the tree had 437, missing all
- * eight `snow_fluent_*` tools for two months, because nothing compared them.
+ * manifest: `tools.json` sat at 429 tools while the tree had 437, because
+ * nothing compared them (issue #294).
  * The roles manifest is a step further out of reach — it cannot be regenerated
  * in CI at all (it reads `sys_security_acl` on a live instance), so it goes
  * stale by default. This makes the gap explicit and countable instead.
@@ -70,20 +70,24 @@ describe("the manifest is published, not just committed", () => {
     // `sn-roles.ts` reads `../sn-roles.manifest.json`, which lands on the
     // package root from `src/` here and from `dist/` in the tarball only
     // because tsconfig.build.json sets rootDir to src. Move the module a
-    // directory deeper and both layouts break; this pins the src half, and the
-    // tarball gate in .github/workflows/publish-mcp.yml pins the dist half.
+    // directory deeper and both layouts break. This pins the src half only:
+    // nothing in CI calls loadSnRolesManifest() against a built tarball, since
+    // the publish workflow's smoke gate imports the subpath and this module
+    // does no I/O at import time. The dist half was checked by hand — untar the
+    // pack and import dist/sn-roles.js under node.
     expect(snRolesManifestPath).toBe(resolve(PACKAGE_ROOT, "sn-roles.manifest.json"))
   })
 })
 
 describe("the declared types still describe the data", () => {
   test("every entry matches SnRolesResolvedTool or SnRolesUntestableTool", () => {
-    // The unions as `sn-roles.ts` declares them. `methodOp` in the probe can
-    // emit "unknown" for an HTTP verb it does not map, and a future ServiceNow
-    // release can add a resolution source, so neither union is guaranteed by
-    // its producer — this is what keeps loadSnRolesManifest()'s return type honest.
+    // The unions as `sn-roles.ts` declares them. Neither is guaranteed by its
+    // producer: `methodOp` in the probe emits "unknown" for an HTTP verb it does
+    // not map, which SnRolesOperation deliberately does not cover, and "none" is
+    // a source the probe can write but this data has no instance of. That is
+    // what keeps loadSnRolesManifest()'s return type honest across probe runs.
     const operations: SnRolesOperation[] = ["read", "create", "write", "delete"]
-    const sources: SnRolesSource[] = ["direct", "inherited", "wildcard"]
+    const sources: SnRolesSource[] = ["direct", "inherited", "wildcard", "none"]
 
     const violations = Object.entries(manifest.tools).flatMap(([name, tool]) => {
       // `in` rather than a truthiness or null check: this package compiles
@@ -119,15 +123,24 @@ describe("the declared types still describe the data", () => {
 
 describe("tools.json and the roles manifest agree on which tools exist", () => {
   test("every published tool has a roles entry, except those awaiting the next probe", () => {
-    expect(published.filter((name) => !Object.hasOwn(manifest.tools, name) && !AWAITING_PROBE.includes(name))).toEqual(
-      [],
-    )
+    // Failures name the fix rather than printing a bare array diff: this fires
+    // on whoever adds the next tool, in a test that has nothing to do with
+    // their change, and AGENTS.md is the only other place that says so.
+    expect(
+      published
+        .filter((name) => !Object.hasOwn(manifest.tools, name) && !AWAITING_PROBE.includes(name))
+        .map((name) => `${name}: no roles entry — add it to AWAITING_PROBE in this file until the next probe run`),
+    ).toEqual([])
   })
 
   test("AWAITING_PROBE holds nothing already covered, and nothing that is no longer a tool", () => {
-    expect(AWAITING_PROBE.filter((name) => Object.hasOwn(manifest.tools, name) || !published.includes(name))).toEqual(
-      [],
-    )
+    expect(
+      AWAITING_PROBE.filter((name) => Object.hasOwn(manifest.tools, name) || !published.includes(name)).map((name) =>
+        Object.hasOwn(manifest.tools, name)
+          ? `${name}: the manifest covers it now — drop it from AWAITING_PROBE`
+          : `${name}: no longer a tool — drop it from AWAITING_PROBE`,
+      ),
+    ).toEqual([])
   })
 
   test("the manifest names no tool that no longer exists", () => {
