@@ -8,7 +8,18 @@ name: Renovate
 # that talks to customer ServiceNow instances, that seemed the better trade.
 #
 # IT IS NOT FREE OF TRADE-OFFS. It needs RENOVATE_TOKEN. Fine-grained, scoped to
-# this repository: Contents read/write, Pull requests read/write, Metadata read.
+# this repository:
+#   Contents           read/write
+#   Pull requests      read/write
+#   Metadata           read        (mandatory, added automatically)
+#   Dependabot alerts  read        <- easy to miss, and the one that matters most
+#
+# Without the alerts permission Renovate logs "Cannot access vulnerability
+# alerts" as a WARNING and carries on: the run goes green, ordinary updates keep
+# flowing, and the vulnerabilityAlerts rule in renovate.json simply never fires.
+# Security PRs — the whole reason for moving off Dependabot — would silently
+# never open. The first dry run here hit exactly that.
+#
 # Classic equivalent: `public_repo` alone — NOT full `repo`, which would also
 # reach private repositories this token has no business in.
 #
