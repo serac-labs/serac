@@ -58,11 +58,12 @@ existing skill. Pick one and say so in a comment before you start. For a domain
 that is not on that list, open an issue first — the label means a maintainer
 already agreed the guide is wanted, which is the whole point of it.
 
-A skill is one directory holding one `SKILL.md`, and it opens with frontmatter:
+A skill is one directory holding one `SKILL.md`, and it opens with frontmatter
+whose `name` is the directory name:
 
 ```yaml
 ---
-name: on-call-rotations # must equal the directory name
+name: on-call-rotations
 description: One line. This is what an agent reads when deciding to load it.
 tools:
   - snow_oncall_manage
