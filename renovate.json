@@ -1,0 +1,77 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "description": [
+    "Replaces Dependabot, which cannot land a PR in this repo at all: it updates",
+    "package.json but not bun.lock, so `bun install --frozen-lockfile` fails before",
+    "a single test runs. Both of its security PRs (axios, hono) were stuck that way",
+    "until they were applied by hand in #282. Renovate runs the package manager",
+    "itself, so the lockfile moves with the manifest.",
+    "",
+    "There are TWO lockfiles and that is deliberate: the root bun.lock for the",
+    "workspace, and packages/servicenow-mcp/bun.lock which the publish workflow's",
+    "standalone gate uses to prove the package still builds lifted out of the",
+    "monorepo. Both must move together or that gate fails \u2014 which is exactly what",
+    "happened when only the root one was refreshed."
+  ],
+  "timezone": "Europe/Amsterdam",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "prConcurrentLimit": 5,
+  "labels": [
+    "dependencies"
+  ],
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": [
+      "before 6am on the first day of the month"
+    ]
+  },
+  "vulnerabilityAlerts": {
+    "enabled": true,
+    "labels": [
+      "dependencies",
+      "security"
+    ],
+    "schedule": null,
+    "prCreation": "immediate",
+    "minimumReleaseAge": null
+  },
+  "packageRules": [
+    {
+      "description": "Group the low-risk updates into one PR a week. This repo is two packages and about a dozen dependencies; a PR per patch bump is more review than the risk deserves.",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "non-major dependencies"
+    },
+    {
+      "description": "Majors stay separate and are never automatic. axios and hono are how this server reaches customer ServiceNow instances, and @modelcontextprotocol/sdk is the wire protocol \u2014 a major there is a behaviour change, not a bump.",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "dependencyDashboardApproval": true
+    },
+    {
+      "description": "Let a release settle before adopting it, except for advisories, which vulnerabilityAlerts above exempts.",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "GitHub Actions are reported on the dashboard, never opened as PRs. Renovate would need the `workflow` scope to push a change under .github/workflows, and a long-lived token that can rewrite CI is a meaningful escalation \u2014 whoever holds it could redirect a build to exfiltrate secrets. Action bumps are rare enough to do by hand; the dashboard makes sure we still hear about them.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "dependencyDashboardApproval": true
+    }
+  ],
+  "dependencyDashboard": true,
+  "dependencyDashboardTitle": "Dependency dashboard"
+}
