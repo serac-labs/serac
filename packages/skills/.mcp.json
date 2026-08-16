@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "servicenow": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "--package=@serac-labs/servicenow-mcp", "servicenow-mcp-stdio"]
+    }
+  }
+}

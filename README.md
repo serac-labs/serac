@@ -68,6 +68,20 @@ tool_execute({tool: "snow_query_incidents", args: {query: "priority=1"}})
 Set `SNOW_LAZY_TOOLS=false` to register the whole catalog up front instead. Full options, library usage and
 the multi-tenancy rules are in the [package README](packages/servicenow-mcp/README.md).
 
+### As a Claude Code plugin
+
+The repository is also a plugin marketplace, so the server and all 57 skills arrive in one step:
+
+```
+/plugin marketplace add serac-labs/serac
+/plugin install servicenow@serac
+```
+
+The server runs through `npx`, so nothing has to be installed first: export `SNOW_INSTANCE_URL`,
+`SNOW_CLIENT_ID` and `SNOW_CLIENT_SECRET` and it is ready. Cursor and VS Code pick up the same server from
+[`.mcp.json`](.mcp.json) at the repo root; Windsurf reads only its own global config, so paste the entry
+into `~/.codeium/windsurf/mcp_config.json`.
+
 ### Using the skills
 
 A skill is a directory with a `SKILL.md`: YAML frontmatter naming the skill and the `snow_*` tools it

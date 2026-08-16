@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "serac",
+  "owner": {
+    "name": "Serac Labs",
+    "url": "https://github.com/serac-labs"
+  },
+  "description": "The ServiceNow MCP server and skill guides from serac-labs/serac.",
+  "plugins": [
+    {
+      "name": "servicenow",
+      "source": "./packages/skills",
+      "displayName": "ServiceNow",
+      "description": "437 snow_* MCP tools for ServiceNow, plus the 57 skill guides that teach an agent to use them.",
+      "author": {
+        "name": "Serac Labs",
+        "url": "https://github.com/serac-labs"
+      },
+      "homepage": "https://serac.build",
+      "repository": "https://github.com/serac-labs/serac",
+      "license": "Apache-2.0",
+      "category": "integrations",
+      "keywords": ["servicenow", "mcp", "itsm", "glide", "skills"]
+    }
+  ]
+}

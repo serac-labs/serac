@@ -33,6 +33,21 @@ This exists for consumers with no source filesystem alongside them — a bundled
 single file, a `bun build --compile` binary, a serverless deploy. It is
 generated: do not edit `src/embedded.ts` by hand.
 
+## This directory is also the Claude Code plugin
+
+`/plugin install servicenow@serac` installs *this* directory: the marketplace
+entry at the repo root points its `source` here, `.claude-plugin/plugin.json`
+declares `"skills": ["."]`, and `.mcp.json` names the MCP server the skills
+expect. Claude Code then scans the plugin root with the same rule the portal
+uses — top-level directory containing a `SKILL.md` — so `src/`, `script/` and
+`test/` are ignored and every skill ships without a copy step to go stale.
+
+The manifest deliberately carries no `version`: without one, Claude Code
+versions the plugin by commit SHA, so a skill edit reaches installed users when
+it lands. With one, they get the edit when someone remembers to bump a number
+nothing else in this repo reads. `claude plugin validate` warns about the
+missing field; that warning is the trade.
+
 ## After changing a skill
 
 ```
