@@ -17,7 +17,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { MCPPromptManager } from "../../shared/mcp-prompt-manager.js"
 import { toolRegistry } from "../shared/tool-registry.js"
 import { authManager } from "../shared/auth.js"
-import { ToolSearch, extractKeywords } from "../shared/tool-search.js"
+import { ToolSearch, buildToolIndex } from "../shared/tool-search.js"
 import { mcpDebug, mcpWarn } from "../../shared/mcp-debug.js"
 import { extractJWTPayload } from "../shared/permission-validator.js"
 import { createServer } from "../shared/server-factory.js"
@@ -200,17 +200,12 @@ const bootstrap = async (
 
     // Populate ToolSearch index for session-based tool enabling
     mcpDebug("[Server] Building tool search index...")
-    const allTools = toolRegistry.getToolDefinitions()
-    const toolIndexEntries = allTools.map((tool) => {
-      const registeredTool = toolRegistry.getTool(tool.name)
-      return {
-        id: tool.name,
-        description: tool.description.substring(0, 200),
-        category: registeredTool?.domain || "unknown",
-        keywords: extractKeywords(tool.name, tool.description),
-        deferred: true, // All tools are deferred in lazy mode
-      }
-    })
+    // Everything is deferred in lazy mode: tool_search is the only way in.
+    const toolIndexEntries = buildToolIndex(
+      toolRegistry.getToolDefinitions(),
+      (name) => toolRegistry.getTool(name)?.domain || "unknown",
+      true,
+    )
     ToolSearch.registerTools(toolIndexEntries)
     mcpDebug(`[Server] Tool search index populated with ${toolIndexEntries.length} tools`)
 

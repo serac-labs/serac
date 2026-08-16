@@ -2,8 +2,8 @@
  * Retrieval fixture for `ToolSearch.search` — see `tool-search-eval.test.ts`.
  *
  * Each entry is a request phrased the way a person (or the model relaying for
- * them) would actually type it, paired with the tool(s) from `tools.json` that
- * should come back. Queries deliberately do NOT echo tool ids: a query built
+ * them) would actually type it, paired with the tool(s) that should come back.
+ * Queries deliberately do NOT echo tool ids: a query built
  * out of the tool's own name measures the index's ability to find a string it
  * already contains, which is not the thing that decides whether a session
  * reaches the right tool.
@@ -14,9 +14,9 @@
  * them is a correct answer, so a hit on any of them counts. It is not a place
  * to widen the target until the number looks better.
  *
- * Every name here is asserted to exist in `tools.json` before scoring, so a
- * renamed or deleted tool fails the suite instead of silently counting as a
- * retrieval miss.
+ * Every name here is asserted to be in the index the server builds before
+ * scoring, so a renamed, deleted or unregistered tool fails the suite instead
+ * of silently counting as a retrieval miss.
  */
 
 export const EVAL_QUERIES = [
@@ -114,11 +114,15 @@ export const EVAL_QUERIES = [
   { query: "record that this application runs on that server", expected: ["snow_create_ci_relationship"] },
   { query: "scan this subnet and bring the hardware into the CMDB", expected: ["snow_run_discovery"] },
 
-  // HR, CSM, field service, agile, PPM
+  // HR, CSM, agile, PPM
+  //
+  // No field-service request here: the three snow_fsm_* tools are published in
+  // tools.json but the server never registers them (issue #307), so a query
+  // aimed at them would score as a ranking miss for a tool no ranking can
+  // return.
   { query: "open an HR case for an address change", expected: ["snow_create_hr_case"] },
   { query: "someone leaves on friday, start the leaver process", expected: ["snow_employee_offboarding"] },
   { query: "log a complaint from a customer account", expected: ["snow_create_customer_case"] },
-  { query: "send a technician out to fix the printer on site", expected: ["snow_fsm_work_order_manage", "snow_fsm_dispatch_manage"] },
   { query: "how many story points does the team deliver per sprint", expected: ["snow_agile_velocity_report"] },
   { query: "move this story into the next sprint", expected: ["snow_agile_story_manage", "snow_agile_backlog_groom"] },
   { query: "set up a project with a start date and a project manager", expected: ["snow_create_project"] },

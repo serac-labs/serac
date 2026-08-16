@@ -19,7 +19,7 @@
  */
 
 import { toolRegistry } from "../shared/tool-registry.js"
-import { ToolSearch, extractKeywords } from "../shared/tool-search.js"
+import { ToolSearch, buildToolIndex } from "../shared/tool-search.js"
 import { createHttpApp } from "./http.js"
 import { createHttpResolver } from "./http-resolver.js"
 import { mcpDebug, mcpWarn } from "../../shared/mcp-debug.js"
@@ -59,22 +59,15 @@ async function main(): Promise<void> {
   // index + SNOW_LAZY_TOOLS defaulting to on, and filters everything except
   // the two meta tools (tool_search / tool_execute) — which makes the LLM
   // think ServiceNow is read-only.
-  const allTools = toolRegistry.getToolDefinitions()
-  const toolIndexEntries = allTools.map((tool) => {
-    const registeredTool = toolRegistry.getTool(tool.name)
-    return {
-      id: tool.name,
-      description: tool.description.substring(0, 200),
-      category: registeredTool?.domain || "unknown",
-      keywords: extractKeywords(tool.name, tool.description),
-      // HTTP callers (portal chat) do their own token budgeting + tool
-      // enablement on the client side. Marking everything non-deferred
-      // here means `listTools` returns the full catalog so the portal's
-      // tool_search overlay can match against write/deploy tools, not
-      // just the two meta tools.
-      deferred: false,
-    }
-  })
+  // HTTP callers (portal chat) do their own token budgeting + tool enablement
+  // on the client side. Marking everything non-deferred here means `listTools`
+  // returns the full catalog so the portal's tool_search overlay can match
+  // against write/deploy tools, not just the two meta tools.
+  const toolIndexEntries = buildToolIndex(
+    toolRegistry.getToolDefinitions(),
+    (name) => toolRegistry.getTool(name)?.domain || "unknown",
+    false,
+  )
   ToolSearch.registerTools(toolIndexEntries)
   mcpDebug(`[mcp-http] tool search index populated with ${toolIndexEntries.length} tools`)
 

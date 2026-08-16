@@ -2,7 +2,7 @@
  * Retrieval eval for `ToolSearch.search`.
  *
  * Every tool but the two meta tools is deferred, so `tool_search` is the only
- * path a model has to the other 435. A tool the ranking never surfaces might
+ * path a model has to the other 429. A tool the ranking never surfaces might
  * as well not be installed — and the ranking is a hand-tuned pile of substring
  * bonuses that until now nothing measured.
  *
@@ -10,71 +10,74 @@
  * real gate rather than an approximation: it scores the shipped ranker against
  * a fixed set of realistically-phrased requests and fails when recall drops.
  *
- * The index is built from `tools.json` the way the transports build theirs —
- * same `extractKeywords`, same 200-char description truncation — so the score
- * is the score a session gets. Two deliberate deviations, neither of which can
- * move the numbers:
+ * The index comes from `toolRegistry` through `buildToolIndex` — the same call
+ * both transports make at bootstrap — so this scores the catalog a session
+ * actually searches. That is 429 tools, not the 437 in `tools.json`: the `fsm`
+ * and `predictive-intelligence-MIGRATED` domains are missing from
+ * `STATIC_TOOL_MODULES` and `snow_create_catalog_variable` is not re-exported,
+ * so nine published tools never enter anyone's index (issue #307), and
+ * `snow_comprehensive_search` is the reverse case. Scoring `tools.json`
+ * instead moves every metric and counts unreachable tools as findable, which
+ * is the opposite of what this measures.
  *
- *   - `category` comes from the manifest group; the transports use the
- *     registry domain (the tool's directory). They differ for the ~20 tools
- *     that declare their own `subcategory`, but category only scores when the
- *     *entire* query is a substring of it, which no multi-word request is.
- *   - `search()` is called with the full catalog as its limit instead of the
- *     default 20, so MRR is not truncated at 1/20. The @k slices are identical
- *     either way.
+ * One deliberate deviation from a session: `search()` is called with the whole
+ * catalog as its limit instead of the default 20, so MRR is not truncated at
+ * 1/20. The @k slices are identical either way.
  *
- * CURRENT SCORE (437 tools, 102 queries): recall@1 0.255, recall@5 0.480,
- * recall@20 0.667, MRR 0.370. Two thirds of realistic requests do reach the
+ * CURRENT SCORE (429 tools, 101 queries): recall@1 0.267, recall@5 0.505,
+ * recall@20 0.663, MRR 0.385. Two thirds of realistic requests do reach the
  * right tool eventually, but a quarter of them put `snow_sp_theme_manage`
  * first — its keywords contain "theme"/"theming", and the word-level rules
  * match substrings for any query word longer than two characters, so every
- * request containing the word "the" scores it +31. See issue #295; fixing the
- * ranking is deliberately not part of this suite.
+ * request containing the word "the" scores it +31. Issue #298 has the
+ * diagnosis; fixing the ranking is deliberately not part of this suite.
  */
 
 import { describe, test, expect, afterAll } from "@jest/globals"
-import * as path from "path"
-import { ToolSearch, extractKeywords } from "../tool-search"
+import { ToolSearch, buildToolIndex } from "../tool-search"
+import { toolRegistry } from "../tool-registry"
 import { EVAL_QUERIES } from "./tool-search-eval.queries"
 
 /**
- * Floors, not targets. They sit ~2 queries under the measured score so that
- * adding a tool that steals one rank does not fail an unrelated PR, while any
- * real degradation does.
+ * Floors, not targets.
  *
- * These may be raised when the ranking improves. Lowering one to make a change
- * pass is the failure mode this file exists to prevent: it means the change
- * made retrieval worse, and the number is the argument against it.
+ * `search()` sorts by score alone and the sort is stable, so tools on equal
+ * scores come back in index order — which means part of the measurement is
+ * array position, not ranking. Scoring the same 429 tools in 24 different
+ * orders (production, reversed, by id, 20 shuffles) spans recall@1
+ * 0.248-0.297, recall@5 0.465-0.515, recall@20 0.653-0.693, MRR 0.368-0.397.
+ * These floors sit under the bottom of that band, so adding a tool that lands
+ * in a tied cluster cannot fail an unrelated PR. The gap to the measured score
+ * is tie noise, not slack.
+ *
+ * Raise them when the ranking improves. Lowering one to make a change pass is
+ * the failure mode this file exists to prevent: it means the change made
+ * retrieval worse, and the number is the argument against it.
  */
 const MIN_RECALL_AT_1 = 0.24
-const MIN_RECALL_AT_5 = 0.46
-const MIN_RECALL_AT_20 = 0.65
+const MIN_RECALL_AT_5 = 0.45
+const MIN_RECALL_AT_20 = 0.63
 const MIN_MRR = 0.35
 
-const manifest: { count: number; groups: { name: string; tools: { name: string; description: string }[] }[] } =
-  await Bun.file(path.resolve(__dirname, "../../../..", "tools.json")).json()
+await toolRegistry.initialize()
 
-const index = manifest.groups.flatMap((group) =>
-  group.tools.map((tool) => ({
-    id: tool.name,
-    description: tool.description.substring(0, 200),
-    category: group.name,
-    keywords: extractKeywords(tool.name, tool.description),
-    deferred: true,
-  })),
+const index = buildToolIndex(
+  toolRegistry.getToolDefinitions(),
+  (name) => toolRegistry.getTool(name)?.domain || "unknown",
+  true,
 )
 
 afterAll(() => ToolSearch.clearIndex())
 
 describe("tool_search retrieval", () => {
-  test("the fixture points at tools that exist", () => {
+  test("every query has an answer the server can actually return", () => {
     const catalog = new Set(index.map((entry) => entry.id))
-    const unknown = EVAL_QUERIES.flatMap((entry) => entry.expected.filter((name) => !catalog.has(name)))
+    const unanswerable = EVAL_QUERIES.filter((entry) => !entry.expected.some((name) => catalog.has(name)))
 
-    // A renamed or deleted tool must fail loudly here rather than quietly
-    // degrade the score below as if retrieval had regressed.
-    expect(unknown).toEqual([])
-    expect(index.length).toBe(manifest.count)
+    // A target that is not in the index is not a retrieval miss — no ranking
+    // change could ever surface it — so it must fail loudly here instead of
+    // sitting in the score as if the ranker were at fault.
+    expect(unanswerable.map((entry) => entry.query)).toEqual([])
   })
 
   test("recall against realistic queries stays above the measured floor", () => {

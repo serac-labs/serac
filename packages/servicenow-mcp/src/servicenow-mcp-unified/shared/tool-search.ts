@@ -43,15 +43,53 @@ import { STDIO_TENANT } from "./tenant-scope.js"
 export { STDIO_TENANT, resolveTenantScope, tenantScopedKey } from "./tenant-scope.js"
 
 /**
+ * Tool index entry - lightweight representation for search
+ */
+export interface ToolIndexEntry {
+  id: string
+  description: string
+  category: string
+  keywords: string[]
+  deferred: boolean
+}
+
+/**
+ * Build the index the transports register at bootstrap.
+ *
+ * `stdio.ts` and `http-entry.ts` each carried their own copy of this mapping,
+ * and the retrieval eval needs the same one. Either copy drifting — a
+ * different truncation length, a field the ranker reads that only one of them
+ * fills — silently changes what a session can find, and nothing fails.
+ *
+ * `deferred` is the one thing the callers genuinely disagree on: stdio defers
+ * the whole catalog so `tool_search` is the only way in, HTTP marks it
+ * available because the portal budgets tools itself. It does not affect
+ * ranking. Note that keywords come from the untruncated description even
+ * though the indexed description is cut at 200 chars.
+ */
+export function buildToolIndex(
+  tools: { name: string; description: string }[],
+  categoryOf: (name: string) => string,
+  deferred: boolean,
+): ToolIndexEntry[] {
+  return tools.map((tool) => ({
+    id: tool.name,
+    description: tool.description.substring(0, 200),
+    category: categoryOf(tool.name),
+    keywords: extractKeywords(tool.name, tool.description),
+    deferred,
+  }))
+}
+
+/**
  * Derive the search keywords for a tool from its name and description.
  *
- * Lived as a private copy in both `transports/stdio.ts` and
- * `transports/http-entry.ts` — the http-entry copy carried a comment saying it
- * mirrored the stdio one, which is the sort of pairing that drifts. It sits
- * here now because it is what fills the `keywords` field below, and because
- * the retrieval eval has to score the same keywords the transports index.
+ * Lived as a private copy in both transports — the http-entry copy carried a
+ * comment saying it mirrored the stdio one, which is the sort of pairing that
+ * drifts. `src/enterprise-proxy/tool-cache.ts` has a genuinely different one
+ * for non-`snow_` tools; that is not this.
  */
-export function extractKeywords(name: string, description: string): string[] {
+function extractKeywords(name: string, description: string): string[] {
   const keywords = new Set<string>()
 
   // snow_query_incidents -> query, incidents
@@ -70,17 +108,6 @@ export function extractKeywords(name: string, description: string): string[] {
   for (const word of descWords.slice(0, 10)) keywords.add(word)
 
   return Array.from(keywords)
-}
-
-/**
- * Tool index entry - lightweight representation for search
- */
-export interface ToolIndexEntry {
-  id: string
-  description: string
-  category: string
-  keywords: string[]
-  deferred: boolean
 }
 
 /**
