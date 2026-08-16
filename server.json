@@ -1,0 +1,52 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.serac-labs/servicenow-mcp",
+  "title": "Serac ServiceNow",
+  "description": "400+ ServiceNow tools over stdio or streamable HTTP, plus blast-radius impact analysis",
+  "version": "0.2.1",
+  "websiteUrl": "https://docs.serac.build",
+  "repository": {
+    "url": "https://github.com/serac-labs/serac",
+    "source": "github",
+    "id": "1020628118",
+    "subfolder": "packages/servicenow-mcp"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@serac-labs/servicenow-mcp",
+      "version": "0.2.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "SNOW_INSTANCE",
+          "description": "ServiceNow instance, e.g. dev12345.service-now.com. SERVICENOW_INSTANCE_URL is also read.",
+          "format": "string",
+          "isRequired": true,
+          "placeholder": "dev12345.service-now.com"
+        },
+        {
+          "name": "SNOW_CLIENT_ID",
+          "description": "Client ID of an OAuth entry under System OAuth > Application Registry on the instance.",
+          "format": "string",
+          "isRequired": true
+        },
+        {
+          "name": "SNOW_CLIENT_SECRET",
+          "description": "Client secret of that same OAuth application registry entry.",
+          "format": "string",
+          "isRequired": true,
+          "isSecret": true
+        },
+        {
+          "name": "SNOW_LAZY_TOOLS",
+          "description": "false registers all tools up front. Default defers them behind tool_search/tool_execute.",
+          "format": "boolean",
+          "default": "true"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+name: Publish to MCP Registry
+
+# Lists @serac-labs/servicenow-mcp in the official MCP registry
+# (registry.modelcontextprotocol.io) by uploading the repo-root server.json.
+# The registry stores metadata only — the artifact stays on npm, published by
+# publish-mcp.yml.
+#
+# WHY THIS IS A SECOND FILE AND NOT A STEP IN publish-mcp.yml
+#   1. npm binds a Trusted Publisher to owner + repo + workflow FILENAME, so
+#      publish-mcp.yml cannot be renamed and every edit to it risks the one
+#      credential path that has no fallback. Nothing here needs to touch it.
+#   2. Ordering forces the split anyway. The registry validates the npm package
+#      before it will accept the server: it fetches
+#      registry.npmjs.org/@serac-labs/servicenow-mcp/<version> and demands an
+#      `mcpName` there equal to the server name. The version must therefore
+#      already be live on npm when this runs, which a step appended to the npm
+#      publish cannot guarantee — it would race npm's own propagation.
+#   3. A workflow_run chain off publish-mcp.yml would fire on its dry runs and
+#      on forks too, and would publish under whoever happened to dispatch the
+#      npm release. Two dispatches in order — npm first, registry second — keep
+#      each release attributable and independently re-runnable.
+#
+#   The cost of the split is honest: releasing is now two dispatches instead of
+#   one, and a maintainer can forget the second. The pre-flight below makes the
+#   forgotten-first-half case loud; nothing detects the forgotten second half
+#   except the registry listing being a version behind, which is a stale
+#   listing rather than a broken install.
+#
+# TRIGGER: workflow_dispatch to publish. pull_request runs the drift gate only,
+# on the PRs that can introduce drift, so a server.json that disagrees with the
+# package manifest is caught on the PR instead of at release time.
+#
+# AUTH: GitHub OIDC, no secret. The registry grants io.github.<repository
+# owner>/* straight from the OIDC claim, which is why the server is named
+# io.github.serac-labs/servicenow-mcp. The alternative — a PAT in a secret —
+# would be a long-lived credential able to overwrite EVERY server under
+# io.github.serac-labs/*, reachable by anyone who can cause a job to run.
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Gate and validate, but stop before publishing to the registry"
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - "server.json"
+      - "packages/servicenow-mcp/package.json"
+      - "packages/servicenow-mcp/script/check-registry-manifest.ts"
+      - ".github/workflows/publish-mcp-registry.yml"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  # Same reasoning as publish-mcp.yml: a publish is not idempotent (the
+  # registry rejects a version it already holds), so a live release must never
+  # be cancelled from under itself. PR verification is disposable.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: gate and publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # OIDC token for `mcp-publisher login github-oidc`
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      # Runs on both paths. server.json repeats the version, the package name
+      # and the server name from packages/servicenow-mcp/package.json, and all
+      # of it is hand-maintained — see the script's header for what each
+      # mismatch costs.
+      - name: Gate — server.json agrees with the package manifest
+        run: bun run --cwd packages/servicenow-mcp check:registry-manifest
+
+      - name: Read version from packages/servicenow-mcp/package.json
+        id: version
+        # The same single version source publish-mcp.yml uses. The gate above
+        # has already proven server.json carries this exact value, so reading
+        # it from the package manifest here is not a third opinion.
+        run: |
+          set -euo pipefail
+          echo "version=$(node -p "require('./packages/servicenow-mcp/package.json').version")" >> "$GITHUB_OUTPUT"
+          echo "name=$(node -p "require('./packages/servicenow-mcp/package.json').mcpName")" >> "$GITHUB_OUTPUT"
+
+      - name: Install mcp-publisher
+        # Deliberately `latest` rather than pinned: the registry rejects tokens
+        # minted by an out-of-date CLI with "invalid audience", so a pin here
+        # would break the release the next time the audience contract moves.
+        run: |
+          set -euo pipefail
+          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+          ./mcp-publisher --help > /dev/null
+
+      - name: Validate server.json against the registry's own schema
+        # Exhaustive server-side validation, no authentication involved. It
+        # reports every issue at once with JSON paths, and catches what the
+        # local gate cannot — field lengths, enum values, transport shapes.
+        run: ./mcp-publisher validate server.json
+
+      # Only on the publish path: between releases the npm version in the
+      # manifest is legitimately not on npm yet, and failing PRs for that would
+      # be noise.
+      - name: Pre-flight — the version is on npm and carries mcpName
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          NAME: ${{ steps.version.outputs.name }}
+        # Exactly the check the registry runs before it accepts the server, run
+        # first so the failure names the cause. Without it, dispatching this
+        # before the npm release fails inside the registry with a bare
+        # "Registry validation failed for package".
+        run: |
+          set -euo pipefail
+          META=$(curl -fsS "https://registry.npmjs.org/@serac-labs/servicenow-mcp/$VERSION" 2>/dev/null || true)
+          if [ -z "$META" ]; then
+            echo "::error::@serac-labs/servicenow-mcp@$VERSION is not on npm. Dispatch publish-mcp.yml first — the registry validates the package before it will accept the server."
+            exit 1
+          fi
+          PUBLISHED_MCP_NAME=$(printf '%s' "$META" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).mcpName ?? ''")
+          if [ "$PUBLISHED_MCP_NAME" != "$NAME" ]; then
+            echo "::error::the published @serac-labs/servicenow-mcp@$VERSION declares mcpName '$PUBLISHED_MCP_NAME', not '$NAME'. Ownership verification will fail, and an npm version is immutable — this version can never be registered. Ship the corrected manifest in the next npm release and register that one."
+            exit 1
+          fi
+          echo "@serac-labs/servicenow-mcp@$VERSION is on npm and declares mcpName $NAME"
+
+      - name: Authenticate to the MCP Registry (OIDC)
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true && github.repository == 'serac-labs/serac'
+        run: ./mcp-publisher login github-oidc
+
+      - name: Publish server.json to the MCP Registry
+        # No continue-on-error, for the reason spelled out in publish-mcp.yml:
+        # a publish that cannot happen must turn the run red.
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true && github.repository == 'serac-labs/serac'
+        run: ./mcp-publisher publish server.json
+
+      - name: Verify the registry serves the version
+        if: github.event_name == 'workflow_dispatch' && inputs.dry_run != true && github.repository == 'serac-labs/serac'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          NAME: ${{ steps.version.outputs.name }}
+        # The publish call reporting success is not the same as the listing
+        # existing — read it back the way a user's client would.
+        run: |
+          set -euo pipefail
+          ENCODED=${NAME/\//%2F}
+          curl -fsS "https://registry.modelcontextprotocol.io/v0/servers/$ENCODED/versions/$VERSION" > /dev/null
+          echo "$NAME@$VERSION is live at registry.modelcontextprotocol.io"
+
+      - name: Summary (nothing published)
+        if: github.event_name != 'workflow_dispatch' || inputs.dry_run == true || github.repository != 'serac-labs/serac'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          NAME: ${{ steps.version.outputs.name }}
+        run: echo "$NAME@$VERSION gated and validated. Not published (pull request, dry run, or fork)."
