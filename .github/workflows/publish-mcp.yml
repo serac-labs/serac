@@ -229,7 +229,15 @@ jobs:
           tar -cf - --exclude=node_modules --exclude=dist . | tar -xf - -C "$STANDALONE"
           cd "$STANDALONE"
           test ! -e ../package.json || { echo "::error::standalone dir has a parent manifest; the test is meaningless"; exit 1; }
-          bun install --frozen-lockfile
+          # Resolve fresh rather than from a committed lockfile. The package
+          # ships only dist/ and src/agent-fragments (see `files`), so no
+          # lockfile ever reaches a consumer — they resolve the ranges in
+          # package.json themselves, which is exactly what this now reproduces.
+          # A committed standalone lockfile pinned nothing a user gets and cost
+          # us the dependency automation: with two bun projects overlapping,
+          # Renovate updated neither lockfile on a workspace-member bump
+          # (serac-labs/serac#285), the same way Dependabot could not.
+          bun install
           bun run typecheck
           bun run build
           bun test
