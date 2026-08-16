@@ -41,6 +41,12 @@ const PACKAGE = {
   name: "@serac-labs/servicenow-mcp",
   version: "0.2.1",
   mcpName: "io.github.serac-labs/servicenow-mcp",
+  repository: { type: "git", url: "git+https://github.com/serac-labs/serac.git" },
+  bin: {
+    "servicenow-mcp": "./src/servicenow-mcp-unified/index.ts",
+    "servicenow-mcp-stdio": "./src/servicenow-mcp-unified/index.ts",
+    "servicenow-mcp-enterprise-proxy": "./src/enterprise-proxy/index.ts",
+  },
 }
 
 const fixture = async (server: unknown, pkg: unknown) => {
@@ -95,6 +101,53 @@ describe("server.json / package.json drift", () => {
 
     expect(problems).toHaveLength(1)
     expect(problems[0]).toContain("io.github.serac-labs/")
+  })
+
+  // The failure this repo actually shipped into: the package had only
+  // servicenow-mcp-stdio and servicenow-mcp-enterprise-proxy, so `npx -y
+  // @serac-labs/servicenow-mcp@0.2.1` — the command a registry entry with no
+  // runtimeArguments means — died with "could not determine executable to run"
+  // while every other check here stayed green.
+  test("bins npx cannot choose between are reported", async () => {
+    const problems = await registryManifestProblems(
+      await fixture(SERVER, {
+        ...PACKAGE,
+        bin: {
+          "servicenow-mcp-stdio": "./src/servicenow-mcp-unified/index.ts",
+          "servicenow-mcp-enterprise-proxy": "./src/enterprise-proxy/index.ts",
+        },
+      }),
+    )
+
+    expect(problems).toHaveLength(1)
+    expect(problems[0]).toContain(`npx -y @serac-labs/servicenow-mcp@0.2.1`)
+  })
+
+  // npm's other resolution path: several names for one file is unambiguous, so
+  // the checker must not demand a bin named after the package in that case.
+  test("bins that all point at one file resolve without a name match", async () => {
+    const aliases = { stdio: "./src/index.ts", "servicenow-mcp-stdio": "./src/index.ts" }
+
+    expect(await registryManifestProblems(await fixture(SERVER, { ...PACKAGE, bin: aliases }))).toEqual([])
+  })
+
+  // A client told to run something other than the bare package is not subject
+  // to npm's guess, so the bin shape stops being this checker's business.
+  test("an entry with runtimeArguments is not held to npx bin resolution", async () => {
+    const explicit = {
+      ...SERVER,
+      packages: [
+        {
+          ...SERVER.packages[0],
+          runtimeHint: "npx",
+          runtimeArguments: [{ type: "positional", valueHint: "bin", value: "servicenow-mcp-stdio" }],
+        },
+      ],
+    }
+
+    expect(
+      await registryManifestProblems(await fixture(explicit, { ...PACKAGE, bin: { a: "./a.ts", b: "./b.ts" } })),
+    ).toEqual([])
   })
 
   test("a missing server.json fails rather than reporting a clean run", async () => {

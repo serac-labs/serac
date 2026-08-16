@@ -18,10 +18,17 @@
  *     mismatch is not a warning, it is a rejected release.
  *   - the npm package NAME, repeated as `packages[].identifier`.
  *   - the NAMESPACE. GitHub OIDC grants `io.github.<repository owner>/*` and
- *     nothing else, so a server name outside the owner in `repository.url`
+ *     nothing else, so a server name outside this package's repository owner
  *     cannot be published from this repo's Actions at all. `mcp-publisher
  *     validate` does NOT catch this — a bare `serac-labs/servicenow-mcp`
  *     satisfies the schema pattern and fails only at publish time.
+ *
+ * And one thing that is not written down twice but is just as easy to break:
+ * an npm entry with no `runtimeArguments` says "run `npx -y <identifier>@<v>`",
+ * and npx can only resolve that when `bin` names the unscoped package or every
+ * bin points at one file. Two differently-named bins and npx refuses with
+ * "could not determine executable to run" — a listing that publishes, reads
+ * back green, and cannot start. Renaming a bin is enough to cause it.
  *
  * Run:
  *   bun run --cwd packages/servicenow-mcp check:registry-manifest
@@ -46,11 +53,20 @@ export const registryManifestProblems = async (repoRoot: string): Promise<string
     .catch(() => undefined)
   if (!pkg) return [`${packagePath} is missing or is not valid JSON`]
 
-  // The owner segment of the repository URL is what the OIDC token's
-  // `repository_owner` claim will say, which is what the registry turns into a
-  // namespace grant.
-  const owner = server.repository?.url?.split("github.com/")[1]?.split("/")[0]
+  // Read the owner from the PACKAGE manifest, not from server.json's own
+  // repository.url: npm's trusted publisher binds the published package to
+  // this repository, so this URL cannot quietly name someone else, whereas a
+  // server.json that renamed itself and its own repository.url together would
+  // agree with itself all the way to the publish attempt.
+  const owner = pkg.repository?.url?.split("github.com/")[1]?.split("/")[0]
   const npm = server.packages?.filter((entry) => entry.registryType === "npm") ?? []
+
+  // npm's rule, from libnpmexec/lib/get-bin-from-manifest.js: it runs the one
+  // bin when every bin points at the same file, otherwise the bin named after
+  // the unscoped package, otherwise it refuses to guess.
+  const bin = pkg.bin ?? {}
+  const unscoped = pkg.name?.split("/").at(-1) ?? ""
+  const npxResolves = new Set(Object.values(bin)).size === 1 || bin[unscoped] !== undefined
 
   return [
     server.version === pkg.version
@@ -61,7 +77,7 @@ export const registryManifestProblems = async (repoRoot: string): Promise<string
       : `ownership: package.json mcpName "${pkg.mcpName}" is not server.json name "${server.name}". The registry reads mcpName off the published npm manifest and rejects the publish when they differ.`,
     owner && server.name?.startsWith(`io.github.${owner}/`)
       ? undefined
-      : `namespace: server.json name "${server.name}" is not under "io.github.${owner}/", the owner in repository.url "${server.repository?.url}". GitHub OIDC grants that namespace and no other.`,
+      : `namespace: server.json name "${server.name}" is not under "io.github.${owner}/", the owner in package.json repository.url "${pkg.repository?.url}". GitHub OIDC grants that namespace and no other.`,
     npm.length > 0
       ? undefined
       : `packages: server.json declares no npm package, so the registry listing would have no install path.`,
@@ -72,6 +88,9 @@ export const registryManifestProblems = async (repoRoot: string): Promise<string
       entry.version === pkg.version
         ? undefined
         : `packages: "${entry.identifier}" is pinned to "${entry.version}", package.json says "${pkg.version}". The registry validates that exact version on npm.`,
+      entry.runtimeArguments || npxResolves
+        ? undefined
+        : `packages: "npx -y ${entry.identifier}@${entry.version}" — the command an npm entry without runtimeArguments asks a client to run — cannot pick a binary out of bins ${Object.keys(bin).join(", ")}. npm needs one named "${unscoped}", or every bin on one file.`,
     ]),
   ].filter((problem): problem is string => problem !== undefined)
 }
@@ -79,11 +98,16 @@ export const registryManifestProblems = async (repoRoot: string): Promise<string
 type ServerManifest = {
   name?: string
   version?: string
-  repository?: { url?: string }
-  packages?: { registryType?: string; identifier?: string; version?: string }[]
+  packages?: { registryType?: string; identifier?: string; version?: string; runtimeArguments?: unknown[] }[]
 }
 
-type PackageManifest = { name?: string; version?: string; mcpName?: string }
+type PackageManifest = {
+  name?: string
+  version?: string
+  mcpName?: string
+  repository?: { url?: string }
+  bin?: Record<string, string>
+}
 
 if (import.meta.main) {
   // script/ -> packages/servicenow-mcp/ -> packages/ -> repo root.

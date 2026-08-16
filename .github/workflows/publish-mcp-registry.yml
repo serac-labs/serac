@@ -9,12 +9,13 @@ name: Publish to MCP Registry
 #   1. npm binds a Trusted Publisher to owner + repo + workflow FILENAME, so
 #      publish-mcp.yml cannot be renamed and every edit to it risks the one
 #      credential path that has no fallback. Nothing here needs to touch it.
-#   2. Ordering forces the split anyway. The registry validates the npm package
-#      before it will accept the server: it fetches
+#   2. Ordering. The registry validates the npm package before it will accept
+#      the server: it fetches
 #      registry.npmjs.org/@serac-labs/servicenow-mcp/<version> and demands an
 #      `mcpName` there equal to the server name. The version must therefore
-#      already be live on npm when this runs, which a step appended to the npm
-#      publish cannot guarantee — it would race npm's own propagation.
+#      already be live on npm when this runs. An appended step could poll for
+#      that — publish-mcp.yml already polls npm for its own provenance
+#      read-back — so this is a cost of appending, not an impossibility.
 #   3. A workflow_run chain off publish-mcp.yml would fire on its dry runs and
 #      on forks too, and would publish under whoever happened to dispatch the
 #      npm release. Two dispatches in order — npm first, registry second — keep
@@ -78,7 +79,9 @@ jobs:
       # Runs on both paths. server.json repeats the version, the package name
       # and the server name from packages/servicenow-mcp/package.json, and all
       # of it is hand-maintained — see the script's header for what each
-      # mismatch costs.
+      # mismatch costs. It also checks that the `npx` command this listing
+      # implies can still resolve a bin, which a bin rename would silently
+      # break.
       - name: Gate — server.json agrees with the package manifest
         run: bun run --cwd packages/servicenow-mcp check:registry-manifest
 
@@ -92,13 +95,31 @@ jobs:
           echo "version=$(node -p "require('./packages/servicenow-mcp/package.json').version")" >> "$GITHUB_OUTPUT"
           echo "name=$(node -p "require('./packages/servicenow-mcp/package.json').mcpName")" >> "$GITHUB_OUTPUT"
 
+      - name: Install cosign
+        # Pinning the action pins the cosign binary too: the installer checks
+        # the release it downloads against a hash baked into the action itself.
+        uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
+
       - name: Install mcp-publisher
-        # Deliberately `latest` rather than pinned: the registry rejects tokens
-        # minted by an out-of-date CLI with "invalid audience", so a pin here
+        # The CLI stays on `latest` rather than a pin: the registry rejects
+        # tokens minted by an out-of-date CLI with "invalid audience", so a pin
         # would break the release the next time the audience contract moves.
+        # What makes a moving target acceptable is the signature check below —
+        # this job holds `id-token: write` for io.github.serac-labs/*, so an
+        # unverified binary here is the one thing in this file that could
+        # publish as us. `gh attestation verify` does not work on these assets:
+        # they carry sigstore signature bundles, not SLSA provenance.
         run: |
           set -euo pipefail
-          curl -fsSL "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+          ASSET="mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz"
+          BASE="https://github.com/modelcontextprotocol/registry/releases/latest/download"
+          curl -fsSL -o "$ASSET" "$BASE/$ASSET"
+          curl -fsSL -o "$ASSET.sigstore.json" "$BASE/$ASSET.sigstore.json"
+          cosign verify-blob "$ASSET" \
+            --bundle "$ASSET.sigstore.json" \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity-regexp '^https://github\.com/modelcontextprotocol/registry/\.github/workflows/release\.yml@refs/tags/v'
+          tar xzf "$ASSET" mcp-publisher
           ./mcp-publisher --help > /dev/null
 
       - name: Validate server.json against the registry's own schema
@@ -149,12 +170,25 @@ jobs:
           VERSION: ${{ steps.version.outputs.version }}
           NAME: ${{ steps.version.outputs.name }}
         # The publish call reporting success is not the same as the listing
-        # existing — read it back the way a user's client would.
+        # existing — read it back the way a user's client would. Polled, like
+        # publish-mcp.yml's provenance read-back: this has never run, so how
+        # quickly the registry serves a just-published version is unknown, and
+        # a single 404 here would fail a release that actually landed. Re-runs
+        # do not help once the publish has succeeded (the registry rejects a
+        # version it already holds), so the retry has to be in-line.
         run: |
           set -euo pipefail
           ENCODED=${NAME/\//%2F}
-          curl -fsS "https://registry.modelcontextprotocol.io/v0/servers/$ENCODED/versions/$VERSION" > /dev/null
-          echo "$NAME@$VERSION is live at registry.modelcontextprotocol.io"
+          for attempt in 1 2 3; do
+            if curl -fsS "https://registry.modelcontextprotocol.io/v0/servers/$ENCODED/versions/$VERSION" > /dev/null; then
+              echo "$NAME@$VERSION is live at registry.modelcontextprotocol.io"
+              exit 0
+            fi
+            echo "not readable yet (attempt $attempt) — waiting 10s"
+            sleep 10
+          done
+          echo "::error::$NAME@$VERSION is not readable at registry.modelcontextprotocol.io, but the publish reported success. Re-running this job will fail on the duplicate version — check the listing by hand."
+          exit 1
 
       - name: Summary (nothing published)
         if: github.event_name != 'workflow_dispatch' || inputs.dry_run == true || github.repository != 'serac-labs/serac'

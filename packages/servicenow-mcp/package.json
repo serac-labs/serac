@@ -35,6 +35,7 @@
     "./cli/enterprise-docs-generator": "./src/cli/enterprise-docs-generator.ts"
   },
   "bin": {
+    "servicenow-mcp": "./src/servicenow-mcp-unified/index.ts",
     "servicenow-mcp-stdio": "./src/servicenow-mcp-unified/index.ts",
     "servicenow-mcp-enterprise-proxy": "./src/enterprise-proxy/index.ts"
   },
