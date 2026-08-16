@@ -78,6 +78,11 @@ Both are described in [AGENTS.md](./AGENTS.md), along with the code style. The s
 
 Both generators have a `--check` mode, and `bun test` fails if the checked-in artifact drifts from the tree.
 
+A skill is the smallest useful thing to contribute here: one markdown file, no build step. The issues
+labelled [good first issue](https://github.com/serac-labs/serac/labels/good%20first%20issue) are ServiceNow
+domains where the server has tools and nothing teaches an agent to use them, each with the tools listed.
+[`packages/skills/README.md`](./packages/skills/README.md) covers how to write one and what done looks like.
+
 ### Two files that are production
 
 `packages/servicenow-mcp/tools.json` and `packages/servicenow-mcp/sn-roles.manifest.json` are fetched at
