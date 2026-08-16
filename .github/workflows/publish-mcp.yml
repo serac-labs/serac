@@ -311,6 +311,14 @@ jobs:
               ),
               ...Object.entries(pkg.bin ?? {}).map(([key, value]) => [`bin["${key}"]`, value]),
               ["files", "dist/index.js"],
+              // The roles manifest is data, not an entrypoint: exports["./sn-roles"]
+              // reads it from the package root at runtime, and it deliberately has
+              // no JSON subpath of its own (importing one under node needs an
+              // import attribute the smoke gate below cannot pass). So nothing in
+              // exports would notice it dropping out of `files` — which is the
+              // state every published tarball was in until it was added there:
+              // present in the repo, absent from the package.
+              ["files", "sn-roles.manifest.json"],
             ]
 
             const inTarball = (file) => {
