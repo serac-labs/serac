@@ -1,0 +1,78 @@
+name: Renovate
+
+# Self-hosted Renovate, rather than the hosted GitHub App.
+#
+# Same bot, same renovate.json — the only difference is who runs it. The App
+# means granting a third party write access to this repo; running it here keeps
+# the execution inside our own Actions. Given this repo publishes an npm package
+# that talks to customer ServiceNow instances, that seemed the better trade.
+#
+# IT IS NOT FREE OF TRADE-OFFS. It needs RENOVATE_TOKEN — a PAT with
+# `public_repo`, or a token minted from an app you own. The default GITHUB_TOKEN
+# will NOT do: GitHub deliberately does not trigger workflows on pull requests
+# created with it, so Renovate's PRs would arrive with no CI at all and we would
+# be merging dependency bumps blind. So the choice is a third-party app, or a
+# long-lived credential in repo secrets. Neither is free; this one at least
+# keeps the code execution ours.
+#
+# Cost: the repo is public, so standard runners are unmetered. A run over two
+# packages and about a dozen dependencies takes a couple of minutes.
+
+on:
+  schedule:
+    # Daily at 04:00 UTC. The cadence for ordinary updates is set in
+    # renovate.json (grouped, weekly); running daily only means a security
+    # advisory — which bypasses that schedule — is picked up within a day
+    # instead of within a week.
+    - cron: "0 4 * * *"
+  workflow_dispatch:
+    inputs:
+      log_level:
+        description: "Renovate log level"
+        type: choice
+        options: [info, debug]
+        default: info
+      dry_run:
+        description: "Report what it would do, change nothing"
+        type: boolean
+        default: false
+
+concurrency:
+  group: renovate
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  renovate:
+    runs-on: ubuntu-latest
+    # A fork running this on its own schedule would do nothing useful and would
+    # fail noisily on the missing secret.
+    if: github.repository == 'serac-labs/serac'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Refuse to run without a token
+        # Fail loudly and early rather than letting Renovate start, find no
+        # credentials and log something ambiguous. A dependency bot that
+        # silently does nothing is how advisories sit for months.
+        run: |
+          if [ -z "${{ secrets.RENOVATE_TOKEN }}" ]; then
+            echo "::error::RENOVATE_TOKEN is not set. Create a PAT with public_repo scope and add it as a repository secret."
+            exit 1
+          fi
+
+      - name: Renovate
+        uses: renovatebot/github-action@e09d604f8f803bb527bd8321ed5be06c460b8682 # v46.2.2
+        env:
+          LOG_LEVEL: ${{ inputs.log_level || 'info' }}
+          RENOVATE_DRY_RUN: ${{ inputs.dry_run && 'full' || '' }}
+          # Read the config from the repo rather than restating it here, so the
+          # hosted App and this workflow can never drift apart.
+          RENOVATE_REPOSITORIES: serac-labs/serac
+          RENOVATE_ONBOARDING: "false"
+          RENOVATE_REQUIRE_CONFIG: "required"
+        with:
+          token: ${{ secrets.RENOVATE_TOKEN }}
