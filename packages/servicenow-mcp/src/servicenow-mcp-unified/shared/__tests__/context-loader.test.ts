@@ -70,7 +70,10 @@ describe("environment credentials", () => {
     process.env.SNOW_INSTANCE_URL = "https://second.service-now.com"
     process.env.SERVICENOW_INSTANCE_URL = "https://first.service-now.com"
 
-    expect(envCredential("instanceUrl")).toEqual({ name: "SERVICENOW_INSTANCE_URL", value: "https://first.service-now.com" })
+    expect(envCredential("instanceUrl")).toEqual({
+      name: "SERVICENOW_INSTANCE_URL",
+      value: "https://first.service-now.com",
+    })
   })
 
   test("a whitespace-only variable counts as unset", () => {

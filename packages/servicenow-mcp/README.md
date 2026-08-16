@@ -1,6 +1,6 @@
 # @serac-labs/servicenow-mcp
 
-A [Model Context Protocol](https://modelcontextprotocol.io) server for ServiceNow: 437 `snow_*` tools over
+A [Model Context Protocol](https://modelcontextprotocol.io) server for ServiceNow: 400+ `snow_*` tools over
 stdio or streamable HTTP, plus blast-radius impact analysis. Part of [Serac](https://serac.build).
 
 ```bash
@@ -65,6 +65,10 @@ ServiceNow MCP — setup check
                       HTTP 200, text/html;charset=UTF-8
                       -> Sign in at https://developer.servicenow.com, open your instance and press Wake.
   skip  oauth token   Not reached — fix the checks above first.
+  skip  api access    Not reached — fix the checks above first.
+  skip  roles         Not reached — fix the checks above first.
+
+1 problem found. Fix the first FAIL above, then run this again.
 ```
 
 It walks the chain the server itself walks — environment variables, then `auth.json`, then the enterprise

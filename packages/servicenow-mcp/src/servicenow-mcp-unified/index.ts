@@ -43,7 +43,7 @@ async function main() {
     // eight variables and the loader read a different set, so a documented
     // variable could be missing from both without anything noticing.
     const mcpEnvVars = Object.fromEntries(
-      [...Object.values(ENV_VARS).flat(), "SNOW_LAZY_TOOLS", "SNOW_TOOL_DOMAINS"].map((name) => [name, process.env[name]]),
+      [...Object.values(ENV_VARS).flat(), "SNOW_LAZY_TOOLS", "SNOW_TOOL_DOMAINS"].map((v) => [v, process.env[v]]),
     )
 
     // Load environment variables from .env file
