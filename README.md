@@ -91,7 +91,7 @@ also what CI installs.
 ```bash
 bun install
 bun typecheck          # tsgo across both packages
-bun run test           # both suites: 168 MCP tests, 60 skills tests
+bun run test           # both suites
 bun run lint           # oxlint
 ```
 

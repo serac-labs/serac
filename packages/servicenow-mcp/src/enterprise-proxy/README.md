@@ -39,16 +39,22 @@ The Enterprise MCP Proxy bridges **any MCP client** (stdio MCP protocol) with th
 
 ## Configuration
 
-Two environment variables:
+The variables the proxy reads:
 
 ```bash
-SNOW_LICENSE_KEY=<enterprise license key, or a device-auth JWT>
+SNOW_LICENSE_KEY=<enterprise license key, or a device-auth JWT>   # SNOW_ENTERPRISE_LICENSE_KEY is an alias
 SNOW_ENTERPRISE_URL=https://enterprise.serac.build   # the default when unset
+SNOW_PORTAL_URL=https://portal.serac.build           # the default; only used to trade a raw SNOW-ENT-* key for a JWT
 ```
 
-`SNOW_LICENSE_KEY` is optional when `~/.snow-code/enterprise.json` holds a token. The proxy re-reads that
-file on every call and prefers it, because an MCP client config is written once and goes stale while the
-token file does not.
+If you point `SNOW_ENTERPRISE_URL` at a staging or self-hosted server, set `SNOW_PORTAL_URL` to match —
+a raw license key is exchanged for a JWT against the portal, not against the enterprise server, so leaving
+it unset authenticates against production and fails as "License key invalid or expired".
+
+`SNOW_LICENSE_KEY` is optional when `~/.serac/enterprise.json` holds a token — or the legacy pre-rebrand
+`~/.snow-code/enterprise.json`, which is still read as a fallback. The proxy re-reads them on every call and
+prefers the token file over the env var, because an MCP client config is written once and goes stale while
+the token file does not.
 
 Point any MCP client at the binary:
 
@@ -74,8 +80,9 @@ locally. `credentials.ts` is the old local-environment path: deprecated, and imp
 
 ## Files
 
-- **index.ts** - MCP Server entry point (stdio transport)
-- **server.ts** - Server setup and configuration
+- **index.ts** - MCP Server entry point (stdio transport); this is what the bin runs
+- **server.ts** - an alternate stdio entrypoint, dead: no exports, no importers, not the bin. Its token check
+  knows only the legacy `~/.snow-code` path, so do not read it as the source of truth for token resolution
 - **proxy.ts** - HTTPS client for enterprise server communication
 - **credentials.ts** - Environment variable credential gathering (deprecated, unused)
 - **types.ts** - TypeScript type definitions
