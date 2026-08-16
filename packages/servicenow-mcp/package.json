@@ -50,7 +50,7 @@
     "@modelcontextprotocol/sdk": "1.26.0",
     "axios": "1.18.0",
     "dotenv": "17.2.3",
-    "form-data": "4.0.5",
+    "form-data": "4.0.6",
     "hono": "4.12.34",
     "node-machine-id": "1.1.12",
     "zod": "4.1.8"
