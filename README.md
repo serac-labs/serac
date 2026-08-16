@@ -78,9 +78,10 @@ The repository is also a plugin marketplace, so the server and all 57 skills arr
 ```
 
 The server runs through `npx`, so nothing has to be installed first: export `SNOW_INSTANCE_URL`,
-`SNOW_CLIENT_ID` and `SNOW_CLIENT_SECRET` and it is ready. Cursor and VS Code pick up the same server from
-[`.mcp.json`](.mcp.json) at the repo root; Windsurf reads only its own global config, so paste the entry
-into `~/.codeium/windsurf/mcp_config.json`.
+`SNOW_CLIENT_ID` and `SNOW_CLIENT_SECRET` and it is ready. The same entry is in [`.mcp.json`](.mcp.json) at
+the repo root, which Claude Code reads for this project. Other clients each want it somewhere else: copy it
+into `.cursor/mcp.json` (Cursor), `~/.codeium/windsurf/mcp_config.json` (Windsurf), or `.vscode/mcp.json`
+for VS Code, which names the same block `servers` rather than `mcpServers`.
 
 ### Using the skills
 

@@ -37,10 +37,12 @@ generated: do not edit `src/embedded.ts` by hand.
 
 `/plugin install servicenow@serac` installs *this* directory: the marketplace
 entry at the repo root points its `source` here, `.claude-plugin/plugin.json`
-declares `"skills": ["."]`, and `.mcp.json` names the MCP server the skills
-expect. Claude Code then scans the plugin root with the same rule the portal
-uses — top-level directory containing a `SKILL.md` — so `src/`, `script/` and
+declares `"skills": ["./"]`, and `.mcp.json` names the MCP server the skills
+expect. Claude Code then scans the plugin root for directories holding a
+`SKILL.md`, the same rule the generator here uses, so `src/`, `script/` and
 `test/` are ignored and every skill ships without a copy step to go stale.
+`"./"` and `"."` both mean the plugin root; `"."` fails manifest validation on
+Claude Code older than 2.1.221, which is why the checked-in form is `"./"`.
 
 The manifest deliberately carries no `version`: without one, Claude Code
 versions the plugin by commit SHA, so a skill edit reaches installed users when

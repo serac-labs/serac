@@ -11,5 +11,5 @@
   "repository": "https://github.com/serac-labs/serac",
   "license": "Apache-2.0",
   "keywords": ["servicenow", "mcp", "itsm", "glide", "skills"],
-  "skills": ["."]
+  "skills": ["./"]
 }
