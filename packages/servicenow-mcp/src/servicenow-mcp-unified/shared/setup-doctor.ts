@@ -89,6 +89,17 @@ const PROBE_TIMEOUT_MS = 10_000
 const BODY_CAP = 256_000
 
 /**
+ * How many sys_user_has_role rows to ask for. One page, no paging: the report
+ * is a diagnosis, not an inventory. 500 is well above any human account, but an
+ * admin on a large instance can pass it — and a silently short list makes the
+ * coverage numbers wrong in the worst direction, telling the most privileged
+ * account on the instance that tools are out of its reach. So when the page
+ * comes back full, the report says the counts are a floor instead of asserting
+ * them.
+ */
+const ROLE_ROWS_CAP = 500
+
+/**
  * Run every check, in the order a request travels: which credentials the chain
  * produced, whether the URL is usable, whether the instance answers, whether
  * the token exchange succeeds, whether the API accepts the token, and what the
@@ -105,7 +116,10 @@ export const runSetupDoctor = async (options: { context?: ServiceNowContext } = 
   if (!url.baseUrl) return finish(checks, undefined)
 
   const reachability = await probe(`${url.baseUrl}/api/now/table/sys_properties?sysparm_limit=1`)
-  const reach = "failure" in reachability ? classifyTransportFailure(reachability.failure) : classifyReachability(reachability.observed)
+  const reach =
+    "failure" in reachability
+      ? classifyTransportFailure(reachability.failure)
+      : classifyReachability(reachability.observed)
   checks.push(reach)
   if (reach.status === "fail") return finish(checks, url.baseUrl)
 
@@ -124,13 +138,24 @@ export const runSetupDoctor = async (options: { context?: ServiceNowContext } = 
   // and a refused refresh falls through to the client-credentials grant rather
   // than ending the run. The doctor reports both outcomes so a stale refresh
   // token in auth.json cannot masquerade as a bad client secret.
-  const refreshed = hasOAuth && chain.context.refreshToken ? await exchangeToken(url.baseUrl, chain.context, "refresh_token") : undefined
-  const exchange = hasOAuth && refreshed?.token === undefined ? await exchangeToken(url.baseUrl, chain.context, "client_credentials") : refreshed
+  const refreshed =
+    hasOAuth && chain.context.refreshToken
+      ? await exchangeToken(url.baseUrl, chain.context, "refresh_token")
+      : undefined
+  const exchange =
+    hasOAuth && refreshed?.token === undefined
+      ? await exchangeToken(url.baseUrl, chain.context, "client_credentials")
+      : refreshed
   const authorization = exchange?.token ? `Bearer ${exchange.token}` : basic
 
   checks.push(
     exchange
-      ? withDetail(exchange.check, refreshed && refreshed !== exchange ? [`the refresh_token grant was refused first: ${refreshed.check.title}`] : [])
+      ? withDetail(
+          exchange.check,
+          refreshed && refreshed !== exchange
+            ? [`the refresh_token grant was refused first: ${refreshed.check.title}`]
+            : [],
+        )
       : skipped("token", "Basic auth configured — no OAuth token exchange happens."),
   )
 
@@ -147,7 +172,8 @@ export const runSetupDoctor = async (options: { context?: ServiceNowContext } = 
     }).toString()}`,
     authorization,
   )
-  const api = "failure" in identity ? classifyTransportFailure(identity.failure) : classifyApiResponse(identity.observed)
+  const api =
+    "failure" in identity ? classifyTransportFailure(identity.failure) : classifyApiResponse(identity.observed)
   checks.push(api)
   if (api.status === "fail") return finish(checks, url.baseUrl)
 
@@ -157,7 +183,7 @@ export const runSetupDoctor = async (options: { context?: ServiceNowContext } = 
     `${url.baseUrl}/api/now/table/sys_user_has_role?${new URLSearchParams({
       sysparm_query: "user=javascript:gs.getUserID()",
       sysparm_fields: "role.name",
-      sysparm_limit: "500",
+      sysparm_limit: String(ROLE_ROWS_CAP),
     }).toString()}`,
     authorization,
   )
@@ -266,14 +292,22 @@ export const inspectInstanceUrl = (raw: string | undefined): { check: Check; bas
   // A bare name — "dev12345" — is what developer.servicenow.com shows you, so
   // it gets pasted as-is. Complete it rather than failing on it, but say so:
   // the user's config is still wrong for every other tool that reads it.
-  const named = !parsed.hostname.includes(".")
-  const baseUrl = named ? `${parsed.protocol}//${parsed.hostname}.service-now.com` : parsed.origin
+  //
+  // Only when the value is nothing BUT that name, though. A single-label host
+  // with a scheme or a port is an on-prem instance behind corporate DNS
+  // ("https://snprod:8443") or a local test server, and rewriting it would
+  // point the probe — and the OAuth POST that carries the client secret —
+  // at a service-now.com tenant the user never configured.
+  const named = !parsed.hostname.includes(".") && parsed.port === "" && !value.includes("://")
+  const baseUrl = named ? `https://${parsed.hostname}.service-now.com` : parsed.origin
 
   const notes = [
     ...(named ? [`"${parsed.hostname}" is an instance name, not a host — reading it as ${baseUrl}`] : []),
     ...(!value.includes("://") ? ["no scheme — reading it as https"] : []),
     ...(parsed.pathname !== "/" || parsed.search !== "" || parsed.hash !== ""
-      ? [`everything after the host is ignored (${parsed.pathname}${parsed.search}${parsed.hash}) — this looks like a page URL, not the instance root`]
+      ? [
+          `everything after the host is ignored (${parsed.pathname}${parsed.search}${parsed.hash}) — this looks like a page URL, not the instance root`,
+        ]
       : []),
     // Left in place it becomes "https://host//oauth_token.do", because every
     // caller concatenates a path onto this value.
@@ -384,7 +418,10 @@ export const classifyTokenResponse = (observed: Observed): Check => {
   const body = parseJson(observed.body)
   const error = str(body?.error)
   const description = str(body?.error_description)
-  const quoted = [`HTTP ${observed.status}`, ...(error ? [`ServiceNow said: ${error}${description ? ` — ${description}` : ""}`] : bodyDetail(observed))]
+  const quoted = [
+    `HTTP ${observed.status}`,
+    ...(error ? [`ServiceNow said: ${error}${description ? ` — ${description}` : ""}`] : bodyDetail(observed)),
+  ]
 
   if (str(body?.access_token))
     return {
@@ -392,7 +429,9 @@ export const classifyTokenResponse = (observed: Observed): Check => {
       status: "ok",
       code: "token-ok",
       title: "OAuth token exchange succeeded.",
-      detail: [`token type ${str(body?.token_type) ?? "unknown"}, expires in ${typeof body?.expires_in === "number" ? body.expires_in : "?"}s`],
+      detail: [
+        `token type ${str(body?.token_type) ?? "unknown"}, expires in ${typeof body?.expires_in === "number" ? body.expires_in : "?"}s`,
+      ],
       fix: [],
     }
 
@@ -494,7 +533,9 @@ export const classifyApiResponse = (observed: Observed): Check => {
       code: "api-forbidden",
       title: "Authenticated, but not allowed to read sys_user.",
       detail: ["HTTP 403", ...(message ? [`ServiceNow said: ${message}`] : bodyDetail(observed))],
-      fix: ["The account authenticated fine — it just holds no role that can read sys_user. Ask an admin to grant it one (itil or snc_internal is enough to start)."],
+      fix: [
+        "The account authenticated fine — it just holds no role that can read sys_user. Ask an admin to grant it one (itil or snc_internal is enough to start).",
+      ],
     }
 
   if (observed.status !== 200)
@@ -535,15 +576,45 @@ export const classifyApiResponse = (observed: Observed): Check => {
  */
 export const classifyTransportFailure = (failure: TransportFailure): Check => {
   const haystack = `${failure.code ?? ""} ${failure.message}`.toLowerCase()
-  const reason = haystack.includes("enotfound") || haystack.includes("eai_again") || haystack.includes("getaddrinfo") || haystack.includes("dns")
-    ? { code: "instance-dns", title: "The instance host does not resolve.", fix: ["Check the host for a typo. A developer instance is dev12345.service-now.com — the number is on your developer.servicenow.com dashboard."] }
-    : haystack.includes("econnrefused") || haystack.includes("connectionrefused") || haystack.includes("unable to connect")
-      ? { code: "instance-refused", title: "The instance refused the connection.", fix: ["Nothing is listening on that host and port. Check the URL, and whether the instance is reachable from this network (VPN, proxy)."] }
-      : haystack.includes("timeout") || haystack.includes("timed out") || haystack.includes("aborted")
-        ? { code: "instance-timeout", title: `The instance did not answer within ${PROBE_TIMEOUT_MS / 1000}s.`, fix: ["A hibernating instance can hang like this while it wakes. Open it in a browser, then try again."] }
-        : haystack.includes("cert") || haystack.includes("tls") || haystack.includes("ssl")
-          ? { code: "instance-tls", title: "The TLS handshake failed.", fix: ["A corporate proxy that re-signs TLS needs its CA trusted by node (NODE_EXTRA_CA_CERTS)."] }
-          : { code: "instance-unreachable", title: "The instance could not be reached.", fix: ["Check network access to the instance from this machine."] }
+  const reason =
+    haystack.includes("enotfound") ||
+    haystack.includes("eai_again") ||
+    haystack.includes("getaddrinfo") ||
+    haystack.includes("dns")
+      ? {
+          code: "instance-dns",
+          title: "The instance host does not resolve.",
+          fix: [
+            "Check the host for a typo. A developer instance is dev12345.service-now.com — the number is on your developer.servicenow.com dashboard.",
+          ],
+        }
+      : haystack.includes("econnrefused") ||
+          haystack.includes("connectionrefused") ||
+          haystack.includes("unable to connect")
+        ? {
+            code: "instance-refused",
+            title: "The instance refused the connection.",
+            fix: [
+              "Nothing is listening on that host and port. Check the URL, and whether the instance is reachable from this network (VPN, proxy).",
+            ],
+          }
+        : haystack.includes("timeout") || haystack.includes("timed out") || haystack.includes("aborted")
+          ? {
+              code: "instance-timeout",
+              title: `The instance did not answer within ${PROBE_TIMEOUT_MS / 1000}s.`,
+              fix: ["A hibernating instance can hang like this while it wakes. Open it in a browser, then try again."],
+            }
+          : haystack.includes("cert") || haystack.includes("tls") || haystack.includes("ssl")
+            ? {
+                code: "instance-tls",
+                title: "The TLS handshake failed.",
+                fix: ["A corporate proxy that re-signs TLS needs its CA trusted by node (NODE_EXTRA_CA_CERTS)."],
+              }
+            : {
+                code: "instance-unreachable",
+                title: "The instance could not be reached.",
+                fix: ["Check network access to the instance from this machine."],
+              }
 
   return {
     step: "instance",
@@ -585,7 +656,10 @@ export const summarizeRoleCoverage = (manifest: unknown, held: string[]): RoleCo
 
   const owned = new Set(held)
   const blocked = tools.filter(
-    (tool) => tool.bundle.length > 0 && !tool.anyOf.some((role) => owned.has(role)) && !tool.bundle.every((role) => owned.has(role)),
+    (tool) =>
+      tool.bundle.length > 0 &&
+      !tool.anyOf.some((role) => owned.has(role)) &&
+      !tool.bundle.every((role) => owned.has(role)),
   )
 
   const openers = Object.entries(
@@ -637,7 +711,9 @@ const resolveChain = async (supplied?: ServiceNowContext): Promise<{ context: Se
 
   const local = loadContext()
   const enterprise =
-    supplied === undefined && local.instanceUrl === "" && loadEnterpriseAuth() ? await loadFromEnterprisePortal() : undefined
+    supplied === undefined && local.instanceUrl === "" && loadEnterpriseAuth()
+      ? await loadFromEnterprisePortal()
+      : undefined
   const context = supplied ?? enterprise ?? local
 
   const fromEnv = !!envInstance && !!context.instanceUrl && context.instanceUrl.includes(stripScheme(envInstance.value))
@@ -665,7 +741,9 @@ const resolveChain = async (supplied?: ServiceNowContext): Promise<{ context: Se
           `environment: ${[envInstance, envClientId, envClientSecret]
             .filter((hit) => hit !== undefined)
             .map((hit) => hit.name)
-            .join(", ")} set, but the environment link needs instance + client id + client secret together, so it was skipped`,
+            .join(
+              ", ",
+            )} set, but the environment link needs instance + client id + client secret together, so it was skipped`,
         ]
       : []),
     ...files
@@ -721,11 +799,16 @@ const resolveChain = async (supplied?: ServiceNowContext): Promise<{ context: Se
       title: `Loaded from ${source ?? "the running server's own context — no local source matches it"}.`,
       detail: [
         `instance ${context.instanceUrl}`,
-        context.clientId ? `client id ${redact(context.clientId)}, client secret ${context.clientSecret ? "set" : "MISSING"}` : `username ${context.username}, password ${context.password ? "set" : "MISSING"}`,
+        context.clientId
+          ? `client id ${redact(context.clientId)}, client secret ${context.clientSecret ? "set" : "MISSING"}`
+          : `username ${context.username}, password ${context.password ? "set" : "MISSING"}`,
         ...(context.refreshToken ? ["a refresh token is present and will be tried first"] : []),
         ...unused,
       ],
-      fix: unused.length > 0 ? ["If the credentials above are not the ones you meant to use, remove the source you no longer want."] : [],
+      fix:
+        unused.length > 0
+          ? ["If the credentials above are not the ones you meant to use, remove the source you no longer want."]
+          : [],
     },
   }
 }
@@ -749,7 +832,10 @@ const summarizeAuthFile = (path: string): { instance?: string; modified: string 
 // Probing — observe only, decide nothing
 // ---------------------------------------------------------------------------
 
-const probe = async (url: string, authorization?: string): Promise<{ observed: Observed } | { failure: TransportFailure }> =>
+const probe = async (
+  url: string,
+  authorization?: string,
+): Promise<{ observed: Observed } | { failure: TransportFailure }> =>
   fetch(url, {
     headers: { Accept: "application/json", ...(authorization ? { Authorization: authorization } : {}) },
     // Manual: a redirect to a login page is a finding, and following it would
@@ -795,7 +881,10 @@ const exchangeToken = async (
     .catch((error: unknown) => ({ failure: transportFailure(error) }))
 
   if ("failure" in response) return { check: { ...classifyTransportFailure(response.failure), step: "token" } }
-  return { check: classifyTokenResponse(response.observed), token: str(parseJson(response.observed.body)?.access_token) }
+  return {
+    check: classifyTokenResponse(response.observed),
+    token: str(parseJson(response.observed.body)?.access_token),
+  }
 }
 
 const transportFailure = (error: unknown): TransportFailure => {
@@ -859,17 +948,24 @@ const classifyRoles = (observed: Observed): Check => {
       status: "skip",
       code: "roles-unreadable",
       title: "Could not read the roles of the authenticated account.",
-      detail: [`HTTP ${observed.status}`, ...(str(asRecord(body?.error)?.message) ? [`ServiceNow said: ${str(asRecord(body?.error)?.message)}`] : [])],
-      fix: ["Reading sys_user_has_role needs a role itself, so this usually means the account holds very few. Tool calls will still work where its roles allow."],
+      detail: [
+        `HTTP ${observed.status}`,
+        ...(str(asRecord(body?.error)?.message) ? [`ServiceNow said: ${str(asRecord(body?.error)?.message)}`] : []),
+      ],
+      fix: [
+        "Reading sys_user_has_role needs a role itself, so this usually means the account holds very few. Tool calls will still work where its roles allow.",
+      ],
     }
 
+  const rows = asArray(asRecord(body)?.result) ?? []
   const held = [
-    ...new Set(
-      (asArray(asRecord(body)?.result) ?? [])
-        .map((row) => str(asRecord(row)?.["role.name"]))
-        .filter((role): role is string => role !== undefined),
-    ),
+    ...new Set(rows.map((row) => str(asRecord(row)?.["role.name"])).filter((role): role is string => role !== undefined)),
   ].sort()
+
+  const capped =
+    rows.length >= ROLE_ROWS_CAP
+      ? [`the query returned its full ${ROLE_ROWS_CAP}-row page, so this list is cut off and the counts below are a floor`]
+      : []
 
   // Admin accounts hold hundreds of roles; the list is a hint, not an inventory.
   const listed = held.length > 12 ? `${held.slice(0, 12).join(", ")} and ${held.length - 12} more` : held.join(", ")
@@ -880,13 +976,17 @@ const classifyRoles = (observed: Observed): Check => {
       step: "roles",
       status: "ok",
       code: "roles-listed",
-      title: held.length === 0 ? "The account holds no roles." : `${held.length} role${held.length === 1 ? "" : "s"}: ${listed}`,
-      detail: ["sn-roles.manifest.json is not installed, so tool coverage was not computed"],
+      title:
+        held.length === 0
+          ? "The account holds no roles."
+          : `${held.length} role${held.length === 1 ? "" : "s"}: ${listed}`,
+      detail: [...capped, "sn-roles.manifest.json is not installed, so tool coverage was not computed"],
       fix: [],
     }
 
   const coverage = summarizeRoleCoverage(manifest, held)
   const detail = [
+    ...capped,
     `${coverage.unlocked} of ${coverage.resolved} tools with a known role requirement are within reach; ${coverage.blocked} are not`,
     `${coverage.unresolved} more tools have no statically resolvable requirement and were not counted`,
   ]
@@ -896,7 +996,10 @@ const classifyRoles = (observed: Observed): Check => {
       step: "roles",
       status: "ok",
       code: "roles-sufficient",
-      title: held.length === 0 ? "No roles held, and none are needed for the resolved catalog." : `${held.length} role${held.length === 1 ? "" : "s"}: ${listed}`,
+      title:
+        held.length === 0
+          ? "No roles held, and none are needed for the resolved catalog."
+          : `${held.length} role${held.length === 1 ? "" : "s"}: ${listed}`,
       detail,
       fix: [],
     }
@@ -933,15 +1036,26 @@ const STEPS: CheckStep[] = ["credentials", "instance-url", "instance", "token", 
  */
 const finish = (checks: Check[], instanceUrl: string | undefined): SetupReport => {
   const reached = new Set(checks.map((check) => check.step))
-  const padded = [...checks, ...STEPS.filter((step) => !reached.has(step)).map((step) => skipped(step, "Not reached — fix the checks above first."))].sort(
-    (a, b) => STEPS.indexOf(a.step) - STEPS.indexOf(b.step),
-  )
+  const padded = [
+    ...checks,
+    ...STEPS.filter((step) => !reached.has(step)).map((step) =>
+      skipped(step, "Not reached — fix the checks above first."),
+    ),
+  ].sort((a, b) => STEPS.indexOf(a.step) - STEPS.indexOf(b.step))
   return { ok: padded.every((check) => check.status !== "fail"), instanceUrl, checks: padded }
 }
 
-const skipped = (step: CheckStep, why: string): Check => ({ step, status: "skip", code: `${step}-skipped`, title: why, detail: [], fix: [] })
+const skipped = (step: CheckStep, why: string): Check => ({
+  step,
+  status: "skip",
+  code: `${step}-skipped`,
+  title: why,
+  detail: [],
+  fix: [],
+})
 
-const withDetail = (check: Check, detail: string[]): Check => (detail.length === 0 ? check : { ...check, detail: [...check.detail, ...detail] })
+const withDetail = (check: Check, detail: string[]): Check =>
+  detail.length === 0 ? check : { ...check, detail: [...check.detail, ...detail] }
 
 /** One line of the body, quoted back. Users recognise their own error page. */
 const bodyDetail = (observed: Observed): string[] => {

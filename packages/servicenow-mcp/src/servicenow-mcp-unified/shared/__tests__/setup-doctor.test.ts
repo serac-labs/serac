@@ -50,7 +50,11 @@ const HIBERNATING_PAGE = `<!DOCTYPE html>
 const LOGIN_PAGE = `<!DOCTYPE html><html><head><title>Sign In | ServiceNow</title></head>
 <body><form action="/login.do" method="post"><input name="user_name"><input type="password" name="user_password"></form></body></html>`
 
-const observed = (status: number, body: string, contentType = "application/json"): Observed => ({ status, body, contentType })
+const observed = (status: number, body: string, contentType = "application/json"): Observed => ({
+  status,
+  body,
+  contentType,
+})
 
 const UNAUTHENTICATED = `{"error":{"message":"User Not Authenticated","detail":"Required to provide Auth information"},"status":"failure"}`
 const INSUFFICIENT_RIGHTS = `{"error":{"message":"Insufficient rights to query records","detail":"Field(s) present in the query do not have permission to be read"},"status":"failure"}`
@@ -78,7 +82,9 @@ describe("classifying what the instance answered", () => {
   test("HTML is detected by content when the content-type does not say so", () => {
     // Some fronting proxies answer text/plain. Sniffing the body is what keeps
     // the hibernation case from falling through to "unrecognisable response".
-    expect(classifyReachability({ status: 200, body: HIBERNATING_PAGE, contentType: undefined }).code).toBe("instance-hibernating")
+    expect(classifyReachability({ status: 200, body: HIBERNATING_PAGE, contentType: undefined }).code).toBe(
+      "instance-hibernating",
+    )
   })
 
   test("a 401 from the unauthenticated probe means the instance is awake", () => {
@@ -105,7 +111,9 @@ describe("classifying what the instance answered", () => {
   })
 
   test("a grant the OAuth entry does not allow is its own diagnosis", () => {
-    expect(classifyTokenResponse(observed(400, `{"error":"unsupported_grant_type"}`)).code).toBe("oauth-grant-not-allowed")
+    expect(classifyTokenResponse(observed(400, `{"error":"unsupported_grant_type"}`)).code).toBe(
+      "oauth-grant-not-allowed",
+    )
   })
 
   test("a token response is only ok when it carries a token", () => {
@@ -128,17 +136,27 @@ describe("classifying what the instance answered", () => {
   })
 
   test("a 200 identifies the account the OAuth entry is acting as", () => {
-    const check = classifyApiResponse(observed(200, `{"result":[{"user_name":"integration.user","name":"Integration User","active":"true"}]}`))
+    const check = classifyApiResponse(
+      observed(200, `{"result":[{"user_name":"integration.user","name":"Integration User","active":"true"}]}`),
+    )
 
     expect(check.status).toBe("ok")
     expect(check.title).toContain("integration.user")
   })
 
   test("unreachable is one finding with the reason named", () => {
-    expect(classifyTransportFailure({ code: "ENOTFOUND", message: "getaddrinfo ENOTFOUND dev12345.service-now.com" }).code).toBe("instance-dns")
-    expect(classifyTransportFailure({ code: "ECONNREFUSED", message: "connect ECONNREFUSED 127.0.0.1:443" }).code).toBe("instance-refused")
-    expect(classifyTransportFailure({ code: "TimeoutError", message: "The operation was aborted due to timeout" }).code).toBe("instance-timeout")
-    expect(classifyTransportFailure({ code: "CERT_HAS_EXPIRED", message: "certificate has expired" }).code).toBe("instance-tls")
+    expect(
+      classifyTransportFailure({ code: "ENOTFOUND", message: "getaddrinfo ENOTFOUND dev12345.service-now.com" }).code,
+    ).toBe("instance-dns")
+    expect(classifyTransportFailure({ code: "ECONNREFUSED", message: "connect ECONNREFUSED 127.0.0.1:443" }).code).toBe(
+      "instance-refused",
+    )
+    expect(
+      classifyTransportFailure({ code: "TimeoutError", message: "The operation was aborted due to timeout" }).code,
+    ).toBe("instance-timeout")
+    expect(classifyTransportFailure({ code: "CERT_HAS_EXPIRED", message: "certificate has expired" }).code).toBe(
+      "instance-tls",
+    )
   })
 })
 
@@ -167,8 +185,20 @@ describe("instance URL", () => {
     expect(inspectInstanceUrl("https://your-instance.service-now.com").baseUrl).toBeUndefined()
   })
 
+  test("a single-label host with a port is left alone — that is on-prem DNS, not a PDI name", () => {
+    // The ".service-now.com" completion exists for a pasted PDI name. If it
+    // also fired here the doctor would probe, and POST the client secret to,
+    // a host the user never configured — and then report the working config
+    // as a DNS typo.
+    expect(inspectInstanceUrl("https://snprod:8443").baseUrl).toBe("https://snprod:8443")
+    expect(inspectInstanceUrl("http://localhost:1080").baseUrl).toBe("http://localhost:1080")
+    expect(inspectInstanceUrl("https://snprod:8443").check.fix).toEqual([])
+  })
+
   test("a pasted record URL keeps the origin and says the rest was dropped", () => {
-    const inspection = inspectInstanceUrl("https://dev12345.service-now.com/now/nav/ui/classic/params/target/incident.do")
+    const inspection = inspectInstanceUrl(
+      "https://dev12345.service-now.com/now/nav/ui/classic/params/target/incident.do",
+    )
 
     expect(inspection.check.detail.join(" ")).toContain("this looks like a page URL")
     expect(inspection.check.fix[0]).toContain("https://dev12345.service-now.com")
@@ -178,9 +208,11 @@ describe("instance URL", () => {
 describe("role coverage, against the committed sn-roles.manifest.json", () => {
   const manifest = loadRolesManifest()
 
-  test("the manifest ships with the package", () => {
-    // It is read from the package root at runtime, so `files` in package.json
-    // has to keep shipping it. If this fails, npm users lose the roles check.
+  test("the manifest resolves from the package root", () => {
+    // Only proves the relative path is right — this reads the committed file,
+    // so it is blind to `files` in package.json. What the tarball actually
+    // ships is gated in publish-mcp.yml, which is the only place that can see
+    // it.
     expect(manifest).toBeDefined()
   })
 
@@ -272,8 +304,13 @@ const startInstance = async (answer: (path: string) => Answer): Promise<FakeInst
 
 const healthy = (path: string): Answer => {
   if (path.startsWith("/oauth_token.do")) return { status: 200, body: TOKEN_OK }
-  if (path.startsWith("/api/now/table/sys_user_has_role")) return { status: 200, body: `{"result":[{"role.name":"itil"},{"role.name":"snc_internal"}]}` }
-  if (path.startsWith("/api/now/table/sys_user")) return { status: 200, body: `{"result":[{"user_name":"integration.user","name":"Integration User","active":"true"}]}` }
+  if (path.startsWith("/api/now/table/sys_user_has_role"))
+    return { status: 200, body: `{"result":[{"role.name":"itil"},{"role.name":"snc_internal"}]}` }
+  if (path.startsWith("/api/now/table/sys_user"))
+    return {
+      status: 200,
+      body: `{"result":[{"user_name":"integration.user","name":"Integration User","active":"true"}]}`,
+    }
   return { status: 401, body: UNAUTHENTICATED }
 }
 
@@ -287,7 +324,11 @@ const codes = (report: Awaited<ReturnType<typeof runSetupDoctor>>) => report.che
 
 describe("running the whole diagnosis against an instance", () => {
   test("a hibernating instance stops the walk at reachability instead of blaming OAuth", async () => {
-    const instance = await startInstance(() => ({ status: 200, body: HIBERNATING_PAGE, contentType: "text/html;charset=UTF-8" }))
+    const instance = await startInstance(() => ({
+      status: 200,
+      body: HIBERNATING_PAGE,
+      contentType: "text/html;charset=UTF-8",
+    }))
 
     const report = await runSetupDoctor({ context: credentials(instance.url) })
 
@@ -351,7 +392,9 @@ describe("running the whole diagnosis against an instance", () => {
     // precisely the accounts that hold the most.
     const many = Array.from({ length: 300 }, (_, index) => ({ "role.name": `role_number_${index}` }))
     const instance = await startInstance((path) =>
-      path.startsWith("/api/now/table/sys_user_has_role") ? { status: 200, body: JSON.stringify({ result: many }) } : healthy(path),
+      path.startsWith("/api/now/table/sys_user_has_role")
+        ? { status: 200, body: JSON.stringify({ result: many }) }
+        : healthy(path),
     )
 
     const report = await runSetupDoctor({ context: credentials(instance.url) })
@@ -360,6 +403,27 @@ describe("running the whole diagnosis against an instance", () => {
     expect(roles?.title).toContain("300 roles")
     // Listed, but not all 300 of them dumped into one line.
     expect(roles?.title).toContain("and 288 more")
+    await instance.stop()
+  })
+
+  test("a full page of roles is reported as cut off rather than counted as the whole list", async () => {
+    // The query asks for one page. An account that fills it holds an unknown
+    // number more, so the coverage numbers are a floor — saying "N tools are
+    // out of reach" here would be wrong about the most privileged account on
+    // the instance.
+    const full = Array.from({ length: 500 }, (_, index) => ({ "role.name": `role_number_${index}` }))
+    const instance = await startInstance((path) =>
+      path.startsWith("/api/now/table/sys_user_has_role")
+        ? { status: 200, body: JSON.stringify({ result: full }) }
+        : healthy(path),
+    )
+
+    const roles = (await runSetupDoctor({ context: credentials(instance.url) })).checks.find(
+      (check) => check.step === "roles",
+    )
+
+    expect(roles?.detail[0]).toContain("cut off")
+    expect(roles?.detail[0]).toContain("floor")
     await instance.stop()
   })
 
@@ -398,7 +462,9 @@ describe("servicenow-mcp-stdio --doctor", () => {
     const authJson = join(home, ".serac", "auth.json")
     writeFileSync(
       authJson,
-      JSON.stringify({ servicenow: { instance: instance.url, clientId: "abc", clientSecret: "def", type: "servicenow-oauth" } }),
+      JSON.stringify({
+        servicenow: { instance: instance.url, clientId: "abc", clientSecret: "def", type: "servicenow-oauth" },
+      }),
     )
 
     const entry = new URL("../../index.ts", import.meta.url).pathname
