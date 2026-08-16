@@ -43,6 +43,36 @@ import { STDIO_TENANT } from "./tenant-scope.js"
 export { STDIO_TENANT, resolveTenantScope, tenantScopedKey } from "./tenant-scope.js"
 
 /**
+ * Derive the search keywords for a tool from its name and description.
+ *
+ * Lived as a private copy in both `transports/stdio.ts` and
+ * `transports/http-entry.ts` — the http-entry copy carried a comment saying it
+ * mirrored the stdio one, which is the sort of pairing that drifts. It sits
+ * here now because it is what fills the `keywords` field below, and because
+ * the retrieval eval has to score the same keywords the transports index.
+ */
+export function extractKeywords(name: string, description: string): string[] {
+  const keywords = new Set<string>()
+
+  // snow_query_incidents -> query, incidents
+  for (const part of name.replace(/^snow_/, "").split("_")) {
+    if (part.length > 2) keywords.add(part.toLowerCase())
+  }
+
+  // Only the first 10 significant description words are indexed, so a tool
+  // whose distinguishing noun appears late in a long description is not
+  // reachable by keyword — see the eval's reported misses.
+  const descWords = description
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !["this", "that", "with", "from", "will", "have", "been", "tool"].includes(w))
+  for (const word of descWords.slice(0, 10)) keywords.add(word)
+
+  return Array.from(keywords)
+}
+
+/**
  * Tool index entry - lightweight representation for search
  */
 export interface ToolIndexEntry {

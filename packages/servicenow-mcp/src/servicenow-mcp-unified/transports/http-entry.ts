@@ -19,29 +19,10 @@
  */
 
 import { toolRegistry } from "../shared/tool-registry.js"
-import { ToolSearch } from "../shared/tool-search.js"
+import { ToolSearch, extractKeywords } from "../shared/tool-search.js"
 import { createHttpApp } from "./http.js"
 import { createHttpResolver } from "./http-resolver.js"
 import { mcpDebug, mcpWarn } from "../../shared/mcp-debug.js"
-
-/**
- * Derive search keywords from a tool's name + description. Mirrors the
- * stdio transport's helper so both transports produce the same index.
- */
-const extractKeywords = (name: string, description: string): string[] => {
-  const keywords = new Set<string>()
-  const nameParts = name.replace(/^snow_/, "").split("_")
-  for (const part of nameParts) {
-    if (part.length > 2) keywords.add(part.toLowerCase())
-  }
-  const descWords = description
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 3 && !["this", "that", "with", "from", "will", "have", "been", "tool"].includes(w))
-  for (const w of descWords.slice(0, 10)) keywords.add(w)
-  return Array.from(keywords)
-}
 
 async function main(): Promise<void> {
   const resolverUrl = process.env.MCP_RESOLVER_URL

@@ -17,7 +17,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { MCPPromptManager } from "../../shared/mcp-prompt-manager.js"
 import { toolRegistry } from "../shared/tool-registry.js"
 import { authManager } from "../shared/auth.js"
-import { ToolSearch } from "../shared/tool-search.js"
+import { ToolSearch, extractKeywords } from "../shared/tool-search.js"
 import { mcpDebug, mcpWarn } from "../../shared/mcp-debug.js"
 import { extractJWTPayload } from "../shared/permission-validator.js"
 import { createServer } from "../shared/server-factory.js"
@@ -263,31 +263,4 @@ const bootstrap = async (
     mcpDebug("[Server] Initialization failed:", error.message)
     throw error
   }
-}
-
-/**
- * Extract keywords from tool name and description for search indexing.
- */
-const extractKeywords = (name: string, description: string): string[] => {
-  const keywords = new Set<string>()
-
-  // Extract from tool name (e.g., snow_query_incidents -> query, incidents)
-  const nameParts = name.replace(/^snow_/, "").split("_")
-  nameParts.forEach((part) => {
-    if (part.length > 2) {
-      keywords.add(part.toLowerCase())
-    }
-  })
-
-  // Extract significant words from description
-  const descWords = description
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 3 && !["this", "that", "with", "from", "will", "have", "been", "tool"].includes(w))
-
-  // Take top 10 most relevant words from description
-  descWords.slice(0, 10).forEach((w) => keywords.add(w))
-
-  return Array.from(keywords)
 }
