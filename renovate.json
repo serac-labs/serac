@@ -63,6 +63,13 @@
         "patch"
       ],
       "minimumReleaseAge": "3 days"
+    },
+    {
+      "description": "GitHub Actions are reported on the dashboard, never opened as PRs. Renovate would need the `workflow` scope to push a change under .github/workflows, and a long-lived token that can rewrite CI is a meaningful escalation \u2014 whoever holds it could redirect a build to exfiltrate secrets. Action bumps are rare enough to do by hand; the dashboard makes sure we still hear about them.",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "dependencyDashboardApproval": true
     }
   ],
   "dependencyDashboard": true,

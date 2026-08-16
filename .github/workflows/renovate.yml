@@ -7,13 +7,23 @@ name: Renovate
 # the execution inside our own Actions. Given this repo publishes an npm package
 # that talks to customer ServiceNow instances, that seemed the better trade.
 #
-# IT IS NOT FREE OF TRADE-OFFS. It needs RENOVATE_TOKEN — a PAT with
-# `public_repo`, or a token minted from an app you own. The default GITHUB_TOKEN
-# will NOT do: GitHub deliberately does not trigger workflows on pull requests
-# created with it, so Renovate's PRs would arrive with no CI at all and we would
-# be merging dependency bumps blind. So the choice is a third-party app, or a
-# long-lived credential in repo secrets. Neither is free; this one at least
-# keeps the code execution ours.
+# IT IS NOT FREE OF TRADE-OFFS. It needs RENOVATE_TOKEN. Fine-grained, scoped to
+# this repository: Contents read/write, Pull requests read/write, Metadata read.
+# Classic equivalent: `public_repo` alone — NOT full `repo`, which would also
+# reach private repositories this token has no business in.
+#
+# Deliberately NOT granted: `workflow`. Renovate would otherwise want to bump
+# the pinned action SHAs under .github/workflows, and a long-lived token that
+# can rewrite CI is a real escalation — whoever held it could redirect a build
+# to exfiltrate secrets. renovate.json routes github-actions updates to the
+# dependency dashboard instead, so we still hear about them and apply them by
+# hand.
+#
+# The default GITHUB_TOKEN will NOT do either: GitHub deliberately does not
+# trigger workflows on pull requests created with it, so Renovate's PRs would
+# arrive with no CI at all and we would be merging dependency bumps blind. So
+# the choice is a third-party app, or a long-lived credential in repo secrets.
+# Neither is free; this one at least keeps the code execution ours.
 #
 # Cost: the repo is public, so standard runners are unmetered. A run over two
 # packages and about a dozen dependencies takes a couple of minutes.
