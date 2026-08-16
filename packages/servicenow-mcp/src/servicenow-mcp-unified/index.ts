@@ -37,6 +37,7 @@ async function main() {
       SNOW_LAZY_TOOLS: process.env.SNOW_LAZY_TOOLS,
       SNOW_TOOL_DOMAINS: process.env.SNOW_TOOL_DOMAINS,
       SNOW_INSTANCE: process.env.SNOW_INSTANCE,
+      SNOW_INSTANCE_URL: process.env.SNOW_INSTANCE_URL,
       SERVICENOW_INSTANCE_URL: process.env.SERVICENOW_INSTANCE_URL,
       SNOW_CLIENT_ID: process.env.SNOW_CLIENT_ID,
       SERVICENOW_CLIENT_ID: process.env.SERVICENOW_CLIENT_ID,

@@ -344,14 +344,19 @@ export const loadFromEnterprisePortal = async (): Promise<ServiceNowContext | un
  */
 export const loadContext = (): ServiceNowContext => {
   // STEP 1: Try environment variables first
-  // Handle SNOW_INSTANCE with or without https:// prefix to avoid double-prefix issue
-  const snowInstance = process.env.SNOW_INSTANCE
-  const normalizedSnowInstance = snowInstance
-    ? snowInstance.startsWith("http://") || snowInstance.startsWith("https://")
-      ? snowInstance
-      : `https://${snowInstance}`
+  // SNOW_INSTANCE_URL is the name README.md, CONTRIBUTING.md, SECURITY.md and both package READMEs tell
+  // people to set, and it was read nowhere: every documented example started the server unauthenticated,
+  // and the resulting error ("Failed to obtain access token") names credentials rather than the missing
+  // instance. Accepted here alongside the two names that already worked.
+  const rawInstance =
+    process.env.SERVICENOW_INSTANCE_URL || process.env.SNOW_INSTANCE_URL || process.env.SNOW_INSTANCE
+  // Any of the three may be given as a bare host, so prefix a scheme rather than emitting a URL that
+  // axios reads as a relative path.
+  const instanceUrl = rawInstance
+    ? rawInstance.startsWith("http://") || rawInstance.startsWith("https://")
+      ? rawInstance
+      : `https://${rawInstance}`
     : undefined
-  const instanceUrl = process.env.SERVICENOW_INSTANCE_URL || normalizedSnowInstance
   const clientId = process.env.SERVICENOW_CLIENT_ID || process.env.SNOW_CLIENT_ID
   const clientSecret = process.env.SERVICENOW_CLIENT_SECRET || process.env.SNOW_CLIENT_SECRET
   const refreshToken = process.env.SERVICENOW_REFRESH_TOKEN || process.env.SNOW_REFRESH_TOKEN
