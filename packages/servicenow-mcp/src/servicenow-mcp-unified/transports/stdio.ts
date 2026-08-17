@@ -17,7 +17,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { MCPPromptManager } from "../../shared/mcp-prompt-manager.js"
 import { toolRegistry } from "../shared/tool-registry.js"
 import { authManager } from "../shared/auth.js"
-import { ToolSearch } from "../shared/tool-search.js"
+import { ToolSearch, buildToolIndex } from "../shared/tool-search.js"
 import { mcpDebug, mcpWarn } from "../../shared/mcp-debug.js"
 import { extractJWTPayload } from "../shared/permission-validator.js"
 import { createServer } from "../shared/server-factory.js"
@@ -200,17 +200,12 @@ const bootstrap = async (
 
     // Populate ToolSearch index for session-based tool enabling
     mcpDebug("[Server] Building tool search index...")
-    const allTools = toolRegistry.getToolDefinitions()
-    const toolIndexEntries = allTools.map((tool) => {
-      const registeredTool = toolRegistry.getTool(tool.name)
-      return {
-        id: tool.name,
-        description: tool.description.substring(0, 200),
-        category: registeredTool?.domain || "unknown",
-        keywords: extractKeywords(tool.name, tool.description),
-        deferred: true, // All tools are deferred in lazy mode
-      }
-    })
+    // Everything is deferred in lazy mode: tool_search is the only way in.
+    const toolIndexEntries = buildToolIndex(
+      toolRegistry.getToolDefinitions(),
+      (name) => toolRegistry.getTool(name)?.domain || "unknown",
+      true,
+    )
     ToolSearch.registerTools(toolIndexEntries)
     mcpDebug(`[Server] Tool search index populated with ${toolIndexEntries.length} tools`)
 
@@ -263,31 +258,4 @@ const bootstrap = async (
     mcpDebug("[Server] Initialization failed:", error.message)
     throw error
   }
-}
-
-/**
- * Extract keywords from tool name and description for search indexing.
- */
-const extractKeywords = (name: string, description: string): string[] => {
-  const keywords = new Set<string>()
-
-  // Extract from tool name (e.g., snow_query_incidents -> query, incidents)
-  const nameParts = name.replace(/^snow_/, "").split("_")
-  nameParts.forEach((part) => {
-    if (part.length > 2) {
-      keywords.add(part.toLowerCase())
-    }
-  })
-
-  // Extract significant words from description
-  const descWords = description
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 3 && !["this", "that", "with", "from", "will", "have", "been", "tool"].includes(w))
-
-  // Take top 10 most relevant words from description
-  descWords.slice(0, 10).forEach((w) => keywords.add(w))
-
-  return Array.from(keywords)
 }
