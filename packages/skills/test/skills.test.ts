@@ -3,7 +3,7 @@
  *
  * Skills are markdown, so nothing about them fails at compile time — every
  * mistake here is silent until it reaches a user's system prompt. These are the
- * three failures that have actually happened or are one edit away:
+ * four failures that have actually happened or are one edit away:
  *
  *   1. The embedded map drifting from the tree on disk. That is not
  *      hypothetical: the shipped binary carried 55 of 58 skills for weeks and
@@ -13,6 +13,9 @@
  *      tool exists, calls it, and gets an unknown-tool error at runtime.
  *   3. A skill directory whose frontmatter `name` does not match its directory
  *      name, which breaks any consumer that keys skills by directory.
+ *   4. src/ importing a sibling module the way bun resolves rather than the way
+ *      node does. That one is invisible to every other check in this repo,
+ *      because every other check runs under bun.
  */
 
 import { describe, expect, test } from "bun:test"
@@ -135,5 +138,24 @@ describe("frontmatter tools", () => {
       (frontmatter(name)?.tools ?? []).filter((tool) => !known.has(tool)).map((tool) => `${name}: ${tool}`),
     )
     expect(unknown).toEqual([])
+  })
+})
+
+describe("published modules", () => {
+  // src/ is the only part of this package that is not markdown, and it is what
+  // an npm consumer imports: script/build-for-publish.ts compiles it to dist/,
+  // and tsc copies relative specifiers through verbatim. Node's ESM resolver
+  // does no extension guessing, so an extensionless specifier here — which bun
+  // and tsc both accept, and which nothing else in this repo would flag,
+  // because every other check runs under bun — is an ERR_MODULE_NOT_FOUND on
+  // import for everyone who installs the package from npm.
+  test.each(readdirSync(join(ROOT, "src")))("%s imports its siblings the way node resolves", (file) => {
+    const specifiers = [...readFileSync(join(ROOT, "src", file), "utf8").matchAll(/\bfrom "(\.[^"]*)"/g)].map(
+      (match) => match[1],
+    )
+    expect(specifiers.filter((specifier) => !specifier.endsWith(".js"))).toEqual([])
+    expect(specifiers.filter((specifier) => !existsSync(join(ROOT, "src", specifier.replace(/\.js$/, ".ts"))))).toEqual(
+      [],
+    )
   })
 })
