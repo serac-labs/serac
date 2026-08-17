@@ -44,7 +44,7 @@ Point your MCP client at the `servicenow-mcp-stdio` binary:
     "servicenow": {
       "command": "servicenow-mcp-stdio",
       "env": {
-        "SNOW_INSTANCE_URL": "https://dev12345.service-now.com",
+        "SNOW_INSTANCE": "https://dev12345.service-now.com",
         "SNOW_CLIENT_ID": "…",
         "SNOW_CLIENT_SECRET": "…"
       }
@@ -89,10 +89,8 @@ The repository is also a plugin marketplace, so the server and all 57 skills arr
 /plugin install servicenow@serac
 ```
 
-The server runs through `npx`, so nothing has to be installed first: export `SNOW_INSTANCE`,
-`SNOW_CLIENT_ID` and `SNOW_CLIENT_SECRET` and it is ready. `SNOW_INSTANCE` rather than the
-`SNOW_INSTANCE_URL` used further up on purpose — `npx` fetches the released package, and the release that
-first reads `SNOW_INSTANCE_URL` has not gone out yet. `SNOW_INSTANCE` is read by both. The same entry is in [`.mcp.json`](.mcp.json) at
+The server runs through `npx`, so nothing has to be installed first: export the same three variables as
+above and it is ready. The same entry is in [`.mcp.json`](.mcp.json) at
 the repo root, which Claude Code reads for this project. Other clients each want it somewhere else: copy it
 into `.cursor/mcp.json` (Cursor), `~/.codeium/windsurf/mcp_config.json` (Windsurf), or `.vscode/mcp.json`
 for VS Code, which names the same block `servers` rather than `mcpServers`.

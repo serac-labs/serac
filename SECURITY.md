@@ -20,7 +20,7 @@ that is what it is.
 
 ### The credentials are the crown jewels
 
-`servicenow-mcp-stdio` reads `SNOW_INSTANCE_URL`, `SNOW_CLIENT_ID` and `SNOW_CLIENT_SECRET` (or basic-auth
+`servicenow-mcp-stdio` reads `SNOW_INSTANCE`, `SNOW_CLIENT_ID` and `SNOW_CLIENT_SECRET` (or basic-auth
 equivalents) from its environment, and caches the resulting OAuth token in process. Anything that can read
 that process's environment, or drive its stdin, can act on your instance with those credentials. Give the
 OAuth user the least privilege that lets it do the job.
