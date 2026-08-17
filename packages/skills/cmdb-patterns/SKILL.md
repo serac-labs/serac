@@ -9,6 +9,7 @@ metadata:
   category: servicenow
 tools:
   - snow_cmdb_search
+  - snow_cmdb_identify_reconcile
   - snow_create_ci
   - snow_create_ci_relationship
   - snow_query_table
@@ -32,8 +33,10 @@ cmdb (Base)
     │   │   └── cmdb_ci_unix_server
     │   └── cmdb_ci_pc_hardware
     ├── cmdb_ci_service
-    │   ├── cmdb_ci_service_auto
-    │   └── cmdb_ci_service_discovered
+    │   ├── cmdb_ci_service_business
+    │   ├── cmdb_ci_service_technical
+    │   └── cmdb_ci_service_auto
+    │       └── cmdb_ci_service_discovered
     ├── cmdb_ci_appl
     │   ├── cmdb_ci_app_server
     │   └── cmdb_ci_db_instance
@@ -48,7 +51,7 @@ cmdb (Base)
 | ----------------- | ----------------- | ------------------------------------------- |
 | `cmdb_ci`         | Base CI table     | name, sys_class_name, operational_status    |
 | `cmdb_ci_server`  | Servers           | ip_address, os, cpu_count, ram              |
-| `cmdb_ci_service` | Business Services | service_classification, busines_criticality |
+| `cmdb_ci_service` | Service (base class — Business Service is `cmdb_ci_service_business`) | service_classification, busines_criticality |
 | `cmdb_ci_appl`    | Applications      | version, install_directory                  |
 | `cmdb_rel_ci`     | CI Relationships  | parent, child, type                         |
 
@@ -367,32 +370,69 @@ function findStaleCIs(daysOld) {
 
 ### Available CMDB Tools
 
-| Tool                          | Purpose                         |
-| ----------------------------- | ------------------------------- |
-| `snow_create_ci`              | Create new CI with proper class |
-| `snow_cmdb_search`            | Search CIs with filters         |
-| `snow_create_ci_relationship` | Create CI relationships         |
-| `snow_impact_analysis`        | Analyze CI impact               |
-| `snow_get_ci_details`         | Get full CI information         |
-| `snow_run_discovery`          | Trigger discovery               |
+| Tool                           | Purpose                                                              |
+| ------------------------------ | -------------------------------------------------------------------- |
+| `snow_cmdb_identify_reconcile` | Insert/update CIs through IRE — identifies before it writes          |
+| `snow_create_ci`               | Create new CI with proper class (writes straight to the class table) |
+| `snow_cmdb_search`             | Search CIs with filters                                              |
+| `snow_create_ci_relationship`  | Create CI relationships                                              |
+| `snow_impact_analysis`         | Analyze CI impact                                                    |
+| `snow_get_ci_details`          | Get full CI information                                              |
+| `snow_run_discovery`           | Trigger discovery                                                    |
+
+### Write CIs through IRE, not by searching first
+
+Searching for a CI and creating it when the search misses is the pattern that fills a CMDB with
+duplicates: it loses to any variance in name, IP or serial, and the second write carries no record of where
+the data came from. The Identification and Reconciliation Engine exists to do that matching properly.
+`snow_cmdb_identify_reconcile` posts the payload to `/api/now/identifyreconcile`, so each class's identifier
+rules run against it, an existing CI is updated instead of duplicated, reconciliation rules decide whether
+this data source may overwrite each attribute, and the write is recorded in Source [`sys_object_source`].
+
+`snow_create_ci` and `snow_update_ci` write to a class table directly, which skips all of that. Use them for
+a CI you know is not in the CMDB and do not need attributed to a source. Ignore `snow_reconcile_ci` despite
+the name — it PUTs your fields onto base `cmdb_ci` and echoes its `reconciliation_rule` argument back
+untouched; no rule runs.
+
+One payload can also carry `relations` between its own items, where `type` is a name field value from CI
+Relationship Type [`cmdb_rel_type`] and `parent`/`child` are indexes into `items`. That is how a source that
+discovers a host and the application on it submits both in a single call.
+
+`dry_run` commits nothing, but permission is per tool rather than per argument, so it still counts as a
+write: on a production instance the dry run needs the same `__confirmProd` as the real call.
 
 ### Example Workflow
 
 ```javascript
-// 1. Search for existing CI
-await snow_cmdb_search({
-  ci_class: "cmdb_ci_server",
-  query: "name=PROD-WEB-001",
-  include_relationships: true,
+// 1. Dry run first: IRE reports what it would do and commits nothing. On a
+//    400-CI payload this is the only way to see the verdict before taking it.
+await snow_cmdb_identify_reconcile({
+  data_source: "ServiceNow", // must be a choice on cmdb_ci.discovery_source
+  dry_run: true,
+  items: [
+    {
+      className: "cmdb_ci_linux_server",
+      values: { name: "PROD-WEB-002", ip_address: "10.0.1.101", serial_number: "VMW-42-8A" },
+    },
+  ],
 })
+// Read items[0].operation — INSERT, UPDATE, NO_CHANGE, UPDATE_WITH_UPGRADE,
+// UPDATE_WITH_DOWNGRADE, UPDATE_WITH_SWITCH or DELETE — and
+// items[0].identificationAttempts for the identifier rule that matched.
 
-// 2. Create new CI if not found (extra CI fields go in attributes)
-await snow_create_ci({
-  ci_class: "cmdb_ci_linux_server",
-  name: "PROD-WEB-002",
-  attributes: { ip_address: "10.0.1.101" },
-  operational_status: "1",
+// 2. Same payload without dry_run commits it. IRE answers HTTP 200 even when
+//    individual items fail, so check data.items[i].errors, which the tool
+//    surfaces as a failure rather than a success.
+const ire = await snow_cmdb_identify_reconcile({
+  data_source: "ServiceNow",
+  items: [
+    {
+      className: "cmdb_ci_linux_server",
+      values: { name: "PROD-WEB-002", ip_address: "10.0.1.101", serial_number: "VMW-42-8A" },
+    },
+  ],
 })
+// sys_id of the CI IRE inserted or matched: ire.data.items[0].sysId
 
 // 3. Create relationship (relationship_type is a cmdb_rel_type sys_id,
 //    look it up via snow_query_table on cmdb_rel_type)
@@ -402,11 +442,13 @@ await snow_create_ci_relationship({
   relationship_type: runsOnRelTypeSysId, // sys_id of "Runs on::Runs"
 })
 
-// 4. Impact analysis
+// 4. Impact analysis (the CI argument is ci_id; there is no direction parameter).
+//    include_services is left off on purpose: the business_services key it fills
+//    is not impact — see the csdm-modeling skill.
 await snow_impact_analysis({
-  ci_sys_id: serverSysId,
-  direction: "downstream",
+  ci_id: serverSysId,
   depth: 3,
+  include_services: false,
 })
 ```
 

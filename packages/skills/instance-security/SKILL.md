@@ -410,12 +410,20 @@ await snow_execute_script({
 })
 
 // 3. Review access controls
+//    truncate_output is REQUIRED here: `script` is on snow_query_table's
+//    truncation list, so without it every ACL script comes back as its first
+//    200 characters plus "... [truncated, N chars total]".
 await snow_query_table({
   table: "sys_security_acl",
   query: "active=true^admin_overrides=true",
-  fields: "name,operation,type,script",
+  fields: ["name", "operation", "type", "script"],
+  truncate_output: false,
 })
 ```
+
+To read one ACL script in full without the truncation rules applying at all, use
+`snow_get_by_sysid({ table: "sys_security_acl", sys_id })` — it applies no truncation. See the
+`table-api-reads` skill for the rest of what a Table API read does and does not return.
 
 ## Best Practices
 

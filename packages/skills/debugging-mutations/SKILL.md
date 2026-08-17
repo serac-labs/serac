@@ -63,7 +63,8 @@ Flow Designer uses GraphQL mutations against `sys_hub_*` tables, which `sys_audi
 |---|---|
 | Script error | `snow_get_logs` with `level="error"` |
 | Scoped-app log output | `snow_get_logs` with `log_table="syslog_app_scope"` |
-| Background-script ran, output lost | `snow_get_logs` with `log_table="sys_script_execution_history"` |
+| `snow_execute_script` ran, output lost | `snow_get_script_output` with the `execution_id` — see `background-script-execution` |
+| A human's *Scripts - Background* run, output lost | `snow_get_logs` with `log_table="sys_script_execution_history"` (only holds runs where "Record for rollback?" was ticked; never holds a Serac execution) |
 | Permission-denied / unexpected 403 | `snow_session_context` to verify caller's roles + update set |
 | Did the flow mutation work? | `snow_manage_flow` with `verify=true` |
 | What's the flow execution status? | `snow_manage_flow action=check_execution` |

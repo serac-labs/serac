@@ -1,6 +1,6 @@
 ---
 name: workspace-builder
-description: Build ServiceNow App Engine Studio applications — sys_scope creation, scoped tables, sys_aw_workspace with lists/forms, UI Builder pages and macroponents, data brokers, and application export readiness checks.
+description: Build ServiceNow App Engine Studio applications — sys_scope creation, scoped tables, sys_aw_workspace with lists/forms, the sys_ux_* record chain behind UI Builder workspaces, data brokers, and application export readiness checks. Never create a UI Builder page by inserting a sys_ux_page row.
 license: Apache-2.0
 compatibility: Designed for Serac and ServiceNow development
 metadata:
@@ -12,6 +12,20 @@ tools:
   - snow_execute_script
   - snow_artifact_manage
   - snow_update_set_manage
+  - snow_create_ux_experience
+  - snow_create_ux_app_config
+  - snow_create_ux_page_macroponent
+  - snow_create_ux_page_registry
+  - snow_create_ux_app_route
+  - snow_update_ux_app_config_landing_page
+  - snow_create_complete_workspace
+  - snow_validate_workspace_configuration
+  - snow_discover_all_workspaces
+  - snow_uib_discover
+  - snow_uib_page_manage (action='create', 'add_element', 'delete')
+  - snow_create_uib_client_state
+  - snow_create_uib_data_broker
+  - snow_configure_uib_data_broker
 ---
 
 # App Engine Studio & Workspace Builder for ServiceNow
@@ -33,13 +47,17 @@ Application (sys_scope)
 
 ## Key Tables
 
-| Table                | Purpose              |
-| -------------------- | -------------------- |
-| `sys_scope`          | Application scope    |
-| `sys_app`            | Application record   |
-| `sys_aw_workspace`   | Workspace definition |
-| `sys_ux_page`        | UI Builder pages     |
-| `sys_ux_macroponent` | Custom components    |
+| Table                  | Purpose                                                      |
+| ---------------------- | ------------------------------------------------------------ |
+| `sys_scope`            | Application scope                                             |
+| `sys_app`              | Application record                                            |
+| `sys_aw_workspace`     | Agent Workspace definition                                    |
+| `sys_ux_experience`    | Next Experience workspace — top of the UI Builder chain       |
+| `sys_ux_app_config`    | Workspace settings; links to the experience                   |
+| `sys_ux_macroponent`   | Page content and custom components                            |
+| `sys_ux_page_registry` | Registers a macroponent as a page of an app config            |
+| `sys_ux_app_route`     | URL slug that reaches a registered page                       |
+| `sys_ux_page`          | UI Builder page rows — read them, never insert one directly   |
 
 ## Application Development (ES5)
 
@@ -194,128 +212,244 @@ createWorkspaceList(workspaceSysId, {
 })
 ```
 
-## UI Builder Pages (ES5)
+## UI Builder Pages and Workspaces
 
-### Page Configuration
+The sections above write ordinary tables from a background script. This one does not work that way.
+
+A Next Experience workspace is a graph of linked records, not a record. Inserting one row on its own —
+`new GlideRecord("sys_ux_page")`, which is what earlier versions of this guide told you to do — succeeds,
+returns a sys_id, and leaves you an orphan: no experience owns the page, no app config registers it, no route
+reaches it. The row itself gives no hint that anything is missing. A lone `sys_ux_macroponent` insert is the
+same story.
+
+Two tools in this server will POST a `sys_ux_page` row through the Table API, and neither builds the rest of
+the graph. `snow_artifact_manage (action='create', type='uib_page')` writes `name`, `title` and
+`description` and stops. `snow_github_deploy` maps both `target_type: "uib_page"` and `"sys_ux_page"` onto
+the same table, defaults `upsert` to `true`, and inserts a fresh row whenever its identifier matches nothing
+— so a mistyped `target_identifier` produces this same orphan without saying so. Both report success. Use
+`snow_artifact_manage` on UI Builder pages for `get`, `find`, `export` and `verify`, not `create`, and give
+`snow_github_deploy` a `target_sys_id` or an identifier you have already read back off the instance.
+
+The `sys_ux_page` tools in the `workspace` and `ui-builder` domains otherwise only read and delete. The one
+exception is `snow_uib_page_manage (action='create')`, which does not touch the table at all — see *Where
+scripting stops*.
+
+### The record chain
+
+| Step | Table                        | Tool                                       | Carries forward       |
+| ---- | ---------------------------- | ------------------------------------------ | --------------------- |
+| 1    | `sys_ux_experience`          | `snow_create_ux_experience`                | `experience_sys_id`   |
+| 2    | `sys_ux_app_config`          | `snow_create_ux_app_config`                | `app_config_sys_id`   |
+| 3    | `sys_ux_macroponent`         | `snow_create_ux_page_macroponent`          | `macroponent_sys_id`  |
+| 4    | `sys_ux_page_registry`       | `snow_create_ux_page_registry`             | `sys_name`            |
+| 5    | `sys_ux_app_route`           | `snow_create_ux_app_route`                 | `name`                |
+| 6    | `sys_ux_app_config` (update) | `snow_update_ux_app_config_landing_page`   | —                     |
+
+The order is enforced, not advisory. Step 2 refuses if step 1's experience cannot be read back. Step 4 GETs
+both `sys_ux_app_config` and `sys_ux_macroponent` before it writes and refuses if either is missing. Step 5
+joins back to step 4 through `page_sys_name` — per step 5's own schema that value is the registry's
+`sys_name` **string**, not its sys_id. Step 6 is the one people skip: step 5's own response tells you to run
+it, and until you do the app config has no `landing_page`.
+
+Step 5 returns two keys that look interchangeable and are not. Its `name` input is the route name that
+becomes the URL slug; its `route` is the path, which it defaults to `/<name>`. Step 6 wants the **name**:
+`snow_update_ux_app_config_landing_page` takes `route_name` and PATCHes it straight into `landing_page`. Hand
+it step 5's `route` and you set the landing page to `/home` where the route is called `home`.
+
+Step 1 needs only a name. It derives `path` from that name (lowercased, spaces to hyphens) unless you pass
+one, defaults `homepage` to `home`, and resolves the app shell itself by querying `sys_ux_macroponent` for
+`name=uib_app_shell^category=app_shell`, falling back to
+`name=x_snc_app_shell_uib_app_shell^category=app_shell`. If neither row is on the instance you get
+`Could not find appShellUI macroponent (uib_app_shell) on this instance` before anything is written.
+
+### The Builder Toolkit dependency
+
+Step 1 is not a Table API write. It POSTs to `/api/sn_uibtk_api/buildertoolkit/experience`, a scoped
+endpoint that appears in no reachable ServiceNow REST documentation — the scope name reads like UI
+Builder's own toolkit, but treat that as a guess, not a contract, and expect nothing about it to survive a
+family release. Steps 2 through 6 write through the ordinary `/api/now/table/...` API.
+
+If the `sn_uibtk_api` scope is not on the instance, step 1 fails with
+`Builder Toolkit API not available - UI Builder plugin may not be installed` and names the plugin
+`com.snc.ui_builder_toolkit`. That is the tool working correctly, not a broken tool.
+
+**The trap is step 2.** Before it writes anything, `snow_create_ux_app_config` GETs
+`/api/sn_uibtk_api/buildertoolkit/experience` to confirm the experience exists, and swallows every failure
+from that GET. On an instance without the toolkit the check 404s and the tool reports
+`Experience '<sys_id>' not found or not accessible`. The sys_id in that message is fine; the toolkit is
+missing. Check step 1's result and the plugin before you go re-copying sys_ids.
+
+### Roles
+
+`sn-roles.manifest.json` in the MCP package records an ACL probe of a live instance, and create permission
+across the chain is not uniform:
+
+| Table                  | Create needs one of                                                |
+| ---------------------- | ------------------------------------------------------------------ |
+| `sys_ux_app_config`    | `delegated_developer`, `ui_builder_admin`                          |
+| `sys_ux_macroponent`   | `delegated_developer`, `ui_builder_admin`                          |
+| `sys_ux_page_registry` | `canvas_admin`, `maint`, `ui_builder_admin`, `uxframework_designer` |
+| `sys_ux_app_route`     | `ui_builder_admin`                                                 |
+| `sys_ux_data_broker`   | `ui_builder_admin`                                                 |
+| `sys_ux_page_element`  | `ui_builder_admin`, `uxframework_designer`                         |
+
+So a `delegated_developer` clears steps 2 and 3 and then fails at step 4, with three records already
+written. `ui_builder_admin` covers the whole chain; the manifest lists `admin` as sufficient everywhere.
+
+When an ACL does reject a write, the failure is quieter than you expect. This server's HTTP client
+re-throws ServiceNow error bodies as `ServiceNow: <message>` and drops the body's `detail` whenever
+`message` is present — and `detail` is usually the half that says which table and which operation. If a
+step fails and the message tells you nothing, query the table for the row rather than guessing.
+
+### This server ships three different chains
+
+They do not agree with each other. Know which one you called.
+
+- **The six steps above.** Experience, app config, macroponent, page registry, route, landing page. No
+  lists. Every record is one you can see and verify.
+- **`snow_create_complete_workspace`.** Experience, app config, then a page created through the toolkit's
+  `/page` endpoint, then — only if you pass `tables` — one `sys_ux_list_menu_config`, one
+  `sys_ux_list_category` per table and one `sys_ux_list` per category. It never writes a
+  `sys_ux_page_registry` or `sys_ux_app_route` row, because the toolkit `/page` call is what is supposed to
+  produce the screen and route server-side. Whether it did is something you check, not something the tool
+  reports.
+- **`snow_create_workspace`** (the `ui-builder` domain, not `workspace`). Experience, app config, route,
+  lists — and no page at all, so nothing lands on anything.
+
+Prefer the six steps when the workspace has to be right, because you can inspect every row. Reach for
+`snow_create_complete_workspace` when you were going to open UI Builder afterwards anyway. Do not build
+something a user will open with `snow_create_workspace`.
+
+None of the three read a URL back from the instance. `snow_create_ux_app_route` prints
+`/now/experience<route>`, `snow_create_complete_workspace` prints `/now/<path>`, and `snow_create_workspace`
+prints `<instance_url>/workspace/<path>` — all assembled inside the tool from strings you passed in. For a
+path the instance actually knows, call `snow_discover_all_workspaces`, which reads the experience list back
+from the toolkit — but read its output, not its status. When the toolkit call fails it does not fail the
+tool: it pushes `{type: "UX Experience", error: "Builder Toolkit API not available"}` into the list and
+returns success. On a toolkit-less instance that is a green result with no experiences in it.
+
+One more route writer, and its name will mislead you. `snow_create_uib_page_registry`, in the `ui-builder`
+domain, does not touch `sys_ux_page_registry` at all: it POSTs to `sys_ux_app_route` with a `page` column,
+plus `roles`, `public` and `active`. That is a different shape from step 5, which links through `app_config`
+and `page_sys_name`. Two tools, one table, two incompatible ideas of how a route finds its page — do not mix
+them in one workspace, and do not reach for this one as step 4 because of what it is called.
+
+### Where scripting stops
+
+The chain leaves you five rows and an update that reference each other the way the tools intend. Whether
+that adds up to a page UI Builder will open is not something this repo demonstrates and not something the
+reachable documentation settles — verify it by opening the experience, not by reading a success payload.
+What the chain definitely does not give you is a page with anything on it.
+
+`snow_create_ux_page_macroponent` writes whatever object you pass as `composition` into that column as a
+JSON string, and when you pass nothing it writes `{"layout":"single-column","components":[]}`. That default
+is the tool's placeholder. Nothing in this repo establishes that it — or any composition you write by hand —
+is a structure the UI Builder runtime renders, and this guide is not going to invent a format for you.
+
+**Lay pages out in UI Builder.** Search the **All** menu for *UI Builder*, open the experience, open the
+page. That is the supported editor for the component tree and it writes the composition the runtime expects.
+Script the chain; author the page.
+
+`snow_uib_page_manage (action='add_element')` looks like the way around that, and it is honest about what it
+does: it POSTs `page`, `component`, `position` and a JSON `properties` string to `sys_ux_page_element`, a
+real table with real ACLs. What is unproven is the connection. Its `page_id` is a `sys_ux_page` sys_id, and
+the six-step chain never creates a `sys_ux_page` — so there is no demonstrated path from a chain-built page
+to an element added this way. Do not build a layout on it without opening the result in UI Builder first.
+
+`snow_uib_page_manage (action='create')` is the one candidate for supplying that missing `sys_ux_page`. It
+takes an `experience_id` and a name and POSTs to the toolkit's `/page` endpoint — the same call
+`snow_create_complete_workspace` makes — then returns the macroponent, screen and route ids the toolkit hands
+back. So the server does the creating, which is why it can plausibly produce a real page and a route at once
+where the Table API route cannot. Two caveats before you lean on it: it needs the toolkit, and the ids it
+returns are the toolkit's, so confirm a `sys_ux_page` row actually exists before feeding one to
+`add_element`. The verdict does not change — open it in UI Builder before you build on it.
+
+The one macroponent internal this server edits through the toolkit rather than the Table API is client
+state: `snow_create_uib_client_state` GETs `/api/sn_uibtk_api/buildertoolkit/macroponent`, appends to the
+`state_properties` it finds there, and PATCHes the whole array back. It needs the macroponent sys_id. The
+read-modify-write is unguarded — no version check, no optimistic lock — so two agents adding state to the
+same page concurrently are the classic setup for a lost update. That outcome is read off the code, not
+observed on an instance — add state from one caller at a time and you never have to find out.
+
+### Verifying the chain
+
+`snow_validate_workspace_configuration` with `workspace_type: "ux_experience"` does not check the parts that
+break. It scores four things: the experience's `active` flag, whether any `sys_ux_app_config` has
+`experience_assoc` pointing at it, whether that config has a `list_config_id`, and whether any
+`sys_ux_page_property` rows reference it. It never reads `sys_ux_macroponent`, `sys_ux_page_registry` or
+`sys_ux_app_route`, so a workspace with no page and no route can come back `passed`.
+
+Check the last two yourself:
 
 ```javascript
-// Create UI Builder page (ES5 ONLY!)
-// Note: Full page creation typically done via UI Builder
+// The page must be registered against the app config from step 2
+await snow_query_table({
+  table: "sys_ux_page_registry",
+  query: "app_config=" + appConfigSysId,
+  fields: ["sys_name", "macroponent", "active"],
+})
 
-var page = new GlideRecord("sys_ux_page")
-page.initialize()
-
-page.setValue("name", "asset_dashboard")
-page.setValue("title", "Asset Dashboard")
-page.setValue("description", "Dashboard for asset overview")
-
-// Page type
-page.setValue("page_type", "workspace")
-
-// Workspace link
-page.setValue("workspace", workspaceSysId)
-
-// Scope
-page.setValue("sys_scope", appScopeSysId)
-
-page.insert()
+// ...and a route must name that same sys_name
+await snow_query_table({
+  table: "sys_ux_app_route",
+  query: "app_config=" + appConfigSysId,
+  fields: ["name", "route", "page_sys_name", "active"],
+})
 ```
 
-### Custom Component (Macroponent)
+Both should return a row, and the route's `page_sys_name` should equal the registry's `sys_name`.
 
-```javascript
-// Create custom macroponent definition (ES5 ONLY!)
-// Note: Actual components created via UI Builder
+Read that check with the same suspicion as the data-broker fields below. `sys_ux_page_registry.app_config`,
+`sys_ux_page_registry.sys_name` and `sys_ux_app_route.page_sys_name` are the columns the step 4 and step 5
+executors write; nothing in this repo confirms them against ServiceNow's own documentation, and the
+`sys_ux_*` tables are not in the reachable docs. So an empty result has two readings — the row is missing,
+or the column name is wrong — and `sysparm_query` will not tell you which, because an unrecognised field in
+an encoded query does not raise an error. Before you trust an empty result, query the same table on
+`sys_created_onONToday@javascript:gs.beginningOfToday()@javascript:gs.endOfToday()` with no `fields` list and
+read the raw row the chain just wrote. If it is there under different column names, the chain worked and
+this recipe is what is out of date.
 
-var component = new GlideRecord("sys_ux_macroponent")
-component.initialize()
+Do not use `snow_uib_discover` as that check. Its `pages` action reads `sys_ux_page`, which the chain never
+creates, and its `routes` action reads `sys_ux_page_registry` filtered by `experience=<sys_id>` — while the
+chain links the registry through `app_config`, not `experience`. Neither one filters on anything your six
+steps wrote, so whatever it returns says nothing about your workspace. Use it to look at pages that were
+authored in UI Builder, and `snow_discover_all_workspaces` to enumerate experiences.
 
-component.setValue("name", "asset_summary_card")
-component.setValue("label", "Asset Summary Card")
-component.setValue("description", "Displays asset summary information")
+One `snow_query_table` quirk matters when you go looking at a macroponent: `truncate_output` defaults to
+`true`, and it cuts to 200 characters with `... [truncated, N chars total]` appended. Which strings it cuts
+depends on the field's name. If the name contains one of its large-content substrings — `script`,
+`description`, `content`, `body`, `json`, `html`, `xml`, `template`, `comments` and about ten more —
+anything past 200 characters is cut. Every other field gets to 400 first. `composition` is not on that list
+so it survives to 400, and a real one is far longer than that; `short_description` matches on `description`
+and so gets cut at 200. Pass `truncate_output: false` whenever you intend to compare values, or you will
+compare two truncations and conclude they match.
 
-// Component category
-component.setValue("category", "data_visualization")
+### Data resources (data brokers)
 
-// Scope
-component.setValue("sys_scope", appScopeSysId)
+Same boundary, same rule. Do not create data brokers from a background script on `sys_ux_data_broker`. The
+field set earlier versions of this guide used there — `type: "script"` plus a `script` column — is not one
+anything in this repo confirms.
 
-// Properties (inputs)
-component.setValue(
-  "properties",
-  JSON.stringify([
-    { name: "title", type: "string", label: "Card Title" },
-    { name: "assetTable", type: "string", label: "Asset Table" },
-    { name: "filter", type: "string", label: "Filter" },
-  ]),
-)
+Two tools write the table:
 
-component.insert()
-```
+- `snow_create_uib_data_broker` POSTs `page`, `name`, `table`, `query` and `limit`, plus `fields`
+  (comma-joined) and `order_by` when you pass them.
+- `snow_configure_uib_data_broker` PATCHes an existing row with any of `query`, `refresh_interval`,
+  `enable_caching`, `cache_duration`, `parameters` and `filters` — the last two JSON-stringified.
 
-## Data Brokers (ES5)
+Those column names are this server's assumption about `sys_ux_data_broker`, not something the repo verifies
+against a real broker. Do not treat a success response as proof the fields landed: read the row straight
+back with `snow_query_table` and compare it against a broker created in UI Builder on the same instance. If
+the shapes differ, author in UI Builder and use these tools only to read.
 
-### Create Data Broker
+Broker script bodies and the GraphQL broker query shape belong to the `ui-builder-patterns` guide. They are
+server-side and ES5, like everything else in this file.
 
-```javascript
-// Data broker for workspace data (ES5 ONLY!)
-// Data brokers provide data to UI Builder pages
-
-var broker = new GlideRecord("sys_ux_data_broker")
-broker.initialize()
-
-broker.setValue("name", "asset_stats")
-broker.setValue("label", "Asset Statistics")
-
-// Data source type
-broker.setValue("type", "script")
-
-// Script to fetch data (ES5 ONLY!)
-broker.setValue(
-  "script",
-  "(function getData(inputs) {\n" +
-    "    var result = {\n" +
-    "        total: 0,\n" +
-    "        assigned: 0,\n" +
-    "        available: 0,\n" +
-    "        expiring_warranty: 0\n" +
-    "    };\n" +
-    "    \n" +
-    '    var ga = new GlideAggregate("x_myco_asset_track_asset_item");\n' +
-    '    ga.addAggregate("COUNT");\n' +
-    '    ga.groupBy("state");\n' +
-    "    ga.query();\n" +
-    "    \n" +
-    "    while (ga.next()) {\n" +
-    '        var count = parseInt(ga.getAggregate("COUNT"), 10);\n' +
-    "        result.total += count;\n" +
-    "        \n" +
-    '        var state = ga.getValue("state");\n' +
-    '        if (state === "in_use") {\n' +
-    "            result.assigned = count;\n" +
-    '        } else if (state === "available") {\n' +
-    "            result.available = count;\n" +
-    "        }\n" +
-    "    }\n" +
-    "    \n" +
-    "    // Expiring warranties\n" +
-    '    var expiring = new GlideAggregate("x_myco_asset_track_asset_item");\n' +
-    '    expiring.addQuery("u_warranty_end", "BETWEEN", "javascript:gs.daysAgoStart(0)@javascript:gs.daysAgoEnd(-30)");\n' +
-    '    expiring.addAggregate("COUNT");\n' +
-    "    expiring.query();\n" +
-    "    \n" +
-    "    if (expiring.next()) {\n" +
-    '        result.expiring_warranty = parseInt(expiring.getAggregate("COUNT"), 10);\n' +
-    "    }\n" +
-    "    \n" +
-    "    return result;\n" +
-    "})(inputs);",
-)
-
-broker.setValue("sys_scope", appScopeSysId)
-
-broker.insert()
-```
+Deletion is the one operation here that walks the graph: `snow_uib_page_manage (action='delete')` with
+`delete_dependencies` left at its default first deletes the `sys_ux_page_element`, `sys_ux_data_broker`,
+`sys_ux_client_script` and `sys_ux_app_route` rows whose `page` points at the page, then the page itself.
+Passing `delete_dependencies: false` leaves all of them behind — more orphans, in the table you were trying
+to clean up.
 
 ## Application Deployment (ES5)
 
@@ -372,14 +506,9 @@ function prepareAppExport(appScope) {
 
 ## MCP Tool Integration
 
-### Available Tools
-
-| Tool                                  | Purpose              |
-| ------------------------------------- | -------------------- |
-| `snow_query_table`                    | Query app components |
-| `snow_execute_script`                 | Test app scripts     |
-| `snow_artifact_manage` (action='find') | Find configurations  |
-| `snow_update_set_manage` (action='create') | Create update sets   |
+The `tools:` list in this file's frontmatter is the full set. There is deliberately no second list here: a
+summary table used to sit in this spot and it drifted out of date the moment the UI Builder chain was added,
+which is a worse failure than having one list.
 
 ### Example Workflow
 
