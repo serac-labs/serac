@@ -157,7 +157,13 @@ The [MCP registry](https://registry.modelcontextprotocol.io) listing is a second
 live. `server.json` repeats that version and the package name, so a gate on every PR touching either file
 fails when the two disagree — `bun run --cwd packages/servicenow-mcp check:registry-manifest`.
 
-`@serac-labs/skills` is not on npm today. It is consumed from a checkout.
+`@serac-labs/skills` releases the same way, from `.github/workflows/publish-skills.yml`, with gates
+adapted to what that package actually ships: the tarball must contain every entrypoint **and** every skill
+directory, and every published subpath must load under node from a real `npm install` — `skillsRoot()`
+hands consumers a filesystem path, so an import that merely succeeds proves nothing.
+
+Its npm trusted publisher does not exist yet, so no version has gone out. Creating it (bound to
+`serac-labs/serac` + `publish-skills.yml`) is a manual step on npmjs.com; see the workflow header.
 
 ## What used to be here
 

@@ -17,5 +17,9 @@
  * literals). Import `@serac-labs/skills/root` instead if you only need the
  * directory path.
  */
-export { BUNDLED_SKILLS } from "./embedded"
-export { skillsRoot } from "./root"
+// `.js` specifiers, not extensionless: tsc preserves the specifier verbatim, and
+// Node's ESM resolver does no extension guessing, so an extensionless import
+// here is an ERR_MODULE_NOT_FOUND for every npm consumer on node. Bun and
+// TypeScript both map the .js back onto the .ts source in this repo.
+export { BUNDLED_SKILLS } from "./embedded.js"
+export { skillsRoot } from "./root.js"

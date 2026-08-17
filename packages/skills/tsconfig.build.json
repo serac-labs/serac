@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json.schemastore.org/tsconfig.json",
+  "compilerOptions": {
+    "lib": ["ESNext"],
+    "target": "ESNext",
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "declaration": true,
+    // rootDir is load-bearing, not tidiness: skillsRoot() resolves the skill
+    // tree as `<its own directory>/..`, so the emitted module must sit exactly
+    // one level below the package root, the same depth src/ sits at. Widening
+    // rootDir (adding script/ or test/ to `include` would do it) makes tsc emit
+    // dist/src/root.js, and skillsRoot() then returns <pkg>/dist — a directory
+    // with no skills in it. The gates in publish-skills.yml catch that, but the
+    // cheapest place to not cause it is here.
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "skipLibCheck": true,
+    "types": ["bun"]
+  },
+  "include": ["src"]
+}
