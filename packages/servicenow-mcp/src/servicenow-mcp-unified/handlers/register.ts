@@ -22,7 +22,10 @@ import { type HandlerDeps } from "./types.js"
 
 export const registerHandlers = (server: Server, deps: HandlerDeps): void => {
   server.setRequestHandler(ListToolsRequestSchema, listTools(deps))
-  server.setRequestHandler(CallToolRequestSchema, callTool(deps))
+  // callTool gets the Server itself because one tool changes the tool list:
+  // tool_search enables deferred tools for the session, and the client only
+  // learns about it from notifications/tools/list_changed.
+  server.setRequestHandler(CallToolRequestSchema, callTool(deps, server))
   server.setRequestHandler(ListPromptsRequestSchema, listPrompts(deps))
   server.setRequestHandler(GetPromptRequestSchema, getPrompt(deps))
 

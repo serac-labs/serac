@@ -1,5 +1,14 @@
 /**
  * snow_reconcile_ci - CMDB reconciliation
+ *
+ * DEPRECATED: this does not run reconciliation. The executor below PUTs the
+ * caller's source_data onto base cmdb_ci for one sys_id and echoes the
+ * reconciliation_rule argument straight back as `rule` — no identifier rule, no
+ * reconciliation rule, no Source [sys_object_source] row, and class-specific
+ * columns are dropped because the write targets cmdb_ci rather than the CI's
+ * own class table. Use snow_cmdb_identify_reconcile, which posts to
+ * /api/now/identifyreconcile and lets the Identification and Reconciliation
+ * Engine decide the operation.
  */
 
 import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
@@ -8,7 +17,8 @@ import { createSuccessResult, createErrorResult } from "../../shared/error-handl
 
 export const toolDefinition: MCPToolDefinition = {
   name: "snow_reconcile_ci",
-  description: "Reconcile CI data from multiple sources",
+  description:
+    "[DEPRECATED - use snow_cmdb_identify_reconcile] Does not reconcile. PUTs the given fields onto base cmdb_ci for one sys_id and echoes reconciliation_rule back untouched — no identifier or reconciliation rule runs, no Source [sys_object_source] row is written, and class-specific fields are dropped. Use snow_cmdb_identify_reconcile instead, which posts the payload to the Identification and Reconciliation Engine. Kept only for callers that already depend on this plain cmdb_ci update.",
   // Metadata for tool discovery (not sent to LLM)
   category: "cmdb",
   subcategory: "reconciliation",

@@ -16,6 +16,10 @@ export {
   execute as snow_rest_message_manage_exec,
 } from "./snow_rest_message_manage.js"
 export {
+  toolDefinition as snow_scripted_rest_api_manage_def,
+  execute as snow_scripted_rest_api_manage_exec,
+} from "./snow_scripted_rest_api_manage.js"
+export {
   toolDefinition as snow_test_rest_connection_def,
   execute as snow_test_rest_connection_exec,
 } from "./snow_test_rest_connection.js"

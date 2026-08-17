@@ -16,6 +16,10 @@ export { toolDefinition as snow_run_discovery_def, execute as snow_run_discovery
 export { toolDefinition as snow_get_ci_impact_def, execute as snow_get_ci_impact_exec } from "./snow_get_ci_impact.js"
 export { toolDefinition as snow_reconcile_ci_def, execute as snow_reconcile_ci_exec } from "./snow_reconcile_ci.js"
 export {
+  toolDefinition as snow_cmdb_identify_reconcile_def,
+  execute as snow_cmdb_identify_reconcile_exec,
+} from "./snow_cmdb_identify_reconcile.js"
+export {
   toolDefinition as snow_ci_health_check_def,
   execute as snow_ci_health_check_exec,
 } from "./snow_ci_health_check.js"

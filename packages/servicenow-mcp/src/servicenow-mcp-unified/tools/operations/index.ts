@@ -21,6 +21,10 @@ export {
   toolDefinition as snow_discover_table_fields_def,
   execute as snow_discover_table_fields_exec,
 } from "./snow_discover_table_fields.js"
+export {
+  toolDefinition as snow_describe_field_def,
+  execute as snow_describe_field_exec,
+} from "./snow_describe_field.js"
 export { toolDefinition as snow_get_by_sysid_def, execute as snow_get_by_sysid_exec } from "./snow_get_by_sysid.js"
 export {
   toolDefinition as snow_search_artifacts_def,
