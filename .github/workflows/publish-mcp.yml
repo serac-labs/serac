@@ -311,6 +311,13 @@ jobs:
               ),
               ...Object.entries(pkg.bin ?? {}).map(([key, value]) => [`bin["${key}"]`, value]),
               ["files", "dist/index.js"],
+              // Not an entrypoint, but the roles check reads it from the
+              // package root at runtime. Dropped from "files" it does not
+              // fail anything — the report silently degrades to "manifest is
+              // not installed" for every npm user while every local test and
+              // CI job stays green. This tarball is the only place that can
+              // see it go missing.
+              ["files", "sn-roles.manifest.json"],
             ]
 
             const inTarball = (file) => {
