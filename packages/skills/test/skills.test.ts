@@ -3,7 +3,7 @@
  *
  * Skills are markdown, so nothing about them fails at compile time — every
  * mistake here is silent until it reaches a user's system prompt. These are the
- * three failures that have actually happened or are one edit away:
+ * four failures that have actually happened or are one edit away:
  *
  *   1. The embedded map drifting from the tree on disk. That is not
  *      hypothetical: the shipped binary carried 55 of 58 skills for weeks and
@@ -13,6 +13,9 @@
  *      tool exists, calls it, and gets an unknown-tool error at runtime.
  *   3. A skill directory whose frontmatter `name` does not match its directory
  *      name, which breaks any consumer that keys skills by directory.
+ *   4. src/ importing a sibling module the way bun resolves rather than the way
+ *      node does. That one is invisible to every other check in this repo,
+ *      because every other check runs under bun.
  */
 
 import { describe, expect, test } from "bun:test"
@@ -41,28 +44,30 @@ const walk = (dir: string, acc: string[] = []): string[] => {
   return acc
 }
 
-/** The `tools:` list out of a SKILL.md's YAML frontmatter. */
+/**
+ * Tool names declared under `tools:`.
+ *
+ * Several skills annotate an entry with the action they mean —
+ * `- snow_update_set_manage (action='create')`. Only the first token is the tool
+ * name, and requiring the whole item to be one token dropped those entries
+ * silently, which exempted ten names in the tree from the check below.
+ */
+const declaredTools = (lines: string[]): string[] => {
+  const start = lines.findIndex((line) => /^tools:\s*$/.test(line))
+  if (start < 0) return []
+  const end = lines.findIndex((line, index) => index > start && /^\S/.test(line))
+  return lines.slice(start + 1, end < 0 ? undefined : end).flatMap((line) => /^\s*-\s*(\S+)/.exec(line)?.[1] ?? [])
+}
+
+/** The `name`, `description` and `tools:` list out of a SKILL.md's YAML frontmatter. */
 const frontmatter = (name: string) => {
   const raw = readFileSync(join(ROOT, name, "SKILL.md"), "utf8")
   const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw)
   if (!match) return undefined
-  const lines = match[1]!.split(/\r?\n/)
-  const tools: string[] = []
-  let inTools = false
-  for (const line of lines) {
-    if (/^tools:\s*$/.test(line)) {
-      inTools = true
-      continue
-    }
-    if (!inTools) continue
-    const item = /^\s*-\s*(\S+)\s*$/.exec(line)
-    if (item) tools.push(item[1]!)
-    else if (/^\S/.test(line)) inTools = false
-  }
   return {
     name: /^name:\s*(\S+)\s*$/m.exec(match[1]!)?.[1],
     description: /^description:\s*(.+)$/m.exec(match[1]!)?.[1],
-    tools,
+    tools: declaredTools(match[1]!.split(/\r?\n/)),
   }
 }
 
@@ -124,6 +129,20 @@ describe("frontmatter tools", () => {
     return found
   }
 
+  test("an entry annotated with an action still names its tool", () => {
+    // This is the shape `update-set-workflow` uses, and it is the skill every
+    // "write a guide" issue points a newcomer at, so a parser that skips it
+    // hands the whole check back to the contributor without saying so.
+    const parsed = declaredTools([
+      "tools:",
+      "  - snow_update_set_manage (action='create')",
+      "  - snow_ensure_active_update_set",
+      "license: Apache-2.0",
+      "  - snow_not_a_tool",
+    ])
+    expect(parsed).toEqual(["snow_update_set_manage", "snow_ensure_active_update_set"])
+  })
+
   test("every tool a skill declares exists in @serac-labs/servicenow-mcp", () => {
     if (!existsSync(toolsDir)) {
       // Sibling package absent (standalone checkout) — nothing to check against.
@@ -135,5 +154,24 @@ describe("frontmatter tools", () => {
       (frontmatter(name)?.tools ?? []).filter((tool) => !known.has(tool)).map((tool) => `${name}: ${tool}`),
     )
     expect(unknown).toEqual([])
+  })
+})
+
+describe("published modules", () => {
+  // src/ is the only part of this package that is not markdown, and it is what
+  // an npm consumer imports: script/build-for-publish.ts compiles it to dist/,
+  // and tsc copies relative specifiers through verbatim. Node's ESM resolver
+  // does no extension guessing, so an extensionless specifier here — which bun
+  // and tsc both accept, and which nothing else in this repo would flag,
+  // because every other check runs under bun — is an ERR_MODULE_NOT_FOUND on
+  // import for everyone who installs the package from npm.
+  test.each(readdirSync(join(ROOT, "src")))("%s imports its siblings the way node resolves", (file) => {
+    const specifiers = [...readFileSync(join(ROOT, "src", file), "utf8").matchAll(/\bfrom "(\.[^"]*)"/g)].map(
+      (match) => match[1],
+    )
+    expect(specifiers.filter((specifier) => !specifier.endsWith(".js"))).toEqual([])
+    expect(specifiers.filter((specifier) => !existsSync(join(ROOT, "src", specifier.replace(/\.js$/, ".ts"))))).toEqual(
+      [],
+    )
   })
 })

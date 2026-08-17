@@ -2,7 +2,7 @@
 
 ## Overview
 
-The Enterprise MCP Proxy bridges **SnowCode CLI** (stdio MCP protocol) with the **Serac Enterprise License Server** (HTTPS REST API), enabling enterprise features like Jira, Azure DevOps, and Confluence integrations.
+The Enterprise MCP Proxy bridges **any MCP client** (stdio MCP protocol) with the **Serac Enterprise License Server** (HTTPS REST API), enabling enterprise features like Jira, Azure DevOps, and Confluence integrations. It ships in this package as the `servicenow-mcp-enterprise-proxy` binary.
 
 ### 🚀 Enterprise Tool Ecosystem
 
@@ -32,82 +32,59 @@ The Enterprise MCP Proxy bridges **SnowCode CLI** (stdio MCP protocol) with the 
 
 ```
 ┌─────────────┐  stdio MCP   ┌──────────────┐  HTTPS REST   ┌─────────────────┐
-│  SnowCode   │─────────────▶│  MCP Proxy   │──────────────▶│ License Server  │
-│  CLI        │◀─────────────│  (LOKAAL)    │◀──────────────│  (CLOUD - GCP)  │
+│ MCP client  │─────────────▶│  MCP Proxy   │──────────────▶│ License Server  │
+│ (local)     │◀─────────────│  (local)     │◀──────────────│  (cloud)        │
 └─────────────┘              └──────────────┘               └─────────────────┘
 ```
 
 ## Configuration
 
-The proxy is automatically configured when running `snow-flow auth login` with an enterprise license key.
-
-### Environment Variables
+The variables the proxy reads:
 
 ```bash
-# ============================================
-# Required - Enterprise License
-# ============================================
-SNOW_LICENSE_KEY=SNOW-ENT-CUST-ABC123
-SNOW_ENTERPRISE_URL=https://license-server.run.app
-
-# ============================================
-# Optional: Local Credentials
-# (Otherwise uses server-side encrypted credentials)
-# ============================================
-
-# Jira Integration (22 tools)
-JIRA_HOST=https://company.atlassian.net
-JIRA_EMAIL=user@company.com
-JIRA_API_TOKEN=ATATT3xFfGF0...
-# Get token: https://id.atlassian.com/manage-profile/security/api-tokens
-
-# Azure DevOps Integration (26 tools)
-AZURE_DEVOPS_ORG=mycompany
-AZURE_DEVOPS_PAT=xxxxxxxxxxxxxxxxxxxxx
-# Get PAT: https://dev.azure.com/{org}/_usersSettings/tokens
-# Required scopes: Work Items (Read, Write), Build (Read, Execute), Code (Read, Write)
-
-# Confluence Integration (24 tools)
-CONFLUENCE_HOST=https://company.atlassian.net
-CONFLUENCE_EMAIL=user@company.com
-CONFLUENCE_API_TOKEN=ATATT3xFfGF0...
-# Same token as Jira (Atlassian Cloud uses same API tokens)
+SNOW_LICENSE_KEY=<enterprise license key, or a device-auth JWT>   # SNOW_ENTERPRISE_LICENSE_KEY is an alias
+SNOW_ENTERPRISE_URL=https://enterprise.serac.build   # the default when unset
+SNOW_PORTAL_URL=https://portal.serac.build           # the default; only used to trade a raw SNOW-ENT-* key for a JWT
 ```
 
-**Credential Priority:**
+If you point `SNOW_ENTERPRISE_URL` at a staging or self-hosted server, set `SNOW_PORTAL_URL` to match —
+a raw license key is exchanged for a JWT against the portal, not against the enterprise server, so leaving
+it unset authenticates against production and fails as "License key invalid or expired".
 
-1. **Local environment variables** (shown above) - Sent encrypted to server
-2. **Server-side encrypted storage** - Managed by enterprise admin
-3. **Error** - If neither available, tool will fail with clear message
+`SNOW_LICENSE_KEY` is optional when `~/.serac/enterprise.json` holds a token — or the legacy pre-rebrand
+`~/.snow-code/enterprise.json`, which is still read as a fallback. The proxy re-reads them on every call and
+prefers the token file over the env var, because an MCP client config is written once and goes stale while
+the token file does not.
 
-### SnowCode Configuration
-
-Automatically added to `~/.config/snow-code/snow-code.json`:
+Point any MCP client at the binary:
 
 ```json
 {
   "mcpServers": {
     "serac-enterprise": {
-      "command": "node",
-      "args": ["node_modules/snow-flow/dist/mcp/enterprise-proxy/index.js"],
+      "command": "servicenow-mcp-enterprise-proxy",
       "env": {
-        "SNOW_LICENSE_KEY": "SNOW-ENT-CUST-ABC123",
-        "SNOW_ENTERPRISE_URL": "https://license-server.run.app",
-        "JIRA_HOST": "...",
-        "JIRA_EMAIL": "...",
-        "JIRA_API_TOKEN": "..."
+        "SNOW_LICENSE_KEY": "...",
+        "SNOW_ENTERPRISE_URL": "https://enterprise.serac.build"
       }
     }
   }
 }
 ```
 
+### Integration credentials
+
+Jira, Azure DevOps and Confluence credentials are **not** read from this process. The enterprise server
+fetches them from the Portal API with the license JWT and decrypts them there, so nothing needs them
+locally. `credentials.ts` is the old local-environment path: deprecated, and imported by nothing.
+
 ## Files
 
-- **index.ts** - MCP Server entry point (stdio transport)
-- **server.ts** - Server setup and configuration
+- **index.ts** - MCP Server entry point (stdio transport); this is what the bin runs
+- **server.ts** - an alternate stdio entrypoint, dead: no exports, no importers, not the bin. Its token check
+  knows only the legacy `~/.snow-code` path, so do not read it as the source of truth for token resolution
 - **proxy.ts** - HTTPS client for enterprise server communication
-- **credentials.ts** - Environment variable credential gathering
+- **credentials.ts** - Environment variable credential gathering (deprecated, unused)
 - **types.ts** - TypeScript type definitions
 
 ## Available Enterprise Tools
@@ -302,29 +279,19 @@ await confluence_improve_content({
 
 ## Usage
 
-### Automatic (Recommended)
+The MCP client spawns the proxy over stdio; there is nothing to start separately. To drive it by hand
+for debugging:
 
 ```bash
-# During snow-flow auth login
-$ snow-flow auth login
+export SNOW_LICENSE_KEY=...
+export SNOW_ENTERPRISE_URL=https://enterprise.serac.build
 
-? Do you have a Serac Enterprise license? Yes
-? Enterprise License Key: SNOW-ENT-CUST-ABC123
-
-✓ Enterprise MCP Proxy configured
-✓ snow-code.json updated
+bun src/enterprise-proxy/index.ts   # from a checkout
+servicenow-mcp-enterprise-proxy     # from an install
 ```
 
-### Manual Testing
-
-```bash
-# Set environment variables
-export SNOW_LICENSE_KEY=SNOW-ENT-CUST-ABC123
-export SNOW_ENTERPRISE_URL=https://license-server.run.app
-
-# Run proxy directly (for debugging)
-node dist/mcp/enterprise-proxy/index.js
-```
+Set `SNOW_MCP_DEBUG=true` for the proxy's own logging, and `SNOW_ENTERPRISE_LAZY_TOOLS=false` to list the
+whole enterprise catalog up front instead of behind the two meta-tools.
 
 ## Security
 
@@ -336,17 +303,9 @@ node dist/mcp/enterprise-proxy/index.js
 
 ### Credentials
 
-**Option 1: Local (in environment)**
-
-- Credentials read from environment variables
-- Sent to server in HTTPS request body (encrypted in transit)
-- Simple setup, no server-side configuration needed
-
-**Option 2: Server-side (encrypted)**
-
-- Credentials stored encrypted in enterprise server database
-- Not sent in requests, server uses own credentials
-- Requires SSO configuration, most secure option
+- Integration credentials are stored encrypted in the enterprise server's database and decrypted there
+- They are never sent in a request from this proxy, so a compromised client machine yields the license
+  token but not the Jira, Azure DevOps or Confluence credentials behind it
 
 ### Machine Fingerprinting
 
@@ -367,20 +326,11 @@ The proxy handles common errors gracefully:
 
 ## Development
 
-### Building
+From `packages/servicenow-mcp`:
 
 ```bash
-npm run build
-```
-
-### Testing
-
-```bash
-# Unit tests
-npm test
-
-# Integration test with mock server
-npm run test:integration
+bun run build   # tsc, for the npm tarball
+bun test        # the package suite; the proxy has no tests of its own
 ```
 
 ## License

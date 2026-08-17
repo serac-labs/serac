@@ -57,6 +57,18 @@ Credentials come from an OAuth application registry entry on your instance (`Sys
 Registry`). A developer instance from [developer.servicenow.com](https://developer.servicenow.com) is enough
 to try everything here.
 
+If nothing works — an auth error, or a response that will not parse — ask the server what is wrong before
+changing anything:
+
+```bash
+servicenow-mcp-stdio --doctor
+```
+
+It names which credential source was used, whether the URL is usable, whether the instance is awake (a
+hibernating developer instance answers with an HTML login page, which makes every tool look broken), whether
+the OAuth exchange succeeds, and which roles the account holds. The model can ask for the same report by
+calling `snow_diagnose_setup`.
+
 The catalog is far larger than a context window, so tools are **deferred** by default: `tools/list` returns
 two meta-tools and the model widens its own surface as it works.
 
@@ -77,8 +89,10 @@ The repository is also a plugin marketplace, so the server and all 57 skills arr
 /plugin install servicenow@serac
 ```
 
-The server runs through `npx`, so nothing has to be installed first: export `SNOW_INSTANCE_URL`,
-`SNOW_CLIENT_ID` and `SNOW_CLIENT_SECRET` and it is ready. The same entry is in [`.mcp.json`](.mcp.json) at
+The server runs through `npx`, so nothing has to be installed first: export `SNOW_INSTANCE`,
+`SNOW_CLIENT_ID` and `SNOW_CLIENT_SECRET` and it is ready. `SNOW_INSTANCE` rather than the
+`SNOW_INSTANCE_URL` used further up on purpose — `npx` fetches the released package, and the release that
+first reads `SNOW_INSTANCE_URL` has not gone out yet. `SNOW_INSTANCE` is read by both. The same entry is in [`.mcp.json`](.mcp.json) at
 the repo root, which Claude Code reads for this project. Other clients each want it somewhere else: copy it
 into `.cursor/mcp.json` (Cursor), `~/.codeium/windsurf/mcp_config.json` (Windsurf), or `.vscode/mcp.json`
 for VS Code, which names the same block `servers` rather than `mcpServers`.
@@ -106,7 +120,7 @@ also what CI installs.
 ```bash
 bun install
 bun typecheck          # tsgo across both packages
-bun run test           # both suites: 168 MCP tests, 60 skills tests
+bun run test           # both suites
 bun run lint           # oxlint
 ```
 
@@ -155,7 +169,18 @@ trusted publishing and signed provenance. Every PR that touches the package runs
 packaging gates without publishing, including one that copies the package out of the workspace entirely and
 proves it installs, builds and tests with no monorepo around it.
 
-`@serac-labs/skills` is not on npm today. It is consumed from a checkout.
+The [MCP registry](https://registry.modelcontextprotocol.io) listing is a second, separate dispatch:
+`.github/workflows/publish-mcp-registry.yml` uploads the repo-root `server.json` once the npm version is
+live. `server.json` repeats that version and the package name, so a gate on every PR touching either file
+fails when the two disagree — `bun run --cwd packages/servicenow-mcp check:registry-manifest`.
+
+`@serac-labs/skills` releases the same way, from `.github/workflows/publish-skills.yml`, with gates
+adapted to what that package actually ships: the tarball must contain every entrypoint **and** every skill
+directory, and every published subpath must load under node from a real `npm install` — `skillsRoot()`
+hands consumers a filesystem path, so an import that merely succeeds proves nothing.
+
+Its npm trusted publisher does not exist yet, so no version has gone out. Creating it (bound to
+`serac-labs/serac` + `publish-skills.yml`) is a manual step on npmjs.com; see the workflow header.
 
 ## What used to be here
 

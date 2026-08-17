@@ -42,9 +42,16 @@ describe("marketplace entry", () => {
     // These two strings are the whole product description in the `/plugin` picker, and nothing else reads
     // them. tools.json has sat two months stale before now (test.yml's --check step exists for that), so a
     // hardcoded number in a file no test touches is a number that goes wrong.
+    //
+    // The tool figure may be an exact count or a "400+" floor, and both are checked against the tree. The
+    // floor is what this repo writes, because tools.json counts what is PUBLISHED and the registry loads
+    // fewer (serac-labs/serac#307) — an exact number here would be precise and wrong.
     expect(embedded.length).toBeGreaterThanOrEqual(50)
     ;[entry.description, plugin.description].forEach((description: string) => {
-      expect(description).toContain(`${toolCount} snow_*`)
+      const advertised = description.match(/(\d+)(\+?) snow_\*/)
+      expect(advertised?.[1]).toBeTruthy()
+      const claimed = Number(advertised?.[1] ?? 0)
+      expect(advertised?.[2] === "+" ? toolCount >= claimed : toolCount === claimed).toBe(true)
       expect(description).toContain(`${embedded.length} skill guides`)
     })
   })

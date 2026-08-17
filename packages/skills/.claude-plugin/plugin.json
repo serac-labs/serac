@@ -2,7 +2,7 @@
   "$schema": "https://json.schemastore.org/claude-code-plugin-manifest.json",
   "name": "servicenow",
   "displayName": "ServiceNow",
-  "description": "437 snow_* MCP tools for ServiceNow, plus the 57 skill guides that teach an agent to use them.",
+  "description": "400+ snow_* MCP tools for ServiceNow, plus the 57 skill guides that teach an agent to use them.",
   "author": {
     "name": "Serac Labs",
     "url": "https://github.com/serac-labs"

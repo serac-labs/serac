@@ -19,29 +19,10 @@
  */
 
 import { toolRegistry } from "../shared/tool-registry.js"
-import { ToolSearch } from "../shared/tool-search.js"
+import { ToolSearch, buildToolIndex } from "../shared/tool-search.js"
 import { createHttpApp } from "./http.js"
 import { createHttpResolver } from "./http-resolver.js"
 import { mcpDebug, mcpWarn } from "../../shared/mcp-debug.js"
-
-/**
- * Derive search keywords from a tool's name + description. Mirrors the
- * stdio transport's helper so both transports produce the same index.
- */
-const extractKeywords = (name: string, description: string): string[] => {
-  const keywords = new Set<string>()
-  const nameParts = name.replace(/^snow_/, "").split("_")
-  for (const part of nameParts) {
-    if (part.length > 2) keywords.add(part.toLowerCase())
-  }
-  const descWords = description
-    .toLowerCase()
-    .replace(/[^a-z0-9\s]/g, " ")
-    .split(/\s+/)
-    .filter((w) => w.length > 3 && !["this", "that", "with", "from", "will", "have", "been", "tool"].includes(w))
-  for (const w of descWords.slice(0, 10)) keywords.add(w)
-  return Array.from(keywords)
-}
 
 async function main(): Promise<void> {
   const resolverUrl = process.env.MCP_RESOLVER_URL
@@ -78,22 +59,15 @@ async function main(): Promise<void> {
   // index + SNOW_LAZY_TOOLS defaulting to on, and filters everything except
   // the two meta tools (tool_search / tool_execute) — which makes the LLM
   // think ServiceNow is read-only.
-  const allTools = toolRegistry.getToolDefinitions()
-  const toolIndexEntries = allTools.map((tool) => {
-    const registeredTool = toolRegistry.getTool(tool.name)
-    return {
-      id: tool.name,
-      description: tool.description.substring(0, 200),
-      category: registeredTool?.domain || "unknown",
-      keywords: extractKeywords(tool.name, tool.description),
-      // HTTP callers (portal chat) do their own token budgeting + tool
-      // enablement on the client side. Marking everything non-deferred
-      // here means `listTools` returns the full catalog so the portal's
-      // tool_search overlay can match against write/deploy tools, not
-      // just the two meta tools.
-      deferred: false,
-    }
-  })
+  // HTTP callers (portal chat) do their own token budgeting + tool enablement
+  // on the client side. Marking everything non-deferred here means `listTools`
+  // returns the full catalog so the portal's tool_search overlay can match
+  // against write/deploy tools, not just the two meta tools.
+  const toolIndexEntries = buildToolIndex(
+    toolRegistry.getToolDefinitions(),
+    (name) => toolRegistry.getTool(name)?.domain || "unknown",
+    false,
+  )
   ToolSearch.registerTools(toolIndexEntries)
   mcpDebug(`[mcp-http] tool search index populated with ${toolIndexEntries.length} tools`)
 

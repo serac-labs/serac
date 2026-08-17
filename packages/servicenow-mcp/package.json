@@ -1,8 +1,9 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@serac-labs/servicenow-mcp",
-  "version": "0.2.2",
-  "description": "Unified ServiceNow MCP server (437 snow_* tools), blast-radius analysis, stdio + HTTP transports.",
+  "version": "0.2.1",
+  "mcpName": "io.github.serac-labs/servicenow-mcp",
+  "description": "Unified ServiceNow MCP server (400+ snow_* tools), blast-radius analysis, stdio + HTTP transports.",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
@@ -16,7 +17,8 @@
   "private": false,
   "files": [
     "dist",
-    "src/agent-fragments"
+    "src/agent-fragments",
+    "sn-roles.manifest.json"
   ],
   "exports": {
     ".": "./src/index.ts",
@@ -26,6 +28,7 @@
     "./stdio": "./src/servicenow-mcp-unified/transports/stdio.ts",
     "./enterprise-proxy": "./src/enterprise-proxy/index.ts",
     "./blast-radius": "./src/servicenow-mcp-unified/tools/blast-radius/index.ts",
+    "./sn-roles": "./src/sn-roles.ts",
     "./types": "./src/servicenow-mcp-unified/shared/types.ts",
     "./auth": "./src/servicenow-mcp-unified/shared/auth.ts",
     "./error-handler": "./src/servicenow-mcp-unified/shared/error-handler.ts",
@@ -34,6 +37,7 @@
     "./cli/enterprise-docs-generator": "./src/cli/enterprise-docs-generator.ts"
   },
   "bin": {
+    "servicenow-mcp": "./src/servicenow-mcp-unified/index.ts",
     "servicenow-mcp-stdio": "./src/servicenow-mcp-unified/index.ts",
     "servicenow-mcp-enterprise-proxy": "./src/enterprise-proxy/index.ts"
   },
@@ -44,6 +48,7 @@
     "test:ci": "mkdir -p .artifacts/unit && bun test --reporter=junit --reporter-outfile=.artifacts/unit/junit.xml",
     "generate:tools-json": "bun script/generate-tools-json.ts",
     "generate:tools-json:check": "bun script/generate-tools-json.ts --check",
+    "check:registry-manifest": "bun script/check-registry-manifest.ts",
     "probe:sn-roles": "bun script/probe-sn-roles/index.ts"
   },
   "dependencies": {

@@ -15,9 +15,13 @@
   "type": "module",
   "private": false,
   "files": [
-    "src",
+    "dist",
+    "NOTICE",
     "*/**",
+    "!.artifacts/**",
     "!.turbo/**",
+    "!script/**",
+    "!src/**",
     "!test/**"
   ],
   "exports": {
@@ -27,6 +31,7 @@
   },
   "scripts": {
     "typecheck": "tsgo --project tsconfig.json --noEmit",
+    "build": "tsc --project tsconfig.build.json",
     "test": "bun test",
     "test:ci": "mkdir -p .artifacts/unit && bun test --reporter=junit --reporter-outfile=.artifacts/unit/junit.xml",
     "generate": "bun script/generate-embedded.ts",
@@ -34,6 +39,7 @@
   },
   "devDependencies": {
     "@types/bun": "1.3.13",
-    "@typescript/native-preview": "7.0.0-dev.20251207.1"
+    "@typescript/native-preview": "7.0.0-dev.20251207.1",
+    "typescript": "5.8.2"
   }
 }

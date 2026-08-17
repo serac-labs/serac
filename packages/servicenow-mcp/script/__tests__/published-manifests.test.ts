@@ -2,10 +2,11 @@
  * Presence and shape guard for the two manifests that are published BY BEING
  * COMMITTED.
  *
- * `tools.json` and `sn-roles.manifest.json` are not in the npm tarball — the
- * package's `files` field ships only `dist` and `src/agent-fragments`. They
- * reach production a completely different way: live services fetch them from
- * `main` over raw.githubusercontent.com. See README.md, "Published manifests".
+ * `tools.json` and `sn-roles.manifest.json` reach production a way no build gate
+ * sees: live services fetch them from `main` over raw.githubusercontent.com. See
+ * README.md, "Published manifests". (`sn-roles.manifest.json` is in the npm
+ * tarball as well — `files` ships it for the `/sn-roles` subpath — but that is a
+ * second audience, not the one below.)
  *
  * That makes them the one part of this package where deleting a file is a
  * production incident rather than a failing build, and where the failure is

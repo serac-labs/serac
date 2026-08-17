@@ -23,6 +23,15 @@ import { mcpDebug } from "../../shared/mcp-debug.js"
 import { STDIO_TENANT, tenantScopedKey } from "./tenant-scope.js"
 
 /**
+ * Pointer to the diagnostic, appended to the errors a user is most likely to
+ * hit first. These messages used to end at "run: serac auth login" — a CLI this
+ * repository no longer ships — which left the reader with a dead end at exactly
+ * the moment they needed a next step.
+ */
+const DIAGNOSE_HINT =
+  "Run `servicenow-mcp-stdio --doctor` (or call snow_diagnose_setup) to find out which part of the setup is wrong."
+
+/**
  * Extract a human-readable error message from a ServiceNow error response.
  * ServiceNow returns errors in various formats; this normalizes them.
  */
@@ -122,8 +131,8 @@ export class ServiceNowAuthManager {
       throw new Error(
         "Failed to obtain access token. This can happen when:\n" +
         "• Your ServiceNow instance is hibernating — open it in a browser to wake it up\n" +
-        "• Your credentials have expired — run: serac auth login\n" +
-        "• Your OAuth client ID/secret are incorrect"
+        "• Your OAuth client ID/secret are incorrect, or the entry has no OAuth application user\n" +
+        `• Your credentials have expired\n${DIAGNOSE_HINT}`
       )
     }
 
@@ -228,7 +237,7 @@ export class ServiceNowAuthManager {
             const newAccessToken = await this.getAccessToken(context)
 
             if (!newAccessToken) {
-              throw new Error("Failed to obtain access token after 401 refresh. Please run: serac auth login")
+              throw new Error(`Failed to obtain access token after 401 refresh.\n${DIAGNOSE_HINT}`)
             }
 
             // Update request with new token
@@ -308,7 +317,7 @@ export class ServiceNowAuthManager {
 
     // Check if instance URL is valid
     if (!context.instanceUrl || context.instanceUrl === "" || context.instanceUrl.includes("your-instance")) {
-      throw new Error("ServiceNow credentials not configured. Please run: serac auth login")
+      throw new Error(`ServiceNow credentials not configured.\n${DIAGNOSE_HINT}`)
     }
 
     // Check for valid OAuth credentials
@@ -326,7 +335,7 @@ export class ServiceNowAuthManager {
 
     // Must have at least one valid auth method
     if (!hasValidOAuth && !hasValidBasic) {
-      throw new Error("ServiceNow credentials not configured. Please run: serac auth login")
+      throw new Error(`ServiceNow credentials not configured.\n${DIAGNOSE_HINT}`)
     }
 
     // If only Basic auth is available, skip OAuth flows and go directly to Basic auth

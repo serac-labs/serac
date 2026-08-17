@@ -139,6 +139,9 @@ Keep helpers close to the code they support, below the main export. Extract only
 - After adding or changing a tool, run `bun run --cwd packages/servicenow-mcp generate:tools-json`.
   `tools.json` is fetched from `main` by the public docs site, so a stale manifest means the tool exists but
   nobody can see it.
+- A new tool also has no entry in `sn-roles.manifest.json`, and that one cannot be regenerated in CI — it
+  reads a live instance's ACLs. Add the tool's name to `AWAITING_PROBE` in
+  `src/__tests__/sn-roles.test.ts`; the next `probe:sn-roles` run covers it and takes it back off.
 - Every executor takes a `ServiceNowContext`. In the HTTP transport one process serves many customers, so
   anything cached must be keyed by `tenantId` — a request that cannot be placed in a tenant is refused, not
   pooled. See `src/servicenow-mcp-unified/shared/tenant-scope.ts`.
