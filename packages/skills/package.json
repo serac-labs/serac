@@ -19,6 +19,7 @@
     "NOTICE",
     "*/**",
     "!.artifacts/**",
+    "!.claude-plugin/**",
     "!.turbo/**",
     "!script/**",
     "!src/**",

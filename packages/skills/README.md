@@ -83,6 +83,11 @@ it lands. With one, they get the edit when someone remembers to bump a number
 nothing else in this repo reads. `claude plugin validate` warns about the
 missing field; that warning is the trade.
 
+The plugin manifests are excluded from the npm tarball (`!.claude-plugin/**` in
+`files`). The plugin is installed from the repository, so shipping them to npm
+would only add a `plugin.json` whose `.mcp.json` is not beside it — a plugin
+that is half there. The npm package is the skills and the two exports.
+
 ## Requirements
 
 Node 20+ or Bun 1.2+. ESM only — there is no CommonJS `require` entrypoint.
