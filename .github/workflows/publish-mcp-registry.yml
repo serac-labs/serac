@@ -36,6 +36,11 @@ name: Publish to MCP Registry
 # io.github.serac-labs/servicenow-mcp. The alternative — a PAT in a secret —
 # would be a long-lived credential able to overwrite EVERY server under
 # io.github.serac-labs/*, reachable by anyone who can cause a job to run.
+#
+# A build.serac/* namespace is the other option, and it is not free: the
+# registry would want the domain proved with a DNS TXT record, and the server
+# re-registered under the new name. io.github.<owner>/* needs no setup at all,
+# which is why it is where this starts.
 
 on:
   workflow_dispatch:
@@ -109,6 +114,13 @@ jobs:
         # unverified binary here is the one thing in this file that could
         # publish as us. `gh attestation verify` does not work on these assets:
         # they carry sigstore signature bundles, not SLSA provenance.
+        #
+        # Do not reach for npm to get this locally. The CLI ships only as a Go
+        # binary from modelcontextprotocol/registry releases and via Homebrew;
+        # `@modelcontextprotocol/publisher` does not exist, and the bare name
+        # `mcp-publisher` on npm belongs to an unrelated browser-automation
+        # package from a different maintainer — so `npm i -g mcp-publisher`
+        # installs the wrong tool without erroring.
         run: |
           set -euo pipefail
           ASSET="mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz"
