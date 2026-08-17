@@ -152,6 +152,11 @@ trusted publishing and signed provenance. Every PR that touches the package runs
 packaging gates without publishing, including one that copies the package out of the workspace entirely and
 proves it installs, builds and tests with no monorepo around it.
 
+The [MCP registry](https://registry.modelcontextprotocol.io) listing is a second, separate dispatch:
+`.github/workflows/publish-mcp-registry.yml` uploads the repo-root `server.json` once the npm version is
+live. `server.json` repeats that version and the package name, so a gate on every PR touching either file
+fails when the two disagree — `bun run --cwd packages/servicenow-mcp check:registry-manifest`.
+
 `@serac-labs/skills` is not on npm today. It is consumed from a checkout.
 
 ## What used to be here
