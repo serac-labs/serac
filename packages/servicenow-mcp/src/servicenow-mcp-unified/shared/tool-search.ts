@@ -54,6 +54,63 @@ export interface ToolIndexEntry {
 }
 
 /**
+ * Build the index the transports register at bootstrap.
+ *
+ * `stdio.ts` and `http-entry.ts` each carried their own copy of this mapping,
+ * and the retrieval eval needs the same one. Either copy drifting — a
+ * different truncation length, a field the ranker reads that only one of them
+ * fills — silently changes what a session can find, and nothing fails.
+ *
+ * `deferred` is the one thing the callers genuinely disagree on: stdio defers
+ * the whole catalog so `tool_search` is the only way in, HTTP marks it
+ * available because the portal budgets tools itself. It does not affect
+ * ranking. Note that keywords come from the untruncated description even
+ * though the indexed description is cut at 200 chars.
+ */
+export function buildToolIndex(
+  tools: { name: string; description: string }[],
+  categoryOf: (name: string) => string,
+  deferred: boolean,
+): ToolIndexEntry[] {
+  return tools.map((tool) => ({
+    id: tool.name,
+    description: tool.description.substring(0, 200),
+    category: categoryOf(tool.name),
+    keywords: extractKeywords(tool.name, tool.description),
+    deferred,
+  }))
+}
+
+/**
+ * Derive the search keywords for a tool from its name and description.
+ *
+ * Lived as a private copy in both transports — the http-entry copy carried a
+ * comment saying it mirrored the stdio one, which is the sort of pairing that
+ * drifts. `src/enterprise-proxy/tool-cache.ts` has a genuinely different one
+ * for non-`snow_` tools; that is not this.
+ */
+function extractKeywords(name: string, description: string): string[] {
+  const keywords = new Set<string>()
+
+  // snow_query_incidents -> query, incidents
+  for (const part of name.replace(/^snow_/, "").split("_")) {
+    if (part.length > 2) keywords.add(part.toLowerCase())
+  }
+
+  // Only the first 10 significant description words are indexed, so a tool
+  // whose distinguishing noun appears late in a long description is not
+  // reachable by keyword — see the eval's reported misses.
+  const descWords = description
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter((w) => w.length > 3 && !["this", "that", "with", "from", "will", "have", "been", "tool"].includes(w))
+  for (const word of descWords.slice(0, 10)) keywords.add(word)
+
+  return Array.from(keywords)
+}
+
+/**
  * Active session store. Defaults to file-backed for stdio; the HTTP
  * transport should call `setSessionStore(new MemoryToolSessionStore())`
  * at startup to opt into in-memory, per-tenant isolation.

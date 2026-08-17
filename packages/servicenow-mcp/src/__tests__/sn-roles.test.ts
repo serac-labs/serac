@@ -39,6 +39,7 @@ const PACKAGE_ROOT = resolve(__dirname, "..", "..")
  */
 const AWAITING_PROBE = [
   "snow_blast_radius_sys_properties",
+  "snow_diagnose_setup",
   "snow_fluent_build",
   "snow_fluent_dependencies",
   "snow_fluent_download",

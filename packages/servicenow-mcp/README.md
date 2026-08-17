@@ -1,17 +1,11 @@
 # @serac-labs/servicenow-mcp
 
-A [Model Context Protocol](https://modelcontextprotocol.io) server for ServiceNow: 437 `snow_*` tools over
+A [Model Context Protocol](https://modelcontextprotocol.io) server for ServiceNow: 400+ `snow_*` tools over
 stdio or streamable HTTP, plus blast-radius impact analysis. Part of [Serac](https://serac.build).
 
 ```bash
-npm install -g @serac-labs/servicenow-mcp@next
+npm install -g @serac-labs/servicenow-mcp
 ```
-
-> **Why `@next`:** the `latest` tag still points at 0.1.0, whose main entrypoint cannot be imported
-> under Node — it does a named import of `machineIdSync` from `node-machine-id`, a CJS module Node's
-> lexer cannot read named exports from, which takes out 4 of 11 subpaths and both bins. 0.2.0 on
-> `next` is the fixed build. Promote it (`npm dist-tag add @serac-labs/servicenow-mcp@0.2.0 latest`,
-> see the header of `.github/workflows/publish-mcp.yml`), then drop the `@next` and this note.
 
 ## Use it as an MCP server
 
@@ -41,6 +35,47 @@ tool_execute({tool: "snow_query_incidents", args: {query: "priority=1"}})
 ```
 
 Set `SNOW_LAZY_TOOLS=false` to register the whole catalog up front instead.
+
+## When it does not work
+
+Setting up OAuth on an instance you have never used is the part that goes wrong, and it goes wrong
+invisibly: the server starts without credentials, so the first symptom is an error inside an unrelated tool
+call. Ask for a diagnosis instead of guessing:
+
+```bash
+servicenow-mcp-stdio --doctor
+```
+
+```
+ServiceNow MCP — setup check
+
+  warn  credentials   Loaded from /Users/you/.serac/auth.json (modified 2026-01-04).
+                      instance https://dev11111.service-now.com
+                      client id …ab12, client secret set
+                      environment: SNOW_CLIENT_ID, SNOW_CLIENT_SECRET set, but the environment link needs
+                      instance + client id + client secret together, so it was skipped
+  ok    instance url  https://dev11111.service-now.com
+  FAIL  instance      The instance is hibernating.
+                      HTTP 200, text/html;charset=UTF-8
+                      -> Sign in at https://developer.servicenow.com, open your instance and press Wake.
+  skip  oauth token   Not reached — fix the checks above first.
+  skip  api access    Not reached — fix the checks above first.
+  skip  roles         Not reached — fix the checks above first.
+
+1 problem found. Fix the first FAIL above, then run this again.
+```
+
+It walks the chain the server itself walks — environment variables, then `auth.json`, then the enterprise
+portal — and reports which link supplied what, so a forgotten `auth.json` cannot quietly outrank the
+variables you just set. Then it checks the URL, the instance (hibernating instances answer with an HTML
+login page, which makes every tool look like it has a parse bug), the OAuth token exchange (a rejected
+client id is reported separately from a rejected grant, quoting what ServiceNow returned), the API call, and
+finally how much of the catalog the authenticated account's roles actually cover, from
+`sn-roles.manifest.json`.
+
+It exits non-zero when something is wrong, prints nothing to stdout on the server path, and never prints a
+secret. `snow_diagnose_setup` returns the same report to the model — useful when the MCP client hides the
+server's stderr, which most of them do. That tool is stdio-only: the report describes the local process.
 
 ## Use it as a library
 

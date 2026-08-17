@@ -1,0 +1,43 @@
+name: Skill proposal
+description: Propose a new skill guide, or a domain an existing guide misses
+title: "docs(skills): "
+labels:
+  - documentation
+body:
+  - type: textarea
+    id: domain
+    attributes:
+      label: What should the skill teach
+      description: A sentence or two. Which ServiceNow domain, and what an agent gets wrong without it.
+    validations:
+      required: true
+
+  - type: textarea
+    id: tools
+    attributes:
+      label: Tools it would cover
+      description: The snow_* tools the guide would drive. See https://docs.serac.build for the full list.
+      placeholder: |
+        snow_oncall_manage
+        snow_create_schedule
+    validations:
+      required: true
+
+  - type: input
+    id: closest
+    attributes:
+      label: Closest existing skill
+      description:
+        Which directory under packages/skills comes nearest, and why it does not cover this. Overlapping guides
+        are worse than a missing one, so this is the field that decides the answer.
+      placeholder: sla-management — mentions business-hours schedules, nothing about rotations
+    validations:
+      required: true
+
+  - type: textarea
+    id: notes
+    attributes:
+      label: Anything else
+      description: Optional. Release or plugin dependencies, an instance you can verify against, prior art.
+    validations:
+      required: false

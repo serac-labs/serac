@@ -17,35 +17,47 @@ import { type ServiceNowContext } from "./types.js"
 import { mcpDebug } from "../../shared/mcp-debug.js"
 
 /**
+ * The auth.json locations `loadFromAuthJson()` reads, in the order it tries them.
+ *
+ * NOTE: snow-code uses xdg-basedir which returns different paths per platform:
+ * - macOS: ~/Library/Application Support/
+ * - Linux: ~/.local/share/
+ * - Windows: %APPDATA%
+ *
+ * Exported so the setup doctor can report which of these files exist and which
+ * one actually supplied the credentials. A forgotten file early in this list
+ * silently outranking the one you just edited is a real failure mode, and it is
+ * invisible unless something enumerates the same list the loader walks.
+ *
+ * A function, not a constant: `os.homedir()` must be read per call.
+ */
+export const authJsonPaths = (): string[] => [
+  // 1. macOS: ~/Library/Application Support/snow-code/auth.json (XDG data dir on macOS)
+  ...(process.platform === "darwin"
+    ? [path.join(os.homedir(), "Library", "Application Support", "snow-code", "auth.json")]
+    : []),
+  // 2. Windows: %APPDATA%/snow-code/auth.json
+  ...(process.platform === "win32" && process.env.APPDATA
+    ? [path.join(process.env.APPDATA, "snow-code", "auth.json")]
+    : []),
+  // 3. Linux/fallback: ~/.local/share/snow-code/auth.json (XDG data dir on Linux)
+  path.join(os.homedir(), ".local", "share", "snow-code", "auth.json"),
+  // 4. Serac specific auth (~/.serac, falling back to legacy ~/.snow-flow)
+  path.join(os.homedir(), ".serac", "auth.json"),
+  path.join(os.homedir(), ".snow-flow", "auth.json"),
+  // 5. The removed CLI's data dir. Kept on purpose: deleting that package
+  //    does not delete the auth.json it wrote on users' machines, and this is
+  //    where an existing install's ServiceNow credentials still live.
+  path.join(os.homedir(), ".local", "share", "opencode", "auth.json"),
+]
+
+/**
  * Load ServiceNow credentials from auth.json files.
  * Checks multiple possible locations in priority order.
  * Returns undefined if no valid credentials found.
  */
 export const loadFromAuthJson = (): ServiceNowContext | undefined => {
-  // Possible auth.json locations in priority order
-  // NOTE: snow-code uses xdg-basedir which returns different paths per platform:
-  // - macOS: ~/Library/Application Support/
-  // - Linux: ~/.local/share/
-  // - Windows: %APPDATA%
-  const authPaths = [
-    // 1. macOS: ~/Library/Application Support/snow-code/auth.json (XDG data dir on macOS)
-    ...(process.platform === "darwin"
-      ? [path.join(os.homedir(), "Library", "Application Support", "snow-code", "auth.json")]
-      : []),
-    // 2. Windows: %APPDATA%/snow-code/auth.json
-    ...(process.platform === "win32" && process.env.APPDATA
-      ? [path.join(process.env.APPDATA, "snow-code", "auth.json")]
-      : []),
-    // 3. Linux/fallback: ~/.local/share/snow-code/auth.json (XDG data dir on Linux)
-    path.join(os.homedir(), ".local", "share", "snow-code", "auth.json"),
-    // 4. Serac specific auth (~/.serac, falling back to legacy ~/.snow-flow)
-    path.join(os.homedir(), ".serac", "auth.json"),
-    path.join(os.homedir(), ".snow-flow", "auth.json"),
-    // 5. The removed CLI's data dir. Kept on purpose: deleting that package
-    //    does not delete the auth.json it wrote on users' machines, and this is
-    //    where an existing install's ServiceNow credentials still live.
-    path.join(os.homedir(), ".local", "share", "opencode", "auth.json"),
-  ]
+  const authPaths = authJsonPaths()
 
   for (const authPath of authPaths) {
     try {
@@ -331,6 +343,49 @@ export const loadFromEnterprisePortal = async (): Promise<ServiceNowContext | un
 }
 
 /**
+ * Every environment variable this loader reads, per credential field, in
+ * precedence order.
+ *
+ * `SNOW_INSTANCE_URL` is in here because it is the name the quick start in
+ * README.md, the package README, CONTRIBUTING.md and SECURITY.md all tell
+ * people to set — and until this list existed, it was the one name the loader
+ * did not read. Everyone who copy-pasted the documented MCP config got a server
+ * with no instance URL, which surfaces much later as an auth error inside an
+ * unrelated tool call. Adding a documented variable here is cheap; the list is
+ * also what `shared/setup-doctor.ts` reports from, so a name that is not in it
+ * is a name the doctor will tell the user is being ignored.
+ */
+export const ENV_VARS = {
+  instanceUrl: ["SERVICENOW_INSTANCE_URL", "SNOW_INSTANCE_URL", "SNOW_INSTANCE"],
+  clientId: ["SERVICENOW_CLIENT_ID", "SNOW_CLIENT_ID"],
+  clientSecret: ["SERVICENOW_CLIENT_SECRET", "SNOW_CLIENT_SECRET"],
+  refreshToken: ["SERVICENOW_REFRESH_TOKEN", "SNOW_REFRESH_TOKEN"],
+  username: ["SERVICENOW_USERNAME", "SNOW_USERNAME"],
+  password: ["SERVICENOW_PASSWORD", "SNOW_PASSWORD"],
+  environmentType: ["SERVICENOW_ENVIRONMENT_TYPE", "SNOW_ENVIRONMENT_TYPE"],
+} as const
+
+/**
+ * First variable of a field that is actually set, with the name that supplied
+ * it. The doctor prints that name: "your instance URL came from SNOW_INSTANCE"
+ * is a different bug report than "…came from SERVICENOW_INSTANCE_URL".
+ * Whitespace-only values count as unset, as they always have.
+ */
+export const envCredential = (field: keyof typeof ENV_VARS): { name: string; value: string } | undefined =>
+  ENV_VARS[field]
+    .map((name) => ({ name, value: process.env[name] ?? "" }))
+    .find((candidate) => candidate.value.trim() !== "")
+
+/**
+ * Accept an instance that was given as a bare host ("dev12345.service-now.com")
+ * as well as a full URL. Historically only SNOW_INSTANCE got this treatment,
+ * so a scheme-less SERVICENOW_INSTANCE_URL became an axios baseURL of
+ * "dev12345.service-now.com" and every request failed with a URL parse error.
+ */
+const normalizeInstanceUrl = (value: string): string =>
+  value.startsWith("http://") || value.startsWith("https://") ? value : `https://${value}`
+
+/**
  * Load ServiceNow context from environment variables OR auth.json fallback.
  * Note: Server will start even without credentials (unauthenticated mode).
  *
@@ -344,26 +399,13 @@ export const loadFromEnterprisePortal = async (): Promise<ServiceNowContext | un
  */
 export const loadContext = (): ServiceNowContext => {
   // STEP 1: Try environment variables first
-  // Handle SNOW_INSTANCE with or without https:// prefix to avoid double-prefix issue
-  const snowInstance = process.env.SNOW_INSTANCE
-  const normalizedSnowInstance = snowInstance
-    ? snowInstance.startsWith("http://") || snowInstance.startsWith("https://")
-      ? snowInstance
-      : `https://${snowInstance}`
-    : undefined
-  const instanceUrl = process.env.SERVICENOW_INSTANCE_URL || normalizedSnowInstance
-  const clientId = process.env.SERVICENOW_CLIENT_ID || process.env.SNOW_CLIENT_ID
-  const clientSecret = process.env.SERVICENOW_CLIENT_SECRET || process.env.SNOW_CLIENT_SECRET
-  const refreshToken = process.env.SERVICENOW_REFRESH_TOKEN || process.env.SNOW_REFRESH_TOKEN
-  const username = process.env.SERVICENOW_USERNAME || process.env.SNOW_USERNAME
-  const password = process.env.SERVICENOW_PASSWORD || process.env.SNOW_PASSWORD
+  const instanceUrl = envCredential("instanceUrl")
+  const clientId = envCredential("clientId")
+  const clientSecret = envCredential("clientSecret")
   // OTAP classification (optional). Lets a self-hosted CLI user mark an instance
   // "production" so the call-tool prod-write guard applies. Invalid/absent ⇒ undefined.
-  const rawEnvironment = (process.env.SERVICENOW_ENVIRONMENT_TYPE || process.env.SNOW_ENVIRONMENT_TYPE || "").toLowerCase()
+  const rawEnvironment = (envCredential("environmentType")?.value || "").toLowerCase()
   const environmentType = (["production", "development", "test", "uat", "sandbox"] as const).find((v) => v === rawEnvironment)
-
-  // Helper: Convert empty strings to undefined (treat empty as missing)
-  const normalizeCredential = (val?: string) => (val && val.trim() !== "" ? val : undefined)
 
   // Check for placeholder values
   const isPlaceholder = (val?: string) => !val || val.includes("your-") || val.includes("placeholder")
@@ -373,19 +415,19 @@ export const loadContext = (): ServiceNowContext => {
     instanceUrl &&
     clientId &&
     clientSecret &&
-    !isPlaceholder(instanceUrl) &&
-    !isPlaceholder(clientId) &&
-    !isPlaceholder(clientSecret)
+    !isPlaceholder(instanceUrl.value) &&
+    !isPlaceholder(clientId.value) &&
+    !isPlaceholder(clientSecret.value)
 
   if (hasValidEnvVars) {
     mcpDebug("[Auth] Using credentials from environment variables")
     return {
-      instanceUrl: instanceUrl!,
-      clientId: clientId!,
-      clientSecret: clientSecret!,
-      refreshToken: normalizeCredential(refreshToken),
-      username: normalizeCredential(username),
-      password: normalizeCredential(password),
+      instanceUrl: normalizeInstanceUrl(instanceUrl.value),
+      clientId: clientId.value,
+      clientSecret: clientSecret.value,
+      refreshToken: envCredential("refreshToken")?.value,
+      username: envCredential("username")?.value,
+      password: envCredential("password")?.value,
       environmentType,
     }
   }

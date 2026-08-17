@@ -45,6 +45,10 @@ const EXPECTED_STDIO_ONLY = new Set<string>([
   "snow_fluent_install",
   "snow_fluent_status",
   "snow_fluent_transform",
+  // Not a filesystem case: snow_diagnose_setup reports this process's
+  // environment variables and auth.json files, which on HTTP is the server's
+  // own configuration rather than the caller's.
+  "snow_diagnose_setup",
   // snow_artifact_manage and snow_pull_artifact were stdio-only until they
   // grew per-arg HTTP-safety guards (`httpForbiddenArgs`). They now run on
   // both transports — the unsafe filesystem args are rejected centrally

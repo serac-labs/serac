@@ -4,6 +4,10 @@
 
 export { toolDefinition as snow_url_doctor_def, execute as snow_url_doctor_exec } from "./snow_url_doctor.js"
 export {
+  toolDefinition as snow_diagnose_setup_def,
+  execute as snow_diagnose_setup_exec,
+} from "./snow_diagnose_setup.js"
+export {
   toolDefinition as snow_session_context_def,
   execute as snow_session_context_exec,
 } from "./snow_session_context.js"

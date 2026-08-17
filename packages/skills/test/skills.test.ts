@@ -41,28 +41,30 @@ const walk = (dir: string, acc: string[] = []): string[] => {
   return acc
 }
 
-/** The `tools:` list out of a SKILL.md's YAML frontmatter. */
+/**
+ * Tool names declared under `tools:`.
+ *
+ * Several skills annotate an entry with the action they mean —
+ * `- snow_update_set_manage (action='create')`. Only the first token is the tool
+ * name, and requiring the whole item to be one token dropped those entries
+ * silently, which exempted ten names in the tree from the check below.
+ */
+const declaredTools = (lines: string[]): string[] => {
+  const start = lines.findIndex((line) => /^tools:\s*$/.test(line))
+  if (start < 0) return []
+  const end = lines.findIndex((line, index) => index > start && /^\S/.test(line))
+  return lines.slice(start + 1, end < 0 ? undefined : end).flatMap((line) => /^\s*-\s*(\S+)/.exec(line)?.[1] ?? [])
+}
+
+/** The `name`, `description` and `tools:` list out of a SKILL.md's YAML frontmatter. */
 const frontmatter = (name: string) => {
   const raw = readFileSync(join(ROOT, name, "SKILL.md"), "utf8")
   const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(raw)
   if (!match) return undefined
-  const lines = match[1]!.split(/\r?\n/)
-  const tools: string[] = []
-  let inTools = false
-  for (const line of lines) {
-    if (/^tools:\s*$/.test(line)) {
-      inTools = true
-      continue
-    }
-    if (!inTools) continue
-    const item = /^\s*-\s*(\S+)\s*$/.exec(line)
-    if (item) tools.push(item[1]!)
-    else if (/^\S/.test(line)) inTools = false
-  }
   return {
     name: /^name:\s*(\S+)\s*$/m.exec(match[1]!)?.[1],
     description: /^description:\s*(.+)$/m.exec(match[1]!)?.[1],
-    tools,
+    tools: declaredTools(match[1]!.split(/\r?\n/)),
   }
 }
 
@@ -123,6 +125,20 @@ describe("frontmatter tools", () => {
     scan(toolsDir)
     return found
   }
+
+  test("an entry annotated with an action still names its tool", () => {
+    // This is the shape `update-set-workflow` uses, and it is the skill every
+    // "write a guide" issue points a newcomer at, so a parser that skips it
+    // hands the whole check back to the contributor without saying so.
+    const parsed = declaredTools([
+      "tools:",
+      "  - snow_update_set_manage (action='create')",
+      "  - snow_ensure_active_update_set",
+      "license: Apache-2.0",
+      "  - snow_not_a_tool",
+    ])
+    expect(parsed).toEqual(["snow_update_set_manage", "snow_ensure_active_update_set"])
+  })
 
   test("every tool a skill declares exists in @serac-labs/servicenow-mcp", () => {
     if (!existsSync(toolsDir)) {

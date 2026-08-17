@@ -65,7 +65,8 @@ export SNOW_CLIENT_SECRET=…
 
 Developer instances hibernate after a few days of inactivity and then answer with an HTML login page instead
 of JSON, which makes failures look like parse errors. If a tool starts returning nonsense, wake the instance
-first.
+first — `bun packages/servicenow-mcp/src/servicenow-mcp-unified/index.ts --doctor` says whether that is what
+happened, along with which credentials it picked up and from where.
 
 ### Adding a tool or a skill
 
@@ -77,6 +78,11 @@ Both are described in [AGENTS.md](./AGENTS.md), along with the code style. The s
   `bun run --cwd packages/skills generate`.
 
 Both generators have a `--check` mode, and `bun test` fails if the checked-in artifact drifts from the tree.
+
+A skill is the smallest useful thing to contribute here: one markdown file, plus the `generate` above. The issues
+labelled [good first issue](https://github.com/serac-labs/serac/labels/good%20first%20issue) are ServiceNow
+domains where the server has tools and nothing teaches an agent to use them, each with the tools listed.
+[`packages/skills/README.md`](./packages/skills/README.md) covers how to write one and what done looks like.
 
 ### Two files that are production
 
