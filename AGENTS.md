@@ -1,7 +1,8 @@
 # AGENTS.md
 
 Conventions for this repository. It holds two packages: `packages/servicenow-mcp` (the MCP server) and
-`packages/skills` (the skill guides). There is nothing else.
+`packages/skills` (the skill guides), plus `.claude-plugin/marketplace.json` at the root, which ships the
+two together as a Claude Code plugin. There is nothing else.
 
 - The default branch is `main`.
 - Run `bun typecheck` from the repo root; it runs `tsgo` across both packages via turbo.
@@ -153,3 +154,6 @@ Keep helpers close to the code they support, below the main export. Extract only
   fails if it drifts, and fails if frontmatter names a tool the MCP server does not have.
 - Skill directory names are a contract with consumers that read the tree from a checkout. Renaming one is a
   breaking change for them, not a refactor.
+- `packages/skills` is also the plugin source, so this tree is what `/plugin install servicenow@serac`
+  installs: any directory here holding a `SKILL.md` reaches installed users, with nothing listing it. The
+  plugin's two manifests live in `packages/skills/.claude-plugin/` and `packages/skills/.mcp.json`.

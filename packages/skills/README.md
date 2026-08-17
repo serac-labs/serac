@@ -66,6 +66,28 @@ This exists for consumers with no source filesystem alongside them — a bundled
 `bun build --compile` binary, a serverless deploy. It costs a few hundred KB of string literals
 at import time, so import `@serac-labs/skills/root` instead if you only need the path.
 
+## This directory is also the Claude Code plugin
+
+`/plugin install servicenow@serac` installs *this* directory: the marketplace
+entry at the repo root points its `source` here, `.claude-plugin/plugin.json`
+declares `"skills": ["./"]`, and `.mcp.json` names the MCP server the skills
+expect. Claude Code then scans the plugin root for directories holding a
+`SKILL.md`, the same rule the generator here uses, so `src/`, `script/` and
+`test/` are ignored and every skill ships without a copy step to go stale.
+`"./"` and `"."` both mean the plugin root; `"."` fails manifest validation on
+Claude Code older than 2.1.221, which is why the checked-in form is `"./"`.
+
+The manifest deliberately carries no `version`: without one, Claude Code
+versions the plugin by commit SHA, so a skill edit reaches installed users when
+it lands. With one, they get the edit when someone remembers to bump a number
+nothing else in this repo reads. `claude plugin validate` warns about the
+missing field; that warning is the trade.
+
+The plugin manifests are excluded from the npm tarball (`!.claude-plugin/**` in
+`files`). The plugin is installed from the repository, so shipping them to npm
+would only add a `plugin.json` whose `.mcp.json` is not beside it — a plugin
+that is half there. The npm package is the skills and the two exports.
+
 ## Requirements
 
 Node 20+ or Bun 1.2+. ESM only — there is no CommonJS `require` entrypoint.

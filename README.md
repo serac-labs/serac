@@ -80,6 +80,23 @@ tool_execute({tool: "snow_query_incidents", args: {query: "priority=1"}})
 Set `SNOW_LAZY_TOOLS=false` to register the whole catalog up front instead. Full options, library usage and
 the multi-tenancy rules are in the [package README](packages/servicenow-mcp/README.md).
 
+### As a Claude Code plugin
+
+The repository is also a plugin marketplace, so the server and all 57 skills arrive in one step:
+
+```
+/plugin marketplace add serac-labs/serac
+/plugin install servicenow@serac
+```
+
+The server runs through `npx`, so nothing has to be installed first: export `SNOW_INSTANCE`,
+`SNOW_CLIENT_ID` and `SNOW_CLIENT_SECRET` and it is ready. `SNOW_INSTANCE` rather than the
+`SNOW_INSTANCE_URL` used further up on purpose — `npx` fetches the released package, and the release that
+first reads `SNOW_INSTANCE_URL` has not gone out yet. `SNOW_INSTANCE` is read by both. The same entry is in [`.mcp.json`](.mcp.json) at
+the repo root, which Claude Code reads for this project. Other clients each want it somewhere else: copy it
+into `.cursor/mcp.json` (Cursor), `~/.codeium/windsurf/mcp_config.json` (Windsurf), or `.vscode/mcp.json`
+for VS Code, which names the same block `servers` rather than `mcpServers`.
+
 ### Using the skills
 
 A skill is a directory with a `SKILL.md`: YAML frontmatter naming the skill and the `snow_*` tools it

@@ -44,6 +44,12 @@ name: Publish servicenow-mcp
 # as part of `npm publish` itself, so `npm dist-tag` in this job would have no
 # token to authenticate with. An unauthenticated "promote" step that 401s is
 # the kind of release machinery that gets a continue-on-error bolted onto it.
+#
+# WHO READS `latest`: the Claude Code plugin (.claude-plugin/marketplace.json)
+# runs this package as `npx --package=@serac-labs/servicenow-mcp
+# servicenow-mcp-stdio` with no version, so every plugin user gets whatever
+# `latest` points at. A release dispatched with the default dist_tag=next
+# reaches none of them until `latest` moves onto it.
 
 on:
   workflow_dispatch:
