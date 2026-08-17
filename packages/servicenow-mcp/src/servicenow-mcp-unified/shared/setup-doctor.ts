@@ -245,7 +245,7 @@ export const inspectInstanceUrl = (raw: string | undefined): { check: Check; bas
         code: "instance-url-missing",
         title: "No instance URL configured.",
         detail: [],
-        fix: ["Set SNOW_INSTANCE_URL to your instance, e.g. https://dev12345.service-now.com"],
+        fix: ["Set SNOW_INSTANCE to your instance, e.g. https://dev12345.service-now.com"],
       },
     }
 
@@ -765,7 +765,7 @@ const resolveChain = async (supplied?: ServiceNowContext): Promise<{ context: Se
           "enterprise portal: no enterprise session on this machine",
         ],
         fix: [
-          "Set SNOW_INSTANCE_URL, SNOW_CLIENT_ID and SNOW_CLIENT_SECRET in your MCP client's env block.",
+          "Set SNOW_INSTANCE, SNOW_CLIENT_ID and SNOW_CLIENT_SECRET in your MCP client's env block.",
           "The client id and secret come from System OAuth > Application Registry on the instance.",
         ],
       },

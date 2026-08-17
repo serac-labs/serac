@@ -17,7 +17,7 @@ Point any MCP client at the `servicenow-mcp-stdio` binary:
     "servicenow": {
       "command": "servicenow-mcp-stdio",
       "env": {
-        "SNOW_INSTANCE_URL": "https://dev12345.service-now.com",
+        "SNOW_INSTANCE": "https://dev12345.service-now.com",
         "SNOW_CLIENT_ID": "…",
         "SNOW_CLIENT_SECRET": "…"
       }
@@ -25,6 +25,10 @@ Point any MCP client at the `servicenow-mcp-stdio` binary:
   }
 }
 ```
+
+`SNOW_INSTANCE` takes either a bare host or a full URL. `SERVICENOW_INSTANCE_URL` and `SNOW_INSTANCE_URL`
+are accepted as aliases, in that order of precedence — but `SNOW_INSTANCE_URL` only from 0.2.2 onwards, so
+prefer `SNOW_INSTANCE` in anything you hand to someone else.
 
 The catalog is large enough to blow a context window, so tools are **deferred** by default: `tools/list`
 returns two meta-tools, and the model widens its own surface as it goes.

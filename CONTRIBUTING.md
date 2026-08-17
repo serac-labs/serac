@@ -58,7 +58,7 @@ developer instance from [developer.servicenow.com](https://developer.servicenow.
 under `System OAuth > Application Registry`, and export:
 
 ```bash
-export SNOW_INSTANCE_URL=https://dev12345.service-now.com
+export SNOW_INSTANCE=https://dev12345.service-now.com
 export SNOW_CLIENT_ID=…
 export SNOW_CLIENT_SECRET=…
 ```
