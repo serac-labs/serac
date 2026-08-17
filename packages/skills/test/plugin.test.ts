@@ -19,18 +19,27 @@ import { fileURLToPath } from "node:url"
 import { BUNDLED_SKILLS } from "../src/embedded"
 
 const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..")
-const marketplace = await Bun.file(join(REPO, ".claude-plugin", "marketplace.json")).json()
-const entry = marketplace.plugins.find((candidate: { name: string }) => candidate.name === "servicenow")
-const pluginRoot = resolve(REPO, entry.source)
-const plugin = await Bun.file(join(pluginRoot, ".claude-plugin", "plugin.json")).json()
-const rootMcp = await Bun.file(join(REPO, ".mcp.json")).json()
-const mcpPackage = await Bun.file(join(REPO, "packages", "servicenow-mcp", "package.json")).json()
-const toolCount = (await Bun.file(join(REPO, "packages", "servicenow-mcp", "tools.json")).json()).count
+
+// Being a plugin is a property of the REPOSITORY, not of this package: the marketplace entry, the root
+// .mcp.json and the MCP package all sit outside it. publish-skills.yml copies the package out of the
+// workspace and runs `bun test` there with no repo root in sight, and these assertions have nothing to
+// read — so they are conditional, and the last test below refuses to let that condition go unnoticed
+// inside a real checkout.
+const inRepo = existsSync(join(REPO, ".claude-plugin", "marketplace.json"))
+const rootJson = async (...segments: string[]) => (inRepo ? await Bun.file(join(REPO, ...segments)).json() : undefined)
+
+const marketplace = await rootJson(".claude-plugin", "marketplace.json")
+const entry = marketplace?.plugins.find((candidate: { name: string }) => candidate.name === "servicenow")
+const pluginRoot = resolve(REPO, entry?.source ?? ".")
+const plugin = inRepo ? await Bun.file(join(pluginRoot, ".claude-plugin", "plugin.json")).json() : undefined
+const rootMcp = await rootJson(".mcp.json")
+const mcpPackage = await rootJson("packages", "servicenow-mcp", "package.json")
+const toolCount = (await rootJson("packages", "servicenow-mcp", "tools.json"))?.count
 
 /** Generated from the tree by `script/generate-embedded.ts`, and kept honest by skills.test.ts. */
 const embedded = [...new Set(Object.keys(BUNDLED_SKILLS).map((key) => key.split("/")[0]))].sort()
 
-describe("marketplace entry", () => {
+describe.skipIf(!inRepo)("marketplace entry", () => {
   test("points at a directory that is a plugin", () => {
     expect(marketplace.name).toBe("serac")
     expect(marketplace.owner.name).toBeTruthy()
@@ -57,7 +66,7 @@ describe("marketplace entry", () => {
   })
 })
 
-describe("plugin manifest", () => {
+describe.skipIf(!inRepo)("plugin manifest", () => {
   test("ships every skill the package embeds", () => {
     // The manifest alone decides which directories reach a user. Comparing against the embedded map — a
     // checked-in artifact generated from the tree, not another read of the same directory — is what
@@ -79,7 +88,7 @@ describe("plugin manifest", () => {
   })
 })
 
-describe("MCP server", () => {
+describe.skipIf(!inRepo)("MCP server", () => {
   test("is the same definition the repo root hands to other clients", async () => {
     // Two files because they answer to two different loaders: Claude Code reads the plugin's copy after
     // install, and the repo-root one from a checkout. Nothing merges them.
@@ -98,4 +107,11 @@ describe("MCP server", () => {
     expect(rootMcp.mcpServers.servicenow.args).toContain(`--package=${mcpPackage.name}`)
     expect(Object.keys(mcpPackage.bin)).toContain(rootMcp.mcpServers.servicenow.args.at(-1))
   })
+})
+
+// The three suites above vanish outside a checkout, which is correct for the standalone publish gate and
+// would be a silent hole anywhere else. A repo-root package.json without a marketplace beside it means the
+// manifests were moved or deleted and nothing above is running any more.
+test("the plugin manifests are read wherever the repo is", () => {
+  expect(existsSync(join(REPO, "package.json")) ? inRepo : true).toBe(true)
 })
