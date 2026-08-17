@@ -8,6 +8,10 @@ Rule fires twice, what ES5-only really rules out. Part of [Serac](https://serac.
 npm install @serac-labs/skills
 ```
 
+That command does not work yet — nothing has been published under this name. The first release is
+waiting on an npm trusted publisher that only a maintainer can create, so for now the guides come
+from [the repo](https://github.com/serac-labs/serac/tree/main/packages/skills).
+
 They pair with [`@serac-labs/servicenow-mcp`](https://www.npmjs.com/package/@serac-labs/servicenow-mcp):
 the MCP server gives a model the ability to change an instance, the skills give it the judgement
 to do so without breaking one.
@@ -47,8 +51,9 @@ readFileSync(join(skillsRoot(), "es5-compliance", "SKILL.md"), "utf8")
 
 This is the path anything with a real filesystem should use, and the markdown ships in the npm
 tarball for exactly that reason. Skills are keyed by "top-level directory containing a
-`SKILL.md`" — which is why `dist/` is not skill-shaped, and why no skill directory can be renamed
-without breaking every consumer that reads the tree.
+`SKILL.md`", which is why `dist/` is not skill-shaped. The Serac Portal reads that tree straight
+out of a checkout and keys on the same rule, so renaming a skill directory is a breaking change:
+change the portal first, rename second.
 
 **As an embedded string map.** `BUNDLED_SKILLS` maps a path relative to the skills root
 (`incident-management/SKILL.md`) to that file's contents:

@@ -94,3 +94,10 @@ if (root !== process.cwd())
 
 await Bun.write("package.json", JSON.stringify({ ...pkg, exports }, null, 2) + "\n")
 console.log(`rewrote ${targets.length} published entrypoints to dist/ — all present, skillsRoot() -> ${root}`)
+
+// A CI runner is thrown away; a developer's checkout is not, and publishing the
+// first version by hand is a documented path (see publish-skills.yml). A
+// manifest left pointing at gitignored dist/ files is easy to commit by
+// accident, and nothing in the repo would catch it: the tests import ../src
+// relatively and typecheck never reads the exports map.
+if (!process.env.CI) console.log("package.json now points at dist/ — `git checkout package.json` when you are done")

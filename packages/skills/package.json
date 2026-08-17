@@ -16,7 +16,9 @@
   "private": false,
   "files": [
     "dist",
+    "NOTICE",
     "*/**",
+    "!.artifacts/**",
     "!.turbo/**",
     "!script/**",
     "!src/**",

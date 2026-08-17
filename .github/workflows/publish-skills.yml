@@ -9,17 +9,27 @@ name: Publish skills
 # IMPORTANT: npm binds a Trusted Publisher to owner + repo + WORKFLOW FILENAME.
 # This file must stay named "publish-skills.yml", and a trusted publisher for
 # @serac-labs/skills pointing at serac-labs/serac + publish-skills.yml
-# (environment blank) must exist on npmjs.com before the first publish from
-# here. IT DOES NOT EXIST YET — the package has never been published, and npm
-# configures the binding on the package's own settings page, so a human has to
-# put the first version on the registry by hand (from packages/skills, after
-# `bun run script/build-for-publish.ts`, with a granular write token), bind the
-# publisher, and release everything after that from here. The provenance check
-# at the end of this job is what makes a missing or mis-typed binding loud: a
-# publish that lands without an attestation fails the run instead of quietly
-# shipping unsigned bits. Note that after a manual 0.1.0 the first dispatch of
-# this workflow must carry a bumped version — the pre-flight below refuses to
-# republish a version that is already on the registry.
+# (environment blank) has to exist on npmjs.com for anything here to publish —
+# check that on the package's settings page before dispatching. The provenance
+# check at the end of this job is what makes a missing or mis-typed binding
+# loud: a publish that lands without an attestation fails the run instead of
+# quietly shipping unsigned bits.
+#
+# FIRST RELEASE ONLY: npm configures that binding on a package's own settings
+# page, and a name that has never been published has no such page. That was the
+# state when this file was written, so unless npm has since grown a way to
+# pre-register an unpublished name, version one goes out by hand — and
+# therefore unsigned — and everything after it from here:
+#
+#   cd packages/skills
+#   bun install
+#   bun run script/build-for-publish.ts   # rewrites exports to dist/ IN PLACE
+#   npm publish --access public           # with a granular write token
+#   git checkout package.json             # that rewrite is not undone for you
+#
+# Then create the trusted publisher, and bump the version before the first
+# dispatch: the pre-flight below refuses to republish a version that is already
+# on the registry.
 #
 # TRIGGER: workflow_dispatch, deliberately, not a tag or a branch push.
 #   - The version is read from packages/skills/package.json and nowhere else. A
@@ -303,6 +313,19 @@ jobs:
             const missing = targets.filter(([, file]) => !inTarball(file))
             const unshipped = onDisk.filter((name) => !files.has(`${name}/SKILL.md`))
 
+            // The other direction, and the one a wildcard `files` actually gets
+            // wrong: everything in the tarball must be something we meant to
+            // publish. `*/**` matches dot-directories — that is why `!.turbo/**`
+            // is in `files` — so the junit report the test step writes three
+            // steps above shipped to the registry until `!.artifacts/**` was
+            // added. No absence check can ever see that; only a list of what
+            // belongs can.
+            const skillFiles = new Set(onDisk.map((name) => `${name}/SKILL.md`))
+            const documentation = (path) => !path.includes("/") && /^(package\.json|README|LICEN[CS]E|NOTICE|CHANGELOG)/.test(path)
+            const unexpected = [...files].filter(
+              (path) => !path.startsWith("dist/") && !skillFiles.has(path) && !documentation(path),
+            )
+
             for (const [name, file] of targets) console.log(`${inTarball(file) ? "ok  " : "MISS"}  ${name} -> ${file}`)
             console.log(`\n${packed.name}@${packed.version}: ${packed.entryCount} files, ${(packed.size / 1024).toFixed(1)} kB packed`)
 
@@ -318,12 +341,16 @@ jobs:
               console.error(`\n::error::${unshipped.length} skill director(ies) on disk are not in the tarball — check "files"`)
               for (const name of unshipped) console.error(`  ${name}`)
             }
+            if (unexpected.length > 0) {
+              console.error(`\n::error::${unexpected.length} file(s) in the tarball are neither dist/, a skill, nor documentation — check "files"`)
+              for (const path of unexpected) console.error(`  ${path}`)
+            }
             if (onDisk.length < 50) {
               console.error(`\n::error::only ${onDisk.length} skill directories on disk; the working tree is not what we think it is`)
               process.exit(1)
             }
-            if (unbuilt.length + missing.length + unshipped.length > 0) process.exit(1)
-            console.log(`gate: ${targets.length} published entrypoints and all ${onDisk.length} skill directories are in the tarball`)
+            if (unbuilt.length + missing.length + unshipped.length + unexpected.length > 0) process.exit(1)
+            console.log(`gate: ${targets.length} published entrypoints and all ${onDisk.length} skill directories are in the tarball, and nothing else is`)
         run: |
           set -euo pipefail
           printf '%s' "$GATE_JS" > "$RUNNER_TEMP/gate.mjs"
