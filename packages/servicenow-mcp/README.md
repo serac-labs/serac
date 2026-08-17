@@ -4,14 +4,8 @@ A [Model Context Protocol](https://modelcontextprotocol.io) server for ServiceNo
 stdio or streamable HTTP, plus blast-radius impact analysis. Part of [Serac](https://serac.build).
 
 ```bash
-npm install -g @serac-labs/servicenow-mcp@next
+npm install -g @serac-labs/servicenow-mcp
 ```
-
-> **Why `@next`:** the `latest` tag still points at 0.1.0, whose main entrypoint cannot be imported
-> under Node — it does a named import of `machineIdSync` from `node-machine-id`, a CJS module Node's
-> lexer cannot read named exports from, which takes out 4 of 11 subpaths and both bins. 0.2.0 on
-> `next` is the fixed build. Promote it (`npm dist-tag add @serac-labs/servicenow-mcp@0.2.0 latest`,
-> see the header of `.github/workflows/publish-mcp.yml`), then drop the `@next` and this note.
 
 ## Use it as an MCP server
 
