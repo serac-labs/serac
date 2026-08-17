@@ -100,6 +100,7 @@ Each tool is exported as a `*_def` / `*_exec` pair: the MCP tool definition and 
 | `/stdio`            | The stdio transport                                           |
 | `/http`             | The streamable-HTTP transport, as a Hono app                  |
 | `/blast-radius`     | Impact-analysis tools, usable without the MCP layer           |
+| `/sn-roles`         | The ServiceNow roles each tool needs — see below              |
 | `/types`            | `ServiceNowContext`, `MCPToolDefinition`, …                   |
 | `/auth`             | OAuth + basic auth, token cache, authenticated Axios client   |
 | `/error-handler`    | Result envelopes and error classification                     |
@@ -122,11 +123,106 @@ the credentials, which is safe but colder.
 None of this state is shared between processes, so an HTTP deployment should run **single-replica** or
 supply its own shared store.
 
+## The roles manifest
+
+`sn-roles.manifest.json` answers "which ServiceNow role do I need to run this tool?" It is empirical, not
+documentation-derived: `script/probe-sn-roles` extracts every `(table, operation)` pair each tool performs,
+then resolves it against a live instance's `sys_security_acl` — the rows ServiceNow's own auth engine reads
+at request time. `files` ships it inside the npm tarball as of the next release — 0.2.1 and earlier did not
+contain it at all — and the `/sn-roles` subpath types it:
+
+```ts
+import { loadSnRolesManifest } from "@serac-labs/servicenow-mcp/sn-roles"
+
+const manifest = loadSnRolesManifest()
+manifest.tools["snow_trigger_scheduled_job"].snRoles
+// { anyOf: ["admin", "system_scheduler_admin"], minimumBundle: ["system_scheduler_admin"] }
+```
+
+`loadSnRolesManifest()` re-reads and re-parses ~420 kB per call, so hold the result. `snRolesManifestPath`
+is the absolute path to the same file, for consumers that would rather stream or serve it than parse it.
+
+### Schema
+
+| Top-level     | What it is                                                                                               |
+| ------------- | -------------------------------------------------------------------------------------------------------- |
+| `version`     | Schema version, currently `1`. Bumped when the shape changes, not when the data is re-probed.            |
+| `validatedOn` | The release string the probed instance reported, e.g. `glide-australia-02-11-2026__patch1-…`.            |
+| `testedAt`    | When the probe ran, ISO-8601.                                                                            |
+| `stats`       | Rollups over the whole run, below.                                                                       |
+| `tools`       | Keyed by tool name. A tool that is absent has not been probed, which is not the same as needing no role. |
+
+Each tool is one of two shapes. Resolved:
+
+```json
+"snow_job_status": {
+  "snRoles": { "anyOf": ["admin"], "minimumBundle": ["assessment_admin", "snc_internal"] },
+  "primitives": [
+    { "table": "sys_trigger", "operation": "read", "roles": ["…"], "source": "direct", "scriptAcls": 0 },
+    { "table": "sys_execution_tracker", "operation": "read", "roles": ["snc_internal"], "source": "direct", "scriptAcls": 1 }
+  ]
+}
+```
+
+- **`anyOf`** — single roles that ALONE suffice for the whole tool: the intersection of every primitive's
+  role list, plus `admin`, which bypasses ACLs outright. Just `["admin"]` means no single non-admin role
+  covers it. `public` shows up here too; it is ServiceNow's "no authentication required" marker, not a role
+  anyone can be granted, so do not render it as one.
+- **`minimumBundle`** — the smallest set of roles a user needs _together_ (greedy set-cover), computed with
+  the `public` primitives dropped — which is why a tool whose every primitive is `public` comes out as `[]`,
+  needing no authenticated role at all. `["admin"]` means some primitive had nothing non-admin left in its
+  role list, and that happens two ways: a genuinely admin-only ACL, or an ACL carrying no roles at all,
+  which any authenticated caller passes. They are indistinguishable in the rollup, so check that
+  primitive's own `roles` before telling someone they need admin. `admin` stays an implicit alternative
+  either way.
+- **`primitives`** — one entry per table call the tool makes, so a table read three times appears three
+  times. `roles` is OR-combined across every matching ACL, and an empty `roles` means the ACL rows exist but
+  name no role — any authenticated caller passes. `source` is how the ACL was found: `direct` on the table,
+  `inherited` from a `sys_db_object.super_class` ancestor (then `inheritedFrom` names it), `wildcard` from
+  the `*` ACL, or `none` — nothing matched at any level, and `roles` is then ServiceNow's implicit
+  admin-only deny, assumed rather than measured. `scriptAcls` counts matching ACLs that carry a condition or
+  advanced script — above zero, the role list is necessary but may not be sufficient, because those scripts
+  run per record and the probe cannot evaluate them.
+
+Untestable:
+
+```json
+"snow_date_filter": {
+  "snRoles": null,
+  "untestable": true,
+  "reason": "no /api/now/table/<table> calls detected in static analysis"
+}
+```
+
+**`untestable` means "not measurable by this method", not "needs no role"** — `stats.untestable` is how many
+entries are in this state, and it is a large share of them. The extractor only sees literal
+`/api/now/table/<table>` endpoints passed to `client.get/post/…`, so tools that go through Scripted REST or
+another API, tools that only compute locally, and tools that build their table name at runtime all land here
+with no roles at all.
+
+`stats` mirrors the run: `tools` and `untestable` are entry counts; `primitivesTotal` is the number of
+distinct `(table, operation)` pairs and `primitivesResolved` how many of them the instance answered for
+(fewer means a partial run); `sourceDistribution` counts primitive _occurrences_, so it sums higher than
+`primitivesTotal`; and `topRoles[].tools` is misnamed — it counts distinct primitives whose ACLs accept the
+role, not tools.
+
+### Staleness
+
+`validatedOn`, not `testedAt`, is the field that matters: roles and ACLs move between ServiceNow families
+and sometimes between patches, so the manifest is exact for the release it names and a strong hint
+elsewhere. Nothing refreshes it automatically — `probe:sn-roles` needs OAuth credentials for a live
+instance, so it is a human running it after a family upgrade and diffing the result.
+
+Tools added since the last run therefore have no entry — there are some today. `src/__tests__/sn-roles.test.ts`
+names the current set and fails if it changes in either direction, so the gap stays visible instead of
+silently growing.
+
 ## Published manifests — read before moving them
 
-Two generated JSON files live at the root of this package. They are **not** part
-of the npm tarball; they are published _by being committed_, because live
-services fetch them straight from `main` over `raw.githubusercontent.com`:
+Two generated JSON files live at the root of this package. Both are published _by
+being committed_, because live services fetch them straight from `main` over
+`raw.githubusercontent.com`. `sn-roles.manifest.json` is _also_ in the npm
+tarball, behind the `/sn-roles` subpath above; `tools.json` is not:
 
 | File                     | Fetched at runtime by                                                         | If the URL 404s                                                                                                                                                                     |
 | ------------------------ | ----------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

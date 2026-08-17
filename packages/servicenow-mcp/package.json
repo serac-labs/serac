@@ -27,6 +27,7 @@
     "./stdio": "./src/servicenow-mcp-unified/transports/stdio.ts",
     "./enterprise-proxy": "./src/enterprise-proxy/index.ts",
     "./blast-radius": "./src/servicenow-mcp-unified/tools/blast-radius/index.ts",
+    "./sn-roles": "./src/sn-roles.ts",
     "./types": "./src/servicenow-mcp-unified/shared/types.ts",
     "./auth": "./src/servicenow-mcp-unified/shared/auth.ts",
     "./error-handler": "./src/servicenow-mcp-unified/shared/error-handler.ts",
