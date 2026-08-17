@@ -65,8 +65,8 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     if (msg.includes("Failed to obtain access token") || status === 401) {
       return createErrorResult(
         `Authentication failed. Your access token may be expired.\n\n` +
-        `Run: serac auth login\n\n` +
-        `If you've already logged in, check: serac auth status`
+        `Run \`servicenow-mcp-stdio --doctor\`, or call snow_diagnose_setup, to find out which part of the setup is wrong. ` +
+        `It reads the raw responses instead of going through the auth manager, so it still answers when this tool cannot.`
       )
     }
 

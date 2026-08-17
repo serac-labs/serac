@@ -8,17 +8,22 @@
  * Usage:
  *   node dist/mcp/servicenow-mcp-unified/index.js
  *
+ * Flags:
+ *   --doctor - diagnose the credential setup and exit, without starting the server
+ *
  * Environment Variables:
- *   SERVICENOW_INSTANCE_URL - ServiceNow instance URL
- *   SERVICENOW_CLIENT_ID - OAuth client ID
- *   SERVICENOW_CLIENT_SECRET - OAuth client secret
+ *   SNOW_INSTANCE_URL / SERVICENOW_INSTANCE_URL - ServiceNow instance URL
+ *   SNOW_CLIENT_ID / SERVICENOW_CLIENT_ID - OAuth client ID
+ *   SNOW_CLIENT_SECRET / SERVICENOW_CLIENT_SECRET - OAuth client secret
  *   SERVICENOW_REFRESH_TOKEN - OAuth refresh token (optional, will be cached)
+ *   The full list, per credential field, is ENV_VARS in shared/context-loader.ts.
  */
 
 import { startStdio } from "./transports/stdio.js"
 import * as dotenv from "dotenv"
 import * as path from "path"
 import { mcpDebug } from "../shared/mcp-debug.js"
+import { ENV_VARS } from "./shared/context-loader.js"
 // Anonymous, content-free usage telemetry. This import lives in the stdio
 // entry point and nowhere else: the HTTP transport must never emit, because
 // it is the platform's multi-tenant server and its "sessions" are our own
@@ -33,16 +38,13 @@ async function main() {
   try {
     // 🆕 Preserve MCP client env vars before loading .env
     // MCP clients (like Claude Code) set env vars from mcp.json which should take priority
-    const mcpEnvVars = {
-      SNOW_LAZY_TOOLS: process.env.SNOW_LAZY_TOOLS,
-      SNOW_TOOL_DOMAINS: process.env.SNOW_TOOL_DOMAINS,
-      SNOW_INSTANCE: process.env.SNOW_INSTANCE,
-      SERVICENOW_INSTANCE_URL: process.env.SERVICENOW_INSTANCE_URL,
-      SNOW_CLIENT_ID: process.env.SNOW_CLIENT_ID,
-      SERVICENOW_CLIENT_ID: process.env.SERVICENOW_CLIENT_ID,
-      SNOW_CLIENT_SECRET: process.env.SNOW_CLIENT_SECRET,
-      SERVICENOW_CLIENT_SECRET: process.env.SERVICENOW_CLIENT_SECRET,
-    }
+    //
+    // Built from ENV_VARS rather than listed by hand: this list used to name
+    // eight variables and the loader read a different set, so a documented
+    // variable could be missing from both without anything noticing.
+    const mcpEnvVars = Object.fromEntries(
+      [...Object.values(ENV_VARS).flat(), "SNOW_LAZY_TOOLS", "SNOW_TOOL_DOMAINS"].map((v) => [v, process.env[v]]),
+    )
 
     // Load environment variables from .env file
     // Note: dotenv should NOT override existing vars, but we preserve them anyway for safety
@@ -78,6 +80,19 @@ async function main() {
         }
         process.env[key] = value
       }
+    }
+
+    // --doctor: diagnose the credential setup and exit. It runs here, after
+    // .env is loaded and the MCP overrides are restored, so it reports the
+    // credentials the server would actually have used — and before the
+    // transport, so no JSON-RPC session is ever opened. That is what makes it
+    // safe to print the report on stdout: this process will not speak the
+    // protocol. Never write anything but JSON to stdout on the server path.
+    if (process.argv.slice(2).includes("--doctor")) {
+      const { runSetupDoctor, renderReport } = await import("./shared/setup-doctor.js")
+      const report = await runSetupDoctor()
+      console.log(renderReport(report))
+      process.exit(report.ok ? 0 : 1)
     }
 
     // Log active configuration mode

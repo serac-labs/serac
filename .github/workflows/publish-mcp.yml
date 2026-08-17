@@ -229,10 +229,10 @@ jobs:
           tar -cf - --exclude=node_modules --exclude=dist . | tar -xf - -C "$STANDALONE"
           cd "$STANDALONE"
           test ! -e ../package.json || { echo "::error::standalone dir has a parent manifest; the test is meaningless"; exit 1; }
-          # Resolve fresh rather than from a committed lockfile. The package
-          # ships only dist/ and src/agent-fragments (see `files`), so no
-          # lockfile ever reaches a consumer — they resolve the ranges in
-          # package.json themselves, which is exactly what this now reproduces.
+          # Resolve fresh rather than from a committed lockfile. Nothing in
+          # `files` is a lockfile, so none ever reaches a consumer — they
+          # resolve the ranges in package.json themselves, which is exactly what
+          # this now reproduces.
           # A committed standalone lockfile pinned nothing a user gets and cost
           # us the dependency automation: with two bun projects overlapping,
           # Renovate updated neither lockfile on a workspace-member bump
@@ -311,6 +311,17 @@ jobs:
               ),
               ...Object.entries(pkg.bin ?? {}).map(([key, value]) => [`bin["${key}"]`, value]),
               ["files", "dist/index.js"],
+              // The roles manifest is data, not an entrypoint: exports["./sn-roles"]
+              // reads it from the package root at runtime, and it deliberately has
+              // no JSON subpath of its own (importing one under node needs an
+              // import attribute the smoke gate below cannot pass). So nothing in
+              // exports would notice it dropping out of `files` — the roles report
+              // would degrade to "manifest is not installed" for every npm user
+              // while every local test and CI job stayed green. That is the state
+              // every published tarball was in until it was added there: present in
+              // the repo, absent from the package. This gate is the only place that
+              // can see it go missing.
+              ["files", "sn-roles.manifest.json"],
             ]
 
             const inTarball = (file) => {

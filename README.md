@@ -57,6 +57,18 @@ Credentials come from an OAuth application registry entry on your instance (`Sys
 Registry`). A developer instance from [developer.servicenow.com](https://developer.servicenow.com) is enough
 to try everything here.
 
+If nothing works — an auth error, or a response that will not parse — ask the server what is wrong before
+changing anything:
+
+```bash
+servicenow-mcp-stdio --doctor
+```
+
+It names which credential source was used, whether the URL is usable, whether the instance is awake (a
+hibernating developer instance answers with an HTML login page, which makes every tool look broken), whether
+the OAuth exchange succeeds, and which roles the account holds. The model can ask for the same report by
+calling `snow_diagnose_setup`.
+
 The catalog is far larger than a context window, so tools are **deferred** by default: `tools/list` returns
 two meta-tools and the model widens its own surface as it works.
 
@@ -91,7 +103,7 @@ also what CI installs.
 ```bash
 bun install
 bun typecheck          # tsgo across both packages
-bun run test           # both suites: 168 MCP tests, 60 skills tests
+bun run test           # both suites
 bun run lint           # oxlint
 ```
 
@@ -139,6 +151,11 @@ repointed and deployed first, and the old path removed in a separate commit afte
 trusted publishing and signed provenance. Every PR that touches the package runs the same build, test and
 packaging gates without publishing, including one that copies the package out of the workspace entirely and
 proves it installs, builds and tests with no monorepo around it.
+
+The [MCP registry](https://registry.modelcontextprotocol.io) listing is a second, separate dispatch:
+`.github/workflows/publish-mcp-registry.yml` uploads the repo-root `server.json` once the npm version is
+live. `server.json` repeats that version and the package name, so a gate on every PR touching either file
+fails when the two disagree — `bun run --cwd packages/servicenow-mcp check:registry-manifest`.
 
 `@serac-labs/skills` releases the same way, from `.github/workflows/publish-skills.yml`, with gates
 adapted to what that package actually ships: the tarball must contain every entrypoint **and** every skill
