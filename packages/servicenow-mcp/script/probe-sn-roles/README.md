@@ -67,60 +67,13 @@ in any matching ACL grants access, subject to that ACL's condition/script.
 
 ## Output shape
 
-```json
-{
-  "version": 1,
-  "validatedOn": "glide-australia-02-11-2026__patch1-...",
-  "testedAt": "2026-05-14T...",
-  "stats": {
-    "tools": 428,
-    "untestable": 128,
-    "primitivesTotal": 462,
-    "primitivesResolved": 462,
-    "sourceDistribution": { "direct": 380, "inherited": 60, "wildcard": 22 },
-    "topRoles": [ { "role": "admin", "tools": 462 }, ... ]
-  },
-  "tools": {
-    "snow_change_manage": {
-      "snRoles": {
-        "anyOf": ["admin"],
-        "minimumBundle": ["itil", "snc_internal"]
-      },
-      "primitives": [
-        { "table": "change_request", "operation": "create", "roles": ["itil", "sn_change_write"], "source": "direct", "scriptAcls": 0 },
-        { "table": "sysapproval_approver", "operation": "create", "roles": ["snc_internal"], "source": "direct", "scriptAcls": 1 }
-      ]
-    },
-    "snow_check_health": {
-      "snRoles": {
-        "anyOf": ["admin", "public", "snc_internal"],
-        "minimumBundle": []
-      },
-      "primitives": [...]
-    },
-    "snow_date_filter": {
-      "snRoles": null,
-      "untestable": true,
-      "reason": "no /api/now/table/<table> calls detected in static analysis"
-    }
-  }
-}
-```
-
-Two rollup fields per tool:
-
-- **`anyOf`** — single roles that ALONE suffice for the entire tool (intersection
-  of primitive role sets, plus `admin` since admin bypasses ACLs). When this is
-  just `["admin"]`, no non-admin role works on its own.
-- **`minimumBundle`** — smallest set of roles the user needs **together** to
-  unlock every primitive. Computed via greedy set-cover.
-  - `[]` (empty) = entire tool is publicly accessible (no auth required)
-  - `["foo"]` = single role suffices
-  - `["foo", "bar"]` = user needs BOTH roles
-  - `["admin"]` = some primitive is admin-only, no non-admin bundle works
-
-`admin` is always an implicit alternative regardless of `minimumBundle` value —
-it bypasses ACLs entirely in SN's auth engine.
+Documented once, in the package README's "The roles manifest" section
+(`../../README.md`), which is the copy that ships to npm consumers behind the
+`/sn-roles` subpath, and typed in `src/sn-roles.ts`. The copy that used to be
+here had already drifted: it showed a `sourceDistribution` of
+`{direct: 380, inherited: 60, wildcard: 22}` against a manifest that says
+`{direct: 870, wildcard: 189, inherited: 42}`, and repeated the wrong rule for
+`minimumBundle: ["admin"]`.
 
 ## Re-running across SN releases
 
