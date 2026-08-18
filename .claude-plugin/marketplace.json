@@ -11,7 +11,7 @@
       "name": "servicenow",
       "source": "./packages/skills",
       "displayName": "ServiceNow",
-      "description": "400+ snow_* MCP tools for ServiceNow, plus the 57 skill guides that teach an agent to use them.",
+      "description": "400+ snow_* MCP tools for ServiceNow, plus the 63 skill guides that teach an agent to use them.",
       "author": {
         "name": "Serac Labs",
         "url": "https://github.com/serac-labs"

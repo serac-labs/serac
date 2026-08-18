@@ -1,6 +1,6 @@
 ---
 name: acl-security
-description: Create and debug ServiceNow ACLs (record, field, REST, script-include). Covers role/condition/script patterns, evaluation order, field-level visibility, and impersonation testing for row- and field-level security.
+description: Create and debug ServiceNow ACLs (record, field, REST, script-include). Covers role/condition/script patterns, which ACL names can apply to a table or field, field-level visibility, and impersonation testing for row- and field-level security.
 license: Apache-2.0
 compatibility: Designed for Serac and ServiceNow development
 metadata:
@@ -9,7 +9,10 @@ metadata:
   category: servicenow
 tools:
   - snow_query_table
-  - snow_test_acl
+  - snow_acl_explain
+  - snow_create_acl
+  - snow_create_acl_role
+  - snow_record_manage
   - snow_artifact_manage
   - snow_execute_script
   - snow_impersonate_user
@@ -20,15 +23,30 @@ tools:
 
 Access Control Lists (ACLs) are the foundation of ServiceNow security. They control who can read, write, create, and delete records.
 
-## ACL Evaluation Order
+## Which ACLs can apply
 
-ACLs are evaluated in this order (first match wins):
+An ACL applies by name, and the name is literal — `sys_security_acl.name` holds `incident.priority` or `*`, never a glob pattern. For one field on a table that extends another, six names can each carry a rule:
 
-1. **Table.field** - Most specific (e.g., `incident.assignment_group`)
-2. \*_Table._` - Table-level field wildcard
-3. **Table** - Table-level record ACL
-4. **Parent table ACLs** - If table extends another
-5. `*` - Global wildcard (catch-all)
+| Name                | Carries the rule for                      |
+| ------------------- | ----------------------------------------- |
+| `incident.priority` | this field on this table                  |
+| `task.priority`     | this field on a parent table              |
+| `*.priority`        | a field of this name on any table         |
+| `incident.*`        | any field on this table                   |
+| `task.*`            | any field on a parent table               |
+| `*.*`               | any field on any table                    |
+
+Alongside them are the record-level names: `incident`, then each parent table in the `sys_db_object.super_class` chain, then `*`.
+
+Two of those forms are confirmed against live instances: the record-level `*` (the ACL probe behind `sn-roles.manifest.json` resolved 189 tool primitives through it) and `table.field` (`snow_analyze_form` reads field ACLs with `nameSTARTSWITH<table>.`). The readings above for `*.priority`, `incident.*` and `*.*` follow the same naming scheme but are not sourced to ServiceNow's own documentation — treat them as names worth checking, not as documented behaviour. `snow_acl_explain` checks all of them either way, and a name nobody uses simply returns nothing.
+
+Look at all of them. Stopping at `incident.priority` names the wrong blocker in exactly the case you are debugging — when the rule carrying the roles sits on `task` or on a wildcard.
+
+`snow_acl_explain` collects the whole set in one call: it walks `sys_db_object.super_class` for the parent names, reads each matching rule's required roles out of the `sys_security_acl_role` m2m (there is no `roles` column on `sys_security_acl`, so anything reading one reports no roles at all), and diffs those against the roles a user holds in `sys_user_has_role` — which already includes inherited roles, so there is no need to expand `sys_user_role_contains` yourself.
+
+Read that diff correctly. The roles on one rule are alternatives, so a rule's `roles_not_held` is the leftover half of `requires_roles`, never a list of roles to grant: if `user_holds` on that rule is non-empty, its role check already passes and the blocker is somewhere else — another level, or a condition or script the tool did not evaluate.
+
+What it will not do is decide. Conditions and advanced scripts run inside the platform against one specific record and nothing over the REST Table API evaluates them, so read the output as "here is what applies and here is what the user holds", then confirm by impersonating. `snow_test_acl` claims to return the decision itself: it POSTs a record to `sys_script_execution` and reports the Table API's echo as if it were script output, and it ignores both its `operation` and its `user` argument. Don't use it.
 
 ## ACL Types
 
@@ -42,27 +60,41 @@ ACLs are evaluated in this order (first match wins):
 
 ## Creating ACLs via MCP
 
+`snow_create_acl` creates the ACL shell and nothing else. It takes `name`, `operation`, `type`, `admin_overrides` and `active`; there are no `roles`, `condition` or `script` arguments, and passing them anyway is silently ignored — they never reach `sys_security_acl`. An ACL left at that stage names no roles and carries no condition, which is the most permissive rule you can write. Set `active: false` until the other two steps are done.
+
 ```javascript
-// Table-level READ ACL
+// 1. The shell — a record-level WRITE ACL on incident, created inactive.
 snow_create_acl({
   name: "incident",
-  operation: "read",
+  operation: "write",
+  type: "record",
   admin_overrides: true,
-  active: true,
-  roles: ["itil", "incident_manager"],
-  condition: "current.active == true",
-  script: "",
+  active: false,
 })
 
-// Field-level WRITE ACL
-snow_create_acl({
-  name: "incident.priority",
-  operation: "write",
-  roles: ["incident_manager"],
-  condition: "",
-  script: "answer = current.state < 6;", // Only if not resolved
+// 2. The roles. They live in the sys_security_acl_role m2m, one row per role, so
+//    this is one call per role and each one needs that role's sys_id.
+snow_query_table({ table: "sys_user_role", query: "nameINitil,incident_manager", fields: ["sys_id", "name"] })
+snow_create_acl_role({ acl: "<acl sys_id>", role: "<itil sys_id>" })
+snow_create_acl_role({ acl: "<acl sys_id>", role: "<incident_manager sys_id>" })
+
+// 3. Condition and script are columns on the ACL record itself, with no argument
+//    on snow_create_acl. Set them by updating the record, then activate it.
+snow_record_manage({
+  action: "update",
+  table: "sys_security_acl",
+  sys_id: "<acl sys_id>",
+  data: { script: "answer = current.state < 6;", active: true },
 })
 ```
+
+Two roles on one ACL are alternatives — either one grants access under that rule — so step 2 widens the rule with each row, it does not narrow it.
+
+`condition` and `script` are both real columns on `sys_security_acl` (`snow_analyze_form` reads them back). Write each in the form the ACL form's own Condition and Script fields expect.
+
+A field-level rule is the same three steps with `name: "incident.priority"`.
+
+Then check your work with `snow_acl_explain({ table: "incident", operation: "write", user: "<someone>" })` — it reads the roles back out of the m2m, which is the step most likely to have been skipped.
 
 ## Common ACL Patterns
 
