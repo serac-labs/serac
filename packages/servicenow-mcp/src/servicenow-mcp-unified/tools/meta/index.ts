@@ -71,7 +71,7 @@ export const tool_search_def: MCPToolDefinition = {
   name: "tool_search",
   description: `Search for available ServiceNow tools when you need specialized functionality.
 
-This tool searches through ALL 235+ available tools including:
+It searches every tool this server registered — several hundred of them — including:
 - Core operations (queries, CRUD, bulk operations)
 - Deployment (widgets, UI pages, script includes)
 - CMDB and asset management
@@ -419,8 +419,8 @@ export const tool_execute_def: MCPToolDefinition = {
   name: "tool_execute",
   description: `Execute any ServiceNow tool by name. Use this after tool_search to call the tools you found.
 
-This is the gateway to ALL 235+ ServiceNow tools. After searching with tool_search,
-use this tool to execute the found tools.
+This is the gateway to every ServiceNow tool this server registered. After searching
+with tool_search, use this tool to execute the found tools.
 
 Example:
 1. tool_search({query: "query incidents"})

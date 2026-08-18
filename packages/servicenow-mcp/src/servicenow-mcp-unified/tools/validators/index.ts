@@ -7,6 +7,10 @@ export {
   execute as snow_validate_field_exec,
 } from "./snow_validate_field.js"
 export {
+  toolDefinition as snow_validate_query_def,
+  execute as snow_validate_query_exec,
+} from "./snow_validate_query.js"
+export {
   toolDefinition as snow_validate_sysid_def,
   execute as snow_validate_sysid_exec,
 } from "./snow_validate_sysid.js"

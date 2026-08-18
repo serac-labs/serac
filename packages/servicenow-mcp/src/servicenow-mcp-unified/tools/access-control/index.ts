@@ -1,3 +1,4 @@
+export { toolDefinition as snow_acl_explain_def, execute as snow_acl_explain_exec } from "./snow_acl_explain.js"
 export { toolDefinition as snow_create_acl_def, execute as snow_create_acl_exec } from "./snow_create_acl.js"
 export {
   toolDefinition as snow_create_acl_role_def,

@@ -38,7 +38,11 @@ const PACKAGE_ROOT = resolve(__dirname, "..", "..")
  * list cannot quietly drift out of date the way an unchecked manifest can.
  */
 const AWAITING_PROBE = [
+  "snow_acl_explain",
+  "snow_app_repo_manage",
   "snow_blast_radius_sys_properties",
+  "snow_cmdb_identify_reconcile",
+  "snow_describe_field",
   "snow_diagnose_setup",
   "snow_fluent_build",
   "snow_fluent_dependencies",
@@ -48,6 +52,8 @@ const AWAITING_PROBE = [
   "snow_fluent_install",
   "snow_fluent_status",
   "snow_fluent_transform",
+  "snow_scripted_rest_api_manage",
+  "snow_validate_query",
 ]
 
 const manifest = loadSnRolesManifest()

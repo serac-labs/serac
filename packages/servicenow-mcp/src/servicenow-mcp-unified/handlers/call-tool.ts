@@ -7,6 +7,7 @@
  *   - regular tools go through permission check + retryable execution
  */
 
+import { Server } from "@modelcontextprotocol/sdk/server/index.js"
 import { McpError, ErrorCode } from "@modelcontextprotocol/sdk/types.js"
 import { toolRegistry } from "../shared/tool-registry.js"
 import { executeWithErrorHandling, SnowFlowError, classifyError } from "../shared/error-handler.js"
@@ -34,7 +35,7 @@ import {
 import { setCurrentUpdateSet } from "../shared/update-set-rebind.js"
 import { type HandlerDeps } from "./types.js"
 
-export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any) => {
+export const callTool = (deps: HandlerDeps, server: Server) => async (request: any, extra?: any) => {
   const { name, arguments: args } = request.params
 
   // Enhanced logging: show tool name AND key parameters
@@ -62,6 +63,18 @@ export const callTool = (deps: HandlerDeps) => async (request: any, extra?: any)
       // the meta path can filter stdio-only tools out of HTTP discovery.
       const contextWithSession = { ...context, sessionId, origin: ctx.origin }
       const result = await tool_search_exec(args as any, contextWithSession)
+      // Enabling a deferred tool changes what the next tools/list returns, and
+      // a client that caches the list learns that only from this notification.
+      // `enabled_tools` is what the call actually wrote to the session store
+      // (meta/index.ts applyEnablement), not what it was asked to write, so an
+      // enable=false search or a search that found nothing deferred stays
+      // silent. Only stdio can get here: http-entry registers the catalog with
+      // `deferred: false` so `enabled_tools` is always empty there, and
+      // transports/http.ts is stateless so there is no stream to notify on.
+      // A notification that cannot be delivered must not turn a successful
+      // search into a tool error — the search already happened.
+      if (ctx.origin === "stdio" && result?.enabled_tools?.length > 0)
+        await server.sendToolListChanged().catch((e) => mcpDebug(`[Server] tools/list_changed notification failed: ${e}`))
       return {
         content: [{ type: "text", text: JSON.stringify(result, null, 2) }],
       }

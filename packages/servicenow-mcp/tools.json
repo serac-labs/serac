@@ -1,11 +1,66 @@
 {
-  "generatedAt": "2026-08-16T21:13:18.874Z",
-  "count": 438,
+  "generatedAt": "2026-08-17T23:43:09.683Z",
+  "count": 444,
   "groups": [
     {
       "name": "access-control",
       "displayName": "Access Control",
       "tools": [
+        {
+          "name": "snow_acl_explain",
+          "description": "Explain which ACLs apply to a table (optionally one field) for one operation, and what a named user is missing. Walks sys_db_object.super_class so parent-table rules are included, covers the wildcard names (*, *.field, table.*, *.*), resolves each rule's required roles through the sys_security_acl_role m2m, and reports which of those roles the user actually holds (sys_user_has_role, inherited roles included). Returns the applicable rules plus the role gap — NOT an access decision: ACL conditions and advanced scripts are reported and counted but never evaluated.",
+          "permission": "read",
+          "allowedRoles": [
+            "developer",
+            "stakeholder",
+            "admin"
+          ],
+          "useCases": [
+            "acl",
+            "security",
+            "roles",
+            "permissions",
+            "debugging"
+          ],
+          "complexity": "intermediate",
+          "frequency": "medium",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "table": {
+                "type": "string",
+                "description": "Table the record lives on, e.g. 'incident'"
+              },
+              "operation": {
+                "type": "string",
+                "enum": [
+                  "read",
+                  "write",
+                  "create",
+                  "delete"
+                ],
+                "description": "The operation being denied: read, write, create or delete"
+              },
+              "field": {
+                "type": "string",
+                "description": "Optional field name, e.g. 'priority' or 'incident.priority'. Adds the six field-level ACL names to the report; without it only the record-level names are checked."
+              },
+              "user": {
+                "type": "string",
+                "description": "Optional sys_id or user_name of the user to diff against. Without it the report lists the rules and their roles but nothing about who holds what."
+              },
+              "include_inactive": {
+                "type": "boolean",
+                "description": "Include ACLs with active=false. Default: false.",
+                "default": false
+              }
+            },
+            "required": [
+              "table",
+              "operation"
+            ]
+          }
+        },
         {
           "name": "snow_create_access_control",
           "description": "Create an Access Control List (ACL) entry on a table: grants a role permission to perform an operation (read/write/create/delete) on records, optionally gated by a condition or advanced script. Writes to sys_security_acl.",
@@ -1251,7 +1306,7 @@
       "tools": [
         {
           "name": "snow_aggregate_metrics",
-          "description": "Aggregate over a table via the /api/now/stats endpoint: COUNT, SUM, AVG, MIN, or MAX on a field, optionally grouped by another field. Returns the rolled-up result without fetching individual rows.",
+          "description": "Count, average, sum, min or max over a table, grouped by a field and filtered by an encoded query. Uses the Aggregate API (/api/now/stats), so it returns the rolled-up numbers per group, never the records themselves.",
           "permission": "read",
           "allowedRoles": [
             "developer",
@@ -1260,6 +1315,8 @@
           ],
           "useCases": [
             "aggregation",
+            "count",
+            "group by",
             "metrics",
             "reporting"
           ],
@@ -1270,11 +1327,7 @@
             "properties": {
               "table": {
                 "type": "string",
-                "description": "Table name"
-              },
-              "field": {
-                "type": "string",
-                "description": "Field to aggregate"
+                "description": "Table to aggregate over (e.g. incident)"
               },
               "aggregation": {
                 "type": "string",
@@ -1285,11 +1338,43 @@
                   "MIN",
                   "MAX"
                 ],
-                "default": "COUNT"
+                "default": "COUNT",
+                "description": "Which aggregate to compute. Everything except COUNT needs `field`."
+              },
+              "field": {
+                "type": "string",
+                "description": "Field to aggregate, required for SUM/AVG/MIN/MAX and ignored for COUNT. Must hold a number (e.g. reassignment_count); for elapsed time use the numeric seconds fields such as business_stc rather than the duration fields. Comma-separate to aggregate several fields at once."
+              },
+              "query": {
+                "type": "string",
+                "description": "Encoded query filtering which records are aggregated (e.g. active=true^priority=1). Omit to cover the whole table."
               },
               "group_by": {
                 "type": "string",
-                "description": "Field to group by"
+                "description": "Field to group by, comma-separated for several (e.g. assignment_group). One result row per distinct combination."
+              },
+              "having": {
+                "type": "string",
+                "description": "Filter on the aggregate itself, syntax aggregate^field^operator^value (e.g. count^priority^>^3). Only meaningful together with group_by."
+              },
+              "order_by": {
+                "type": "string",
+                "description": "Order the rows by a field or by an aggregate. The documented forms are a field (state), an aggregate over a field (AVG^state) and COUNT; append ^DESC for descending (state^DESC). Only upper-case aggregate names are documented."
+              },
+              "display_value": {
+                "type": "string",
+                "enum": [
+                  "true",
+                  "false",
+                  "all"
+                ],
+                "default": "false",
+                "description": "Return display values. Set true when grouping by a reference or choice field, otherwise the groups come back as sys_ids and numeric choice values. `all` asks the API for both values and is passed through, but the row labels only change if the instance sends a display value alongside the raw one."
+              },
+              "max_groups": {
+                "type": "number",
+                "default": 100,
+                "description": "Cap on rows returned. Rows past it are dropped and the result says how many; the instance's own ordering decides which survive, so pair this with order_by. Must be a row count — anything else falls back to 100."
               }
             },
             "required": [
@@ -1562,6 +1647,79 @@
       "displayName": "Applications",
       "tools": [
         {
+          "name": "snow_app_repo_manage",
+          "description": "Publish a scoped application to the Application Repository and install a published version, via ServiceNow's CI/CD API (/api/sn_cicd/app_repo). Requires the sn_cicd.sys_ci_automation or admin role.\n\nActions:\n- publish — POST /api/sn_cicd/app_repo/publish. Stores the application and its artifacts in the Application Repository under a version. Identify the app by scope or app_sys_id. Without an explicit version the publish uses the app's current local version and fails if that version is already in the repository.\n- install — POST /api/sn_cicd/app_repo/install. Installs a repository version onto the instance this call is authenticated to.\n- progress — GET /api/sn_cicd/progress/{progress_id}. Reports the real state of a job started earlier.\n\nThis API has no pipeline and no target-instance parameter: both endpoints act on the instance you are connected to. To move an app from dev to test you publish while connected to dev, then install while connected to test.\n\nPublish and install are asynchronous — they return a queued progress record, not a finished deployment. By default this tool polls that record until it is final and reports what it says: Successful returns success; Failed or Canceled returns an error with ServiceNow's own message; a job still running when timeout_ms elapses returns an error saying the outcome is unknown, with the progress_id. Pass wait=false to get the progress_id back immediately and poll it yourself with action=progress. Returns progress_id, state, status_label, percent_complete and ServiceNow's status/error text.\n\nExamples:\n- { action: \"publish\", scope: \"x_acme_myapp\", version: \"1.2.0\", dev_notes: \"sprint 14\" }\n- { action: \"install\", scope: \"x_acme_myapp\", version: \"1.2.0\", timeout_ms: 600000 }\n- { action: \"install\", app_sys_id: \"b7e...\", version: \"1.2.0\", wait: false }\n- { action: \"progress\", progress_id: \"d174f8e11bd800103d374087bc4bcbd9\" }",
+          "permission": "write",
+          "allowedRoles": [
+            "developer",
+            "admin"
+          ],
+          "useCases": [
+            "app-repo",
+            "deployment",
+            "cicd",
+            "devops",
+            "scoped-apps"
+          ],
+          "complexity": "advanced",
+          "frequency": "medium",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "description": "Operation to perform",
+                "enum": [
+                  "publish",
+                  "install",
+                  "progress"
+                ]
+              },
+              "scope": {
+                "type": "string",
+                "description": "[publish/install] Application scope, e.g. \"x_acme_myapp\". Found in the scope field of Custom Application [sys_app]; for install it may also come from Store Application [sys_store_app]. Pass this or app_sys_id."
+              },
+              "app_sys_id": {
+                "type": "string",
+                "description": "[publish/install] sys_id of the application, from Custom Application [sys_app] (install also accepts a Store Application [sys_store_app] sys_id). Sent as the API's sys_id parameter. Takes precedence over scope — the API wants one identifier, not both."
+              },
+              "version": {
+                "type": "string",
+                "description": "[publish] Version to store the application under, e.g. \"1.2.0\"; the local application version is updated to match. Omit and the publish uses the app's current version, failing if that version is already in the repository. [install] Version to install; omitting it lets ServiceNow pick per its auto_upgrade_base_app / base_app_version rules."
+              },
+              "dev_notes": {
+                "type": "string",
+                "description": "[publish] Developer notes stored with the published version."
+              },
+              "auto_upgrade_base_app": {
+                "type": "boolean",
+                "description": "[install] Only relevant when installing customizations of a base application: whether the associated base application may be upgraded to a later version. Left to ServiceNow's default (false) when omitted."
+              },
+              "base_app_version": {
+                "type": "string",
+                "description": "[install] Version of the base application (a third-party Store application) to install. When set, only the base application is installed."
+              },
+              "progress_id": {
+                "type": "string",
+                "description": "[progress] Progress record id returned by an earlier publish or install."
+              },
+              "wait": {
+                "type": "boolean",
+                "description": "[publish/install] Poll the progress record until it is final (default true). false returns the progress_id straight away, before the job has done anything — the app is not published or installed at that point.",
+                "default": true
+              },
+              "timeout_ms": {
+                "type": "number",
+                "description": "[publish/install when wait=true] How long to keep polling, in milliseconds. Default 120000 (2 min); installs of large applications routinely need more. Running out returns an error with the progress_id, not a success — recover with action=progress on that id. Do not re-issue the publish/install with a larger timeout_ms: the first job is still running and a second one would be a duplicate.",
+                "default": 120000
+              }
+            },
+            "required": [
+              "action"
+            ]
+          }
+        },
+        {
           "name": "snow_create_application",
           "description": "Create a scoped application (sys_app), optionally bootstrapping an Update Set and switching the OAuth service account into the new scope so subsequent artifacts are tracked there.\n\nUse when: building a complete feature set (HR Portal, Customer Onboarding), bundling functionality for single-unit deployment, building external integrations, or developing for multiple instances. Prefer global scope for small fixes, shared utilities, quick POCs, or cross-application work.\n\nDefaults:\n- auto_create_update_set=true — creates a fresh Update Set in the new app scope\n- auto_switch_scope=true — switches the OAuth service account to the new scope so subsequent artifacts track there\n\nSet either to false for manual control.",
           "permission": "write",
@@ -1677,16 +1835,14 @@
         },
         {
           "name": "snow_install_application",
-          "description": "Install application from store",
-          "permission": "write",
+          "description": "[DEPRECATED - use snow_app_repo_manage] Performs no operation and returns an error. It used to insert a row into sys_store_app and report that as an install; a row insert installs nothing. Install through the documented CI/CD Application Repository API instead: snow_app_repo_manage({ action: \"install\", scope: \"x_acme_myapp\", version: \"1.2.0\" }).",
+          "permission": "read",
           "allowedRoles": [
             "developer",
             "admin"
           ],
           "useCases": [
-            "app-install",
-            "store",
-            "deployment"
+            "deprecated"
           ],
           "complexity": "beginner",
           "frequency": "low",
@@ -1695,17 +1851,16 @@
             "properties": {
               "app_id": {
                 "type": "string",
-                "description": "Application ID from store"
+                "description": "Ignored. Pass it as app_sys_id to snow_app_repo_manage instead."
               },
               "version": {
                 "type": "string",
-                "description": "Version to install"
+                "description": "Ignored. Pass it as version to snow_app_repo_manage instead."
               }
             },
-            "required": [
-              "app_id"
-            ]
-          }
+            "required": []
+          },
+          "deprecated": true
         },
         {
           "name": "snow_list_applications",
@@ -8369,6 +8524,58 @@
             },
             "required": [
               "query"
+            ]
+          }
+        },
+        {
+          "name": "snow_describe_field",
+          "description": "Describe one field on one table, resolved through table inheritance. Walks sys_db_object.super_class to the root class, so fields declared on a parent are found (incident.short_description is declared on task, incident.state on task, cmdb_ci_win_server.name on cmdb_ci). Applies the sys_dictionary_override rows found anywhere on that chain, nearest table wins.\n\nReturns: the declaring table, the full parent-class chain, the effective column_label / internal_type / max_length / mandatory / read_only / default_value / reference target / reference qualifier / attributes after overrides, the raw dictionary row and the override rows it merged, and the field's sys_choice values.\n\nChoice handling: the nearest table on the chain that defines any sys_choice rows for the field supplies the list — a child's choices replace the parent's, they are not merged — and the count for every other table on the chain is reported too. Inactive choices are filtered out (opt in with include_inactive_choices), rows are matched on language, and each choice keeps its own dependent_value instead of being flattened. sys_dictionary.choice is returned as choice_mode with the instance's own label for it, so an empty choices array is distinguishable from a field that has no choice list.\n\nUse this instead of snow_discover_table_fields or snow_table_schema_discovery when you need one field's real definition: those two query sys_dictionary by table name only and therefore miss every inherited field.",
+          "permission": "read",
+          "allowedRoles": [
+            "developer",
+            "stakeholder",
+            "admin"
+          ],
+          "useCases": [
+            "schema",
+            "field-definition",
+            "choice-list",
+            "discovery"
+          ],
+          "complexity": "intermediate",
+          "frequency": "high",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "table": {
+                "type": "string",
+                "description": "Table the field is used on, e.g. 'incident'. The field may be declared on a parent table."
+              },
+              "field": {
+                "type": "string",
+                "description": "Column name (sys_dictionary element), e.g. 'state'. Not the column label."
+              },
+              "language": {
+                "type": "string",
+                "description": "Language code for choice labels. Choices with no language set are always included.",
+                "default": "en"
+              },
+              "include_inactive_choices": {
+                "type": "boolean",
+                "description": "Include sys_choice rows marked inactive (default: false)",
+                "default": false
+              },
+              "max_choices": {
+                "type": "number",
+                "description": "Maximum sys_choice rows to read across the whole chain (default: 500)",
+                "default": 500,
+                "minimum": 1,
+                "maximum": 5000
+              }
+            },
+            "required": [
+              "table",
+              "field"
             ]
           }
         },
@@ -18221,8 +18428,104 @@
       "displayName": "Reconciliation",
       "tools": [
         {
+          "name": "snow_cmdb_identify_reconcile",
+          "description": "Insert or update CIs through the CMDB Identification and Reconciliation Engine: POST /api/now/identifyreconcile. IRE runs each class's identifier rules against the payload, so a CI that already exists is matched and updated instead of duplicated, reconciliation rules decide whether this data source may overwrite each attribute, and the source is recorded in Source [sys_object_source].\n\nReturns the engine's verdict per payload item: operation (INSERT, UPDATE, NO_CHANGE, UPDATE_WITH_UPGRADE, UPDATE_WITH_DOWNGRADE, UPDATE_WITH_SWITCH, DELETE), sysId, identifierEntrySysId, each identification attempt with its attemptResult (MATCHED, MULTI_MATCH, NO_MATCH, SKIPPED) and the identifier rule it used, plus per-item errors and warnings. IRE answers HTTP 200 even when individual items fail identification, so this tool reports success only when no returned item, relation or additionally committed item carries an error or a non-zero errorCount.\n\ndry_run: true posts the same payload to /api/now/identifyreconcile/query instead, which returns the same insert/update decision without committing anything. Run that first before pushing a large payload — it is the only way to see what IRE would do without doing it.\n\ndata_source is required and must be an existing choice on cmdb_ci.discovery_source; this tool checks it against sys_choice before posting. Without sysparm_data_source the documented behaviour is to store the payload in the incomplete-payloads table rather than commit it, which looks like success and changes nothing.\n\nUse this instead of snow_create_ci and snow_update_ci, which write to a class table and never run identification. Do not reach for snow_reconcile_ci: despite the name it does not reconcile — it PUTs the caller's object onto base cmdb_ci and echoes its reconciliation_rule argument back untouched.\n\nThe ServiceNow account needs the itil or asset role.",
+          "permission": "write",
+          "allowedRoles": [
+            "developer",
+            "admin"
+          ],
+          "useCases": [
+            "cmdb",
+            "identification",
+            "reconciliation",
+            "deduplication",
+            "discovery-integration"
+          ],
+          "complexity": "advanced",
+          "frequency": "medium",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "items": {
+                "type": "array",
+                "description": "CIs to identify and then insert or update. At least one entry.",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "className": {
+                      "type": "string",
+                      "description": "Required. CMDB class/table of the CI, e.g. cmdb_ci_linux_server or cmdb_ci_win_server. Camel-cased key, snake_case table name."
+                    },
+                    "values": {
+                      "type": "object",
+                      "description": "Field name/value pairs to create or update on the CI. Reference fields take the referenced sys_id. The reference marks only className required, so this may be omitted when the CI is identified through lookup or sys_object_source_info instead — but an item with neither carries nothing for IRE to identify or write."
+                    },
+                    "internal_id": {
+                      "type": "string",
+                      "description": "Identifier for this item within this payload only. Any value, unique in the payload. Referenced by relations.parent_id/child_id and referenceItems."
+                    },
+                    "lookup": {
+                      "type": "array",
+                      "description": "Lookup-based identification records (e.g. cmdb_serial_number rows) used to identify the CI. Each entry takes className, values, and optionally internal_id and sys_object_source_info.",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "related": {
+                      "type": "array",
+                      "description": "Records on a table that references this CI, created or updated alongside it. Not used for identification; allowed types come from the Related Entry [cmdb_related_entry] table.",
+                      "items": {
+                        "type": "object"
+                      }
+                    },
+                    "settings": {
+                      "type": "object",
+                      "description": "Per-item update restrictions: updateWithoutUpgrade, updateWithoutDowngrade, updateWithoutSwitch, skipReclassificationRestrictionRules. All booleans, all default false."
+                    },
+                    "sys_object_source_info": {
+                      "type": "object",
+                      "description": "Unique CI identifier for this data source: source_name (a cmdb_ci.discovery_source choice), source_native_key, optional source_feed, optional source_recency_timestamp as 'YYYY-MM-DD hh:mm:ss' UTC. Lets IRE match on the Source [sys_object_source] table instead of running identifier rules."
+                    }
+                  },
+                  "required": [
+                    "className"
+                  ]
+                }
+              },
+              "relations": {
+                "type": "array",
+                "description": "Relationships between payload items. Each entry needs type (a name from CI Relationship Type [cmdb_rel_type], e.g. 'Runs on::Runs') plus either parent/child as integer indexes into items, or parent_id/child_id as internal_id values (the only form that can point at a related or lookup item). Optional sys_rel_source_info { source_name, source_feed }.",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "referenceItems": {
+                "type": "array",
+                "description": "References between two payload items, resolved before identification: { referenced, referencedBy, referenceField } where referenced/referencedBy are internal_id values and referenceField is the reference column on the referencedBy class.",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "data_source": {
+                "type": "string",
+                "description": "Required. Sent as sysparm_data_source. Must be a choice value of cmdb_ci.discovery_source on this instance, e.g. 'ServiceNow'. Checked against sys_choice before the payload is posted."
+              },
+              "dry_run": {
+                "type": "boolean",
+                "description": "Post to /api/now/identifyreconcile/query instead: same identification, same per-item verdict, nothing committed.",
+                "default": false
+              }
+            },
+            "required": [
+              "items",
+              "data_source"
+            ]
+          }
+        },
+        {
           "name": "snow_reconcile_ci",
-          "description": "Reconcile CI data from multiple sources",
+          "description": "[DEPRECATED - use snow_cmdb_identify_reconcile] Does not reconcile. PUTs the given fields onto base cmdb_ci for one sys_id and echoes reconciliation_rule back untouched — no identifier or reconciliation rule runs, no Source [sys_object_source] row is written, and class-specific fields are dropped. Use snow_cmdb_identify_reconcile instead, which posts the payload to the Identification and Reconciliation Engine. Kept only for callers that already depend on this plain cmdb_ci update.",
           "permission": "write",
           "allowedRoles": [
             "developer",
@@ -18256,7 +18559,8 @@
               "ci_sys_id",
               "source_data"
             ]
-          }
+          },
+          "deprecated": true
         }
       ]
     },
@@ -18896,7 +19200,7 @@
       "tools": [
         {
           "name": "snow_scripted_rest_api",
-          "description": "Invoke a Scripted REST API resource at /api/<namespace>/<path> with chosen method (GET/POST/PUT/PATCH/DELETE) and optional JSON body. Use for instance-defined REST endpoints; for stock table API use snow_custom_api.",
+          "description": "Invoke an EXISTING Scripted REST API resource at /api/<namespace>/<path> with chosen method (GET/POST/PUT/PATCH/DELETE) and optional JSON body. This is a client: it calls endpoints, it does not create them — to author a Scripted REST API (sys_ws_definition + sys_ws_operation) use snow_scripted_rest_api_manage. For the stock table API use snow_custom_api.",
           "permission": "read",
           "allowedRoles": [
             "developer",
@@ -20155,6 +20459,121 @@
                 "default": false
               }
             }
+          }
+        }
+      ]
+    },
+    {
+      "name": "scripted-rest-api",
+      "displayName": "Scripted Rest Api",
+      "tools": [
+        {
+          "name": "snow_scripted_rest_api_manage",
+          "description": "Build and maintain inbound Scripted REST APIs on the instance: the sys_ws_definition record (list/get/create/update/delete) and its sys_ws_operation resources (add_operation/update_operation/delete_operation). Returns the operation_uri ServiceNow assigned to each resource, and — with verify_routing=true, or action=verify afterwards — whether that URL actually answers yet; a freshly created resource is routable only after a short delay, so it reports 'created but not yet routable' rather than claiming success it did not observe. Probing calls the resource for real, which runs whatever its script does. This tool AUTHORS endpoints. To CALL an endpoint that already exists, use snow_scripted_rest_api instead.",
+          "permission": "write",
+          "allowedRoles": [
+            "developer",
+            "admin"
+          ],
+          "useCases": [
+            "scripted-rest-api",
+            "inbound-api",
+            "custom-endpoint",
+            "web-service"
+          ],
+          "complexity": "advanced",
+          "frequency": "medium",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "list",
+                  "get",
+                  "create",
+                  "update",
+                  "delete",
+                  "add_operation",
+                  "update_operation",
+                  "delete_operation",
+                  "verify"
+                ],
+                "description": "Action to perform. list/get/create/update/delete act on the API definition (sys_ws_definition); add_operation/update_operation/delete_operation act on its resources (sys_ws_operation); verify probes an existing resource's URL, which calls the resource."
+              },
+              "sys_id": {
+                "type": "string",
+                "description": "sys_id of the Scripted REST API definition (get/update/delete/add_operation). Alias: definition_sys_id. update_operation/delete_operation/verify also accept it when operation_sys_id is missing, but those actions need the RESOURCE's sys_id — passing the definition's there just 404s."
+              },
+              "name": {
+                "type": "string",
+                "description": "[create/update] Name of the API. ServiceNow derives the API ID from it when api_id is omitted. Also usable instead of sys_id to look a definition up."
+              },
+              "api_id": {
+                "type": "string",
+                "description": "[create] Explicit API ID (service_id column), the segment that appears in the URL. Leave empty to let ServiceNow derive it from the name."
+              },
+              "short_description": {
+                "type": "string",
+                "description": "[create/update] Short description of the API"
+              },
+              "active": {
+                "type": "boolean",
+                "description": "Whether the record is active. Applies to the definition on create/update, and to the resource on add_operation/update_operation. Defaults to true when creating; on the update actions it is left alone unless passed."
+              },
+              "filter": {
+                "type": "string",
+                "description": "[list] Encoded query against sys_ws_definition (e.g. \"nameLIKEorder\" or \"active=true\")"
+              },
+              "limit": {
+                "type": "number",
+                "description": "[list] Maximum definitions to return",
+                "default": 50
+              },
+              "operation_sys_id": {
+                "type": "string",
+                "description": "sys_id of the resource record (update_operation/delete_operation/verify)"
+              },
+              "operation_name": {
+                "type": "string",
+                "description": "[create/add_operation/update_operation] Name of the resource"
+              },
+              "http_method": {
+                "type": "string",
+                "enum": [
+                  "GET",
+                  "POST",
+                  "PUT",
+                  "PATCH",
+                  "DELETE"
+                ],
+                "description": "[create/add_operation/update_operation] HTTP method the resource implements. Creating without it gets GET. On update_operation, pass it only to change the method — it moves the endpoint."
+              },
+              "relative_path": {
+                "type": "string",
+                "description": "[create/add_operation/update_operation] Path relative to the API base, e.g. \"/orders\" or \"/orders/{id}\". Creating without it gets \"/\". On update_operation, pass it only to move the resource — every caller of the old path breaks."
+              },
+              "operation_script": {
+                "type": "string",
+                "description": "[create/add_operation/update_operation] The resource script, shaped as (function process(request, response) { ... })(request, response). Runs server-side on Rhino, so ES5 only — ES6+ syntax is reported back as a warning."
+              },
+              "requires_authentication": {
+                "type": "boolean",
+                "description": "[create/add_operation/update_operation] Require an authenticated caller. Creating without it requires authentication."
+              },
+              "requires_acl_authorization": {
+                "type": "boolean",
+                "description": "[create/add_operation/update_operation] Enforce rest_endpoint ACLs on the resource. Creating without it leaves the column unset — see the tool's response notes for why. Authentication alone authorises EVERY authenticated user, so put a gs.hasRole() check in the script if you leave this off. Passing false on update_operation actively turns enforcement off; the response always reports the value the instance stored, not the one you sent."
+              },
+              "verify_routing": {
+                "type": "boolean",
+                "description": "[create/add_operation/update_operation/verify] After writing, call the resource URL to see whether it routes yet. WARNING: this invokes your resource script for real, with whatever side effects it has.",
+                "default": false
+              }
+            },
+            "required": [
+              "action"
+            ]
           }
         }
       ]
@@ -24747,6 +25166,46 @@
               "table",
               "field",
               "value"
+            ]
+          }
+        },
+        {
+          "name": "snow_validate_query",
+          "description": "Check every field named in an encoded query against the table's sys_dictionary, walking the sys_db_object.super_class chain so inherited fields (incident.priority lives on task) resolve. ServiceNow does not error on a misspelled field in sysparm_query — by default it drops that condition and returns a WIDER result set — so run this before snow_bulk_update, snow_record_manage or snow_data_export act on the matched records. Returns one entry per clause marked known / unknown / unchecked (dot-walks, ^JOIN and RLQUERY blocks, ORDERBY, full-text search and task variables are reported as unchecked, never as errors), spelling suggestions for unknown fields, and how many records the query really matches.",
+          "permission": "read",
+          "allowedRoles": [
+            "developer",
+            "stakeholder",
+            "admin"
+          ],
+          "useCases": [
+            "query-validation",
+            "encoded-query",
+            "bulk-update-safety",
+            "schema"
+          ],
+          "complexity": "intermediate",
+          "frequency": "medium",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "table": {
+                "type": "string",
+                "description": "Table the query will run against (e.g. incident, cmdb_ci_server)"
+              },
+              "query": {
+                "type": "string",
+                "description": "Encoded query to check, e.g. active=true^priority=1. An empty string is accepted and reported as 'matches every record'."
+              },
+              "count_matches": {
+                "type": "boolean",
+                "description": "Also run the query read-only (sysparm_limit=1) and report how many records it matches, taken from the X-Total-Count response header. Default true.",
+                "default": true
+              }
+            },
+            "required": [
+              "table",
+              "query"
             ]
           }
         },

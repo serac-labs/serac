@@ -18,3 +18,7 @@ export {
   toolDefinition as snow_list_applications_def,
   execute as snow_list_applications_exec,
 } from "./snow_list_applications.js"
+export {
+  toolDefinition as snow_app_repo_manage_def,
+  execute as snow_app_repo_manage_exec,
+} from "./snow_app_repo_manage.js"
