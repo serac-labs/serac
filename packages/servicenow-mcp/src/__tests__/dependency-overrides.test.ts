@@ -26,22 +26,33 @@
  */
 
 import { describe, expect, test } from "bun:test"
-import { dirname, resolve } from "node:path"
+import { existsSync } from "node:fs"
+import { dirname, join, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
-const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..")
+const PACKAGE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..")
+const REPO = resolve(PACKAGE_ROOT, "..", "..")
 
-const root: { overrides?: Record<string, string> } = await Bun.file(`${REPO}/package.json`).json()
+/**
+ * Nothing above this package exists in a standalone checkout — publish-mcp.yml
+ * copies packages/servicenow-mcp somewhere with no parent manifest at all and
+ * runs the suite there, and it asserts that absence rather than tolerating it.
+ * Reading the root manifest unconditionally fails that gate at import time.
+ */
+const inMonorepo = existsSync(join(REPO, "package.json")) && existsSync(join(REPO, "bun.lock"))
+
+const root: { overrides?: Record<string, string> } = inMonorepo ? await Bun.file(join(REPO, "package.json")).json() : {}
 const pkg: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> } = await Bun.file(
-  `${REPO}/packages/servicenow-mcp/package.json`,
+  join(PACKAGE_ROOT, "package.json"),
 ).json()
-const lockfile = await Bun.file(`${REPO}/bun.lock`).text()
+const lockfile = inMonorepo ? await Bun.file(join(REPO, "bun.lock")).text() : ""
 
 const overrides = Object.entries(root.overrides ?? {})
 const declared = { ...pkg.devDependencies, ...pkg.dependencies }
 
 describe("root overrides", () => {
   test("there are some, and they are exact versions", () => {
+    if (!inMonorepo) return
     // A range here would re-resolve on every lockfile refresh, which is the
     // drift the override was added to stop.
     expect(overrides.length).toBeGreaterThan(0)
@@ -49,6 +60,7 @@ describe("root overrides", () => {
   })
 
   test("each one matches what the package declares", () => {
+    if (!inMonorepo) return
     // The downgrade case: package.json moves to 4.0.7, the override still says
     // 4.0.6, and every copy in the tree — including the direct one — goes back
     // to 4.0.6 without a word.
@@ -61,6 +73,7 @@ describe("root overrides", () => {
   })
 
   test("the lockfile resolves each overridden package exactly once", () => {
+    if (!inMonorepo) return
     // A nested entry is keyed "<parent>/<name>". One of these is the whole bug:
     // an advisory that `bun audit` reports and every direct-dependency check
     // says is already fixed.
