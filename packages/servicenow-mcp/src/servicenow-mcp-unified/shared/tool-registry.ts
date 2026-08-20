@@ -104,6 +104,8 @@ import * as systemPropertiesTools from "../tools/system-properties/index.js"
 import * as transformersTools from "../tools/transformers/index.js"
 import * as csmTools from "../tools/csm/index.js"
 import * as hrTools from "../tools/hr/index.js"
+import * as fsmTools from "../tools/fsm/index.js"
+import * as predictiveIntelligenceTools from "../tools/predictive-intelligence/index.js"
 
 // ES Module compatible __dirname
 const __filename = fileURLToPath(import.meta.url)
@@ -192,6 +194,8 @@ const STATIC_TOOL_MODULES: Record<string, any> = {
   transformers: transformersTools,
   csm: csmTools,
   hr: hrTools,
+  fsm: fsmTools,
+  "predictive-intelligence": predictiveIntelligenceTools,
 }
 
 export class ToolRegistry {

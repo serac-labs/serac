@@ -75,9 +75,15 @@ export async function extract(): Promise<Extraction> {
   for (const file of files) {
     const src = await Bun.file(file).text()
 
-    const nameMatch = src.match(/name:\s*"(snow_[a-z_0-9]+)"/)
-    if (!nameMatch) continue
-    const name = nameMatch[1]
+    // Every `snow_*` name the file declares, not just the first. A file that
+    // renames a tool keeps the old name callable by exporting a second
+    // definition — `toolDefinitionAlias`, which spreads the first and
+    // overrides `name` — and both are registered. Reading only the first match
+    // left `snow_comprehensive_search` permanently outside this manifest: not
+    // "awaiting the next probe", but unreachable by any probe run. The alias
+    // shares the executor, so it shares the calls extracted below.
+    const names = [...new Set([...src.matchAll(/name:\s*"(snow_[a-z_0-9]+)"/g)].map((match) => match[1]))]
+    if (names.length === 0) continue
 
     const subMatch = src.match(/subcategory:\s*"([^"]+)"/)
     const subcategory = subMatch?.[1] ?? basename(dirname(file))
@@ -95,35 +101,38 @@ export async function extract(): Promise<Extraction> {
       calls.push({ method, table, endpoint })
     }
 
-    const tool: Tool = {
-      name,
-      file: file.replace(TOOLS_DIR, "tools"),
-      subcategory,
-      permission,
-      calls,
-    }
-    tools[name] = tool
-
     const tableCalls = calls.filter((c) => c.table)
-    if (tableCalls.length === 0) {
-      untestable.push({
-        name,
-        file: tool.file,
-        subcategory,
-        reason: "no /api/now/table/<table> calls in static analysis",
-      })
-      continue
-    }
 
-    for (const c of tableCalls) {
-      const op = METHOD_TO_OP[c.method]
-      const key = `${c.table}:${op}`
-      const existing = primitives[key]
-      if (existing) {
-        if (!existing.usedBy.includes(name)) existing.usedBy.push(name)
+    for (const declared of names) {
+      const tool: Tool = {
+        name: declared,
+        file: file.replace(TOOLS_DIR, "tools"),
+        subcategory,
+        permission,
+        calls,
+      }
+      tools[declared] = tool
+
+      if (tableCalls.length === 0) {
+        untestable.push({
+          name: declared,
+          file: tool.file,
+          subcategory,
+          reason: "no /api/now/table/<table> calls in static analysis",
+        })
         continue
       }
-      primitives[key] = { table: c.table!, operation: op, usedBy: [name] }
+
+      for (const c of tableCalls) {
+        const op = METHOD_TO_OP[c.method]
+        const key = `${c.table}:${op}`
+        const existing = primitives[key]
+        if (existing) {
+          if (!existing.usedBy.includes(declared)) existing.usedBy.push(declared)
+          continue
+        }
+        primitives[key] = { table: c.table!, operation: op, usedBy: [declared] }
+      }
     }
   }
 

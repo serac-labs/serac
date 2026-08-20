@@ -2,7 +2,7 @@
  * Retrieval eval for `ToolSearch.search`.
  *
  * Every tool but the two meta tools is deferred, so `tool_search` is the only
- * path a model has to the other 429. A tool the ranking never surfaces might
+ * path a model has to the other 445. A tool the ranking never surfaces might
  * as well not be installed — and the ranking is a hand-tuned pile of substring
  * bonuses that until now nothing measured.
  *
@@ -12,20 +12,20 @@
  *
  * The index comes from `toolRegistry` through `buildToolIndex` — the same call
  * both transports make at bootstrap — so this scores the catalog a session
- * actually searches. That is 429 tools, not the 437 in `tools.json`: the `fsm`
- * and `predictive-intelligence-MIGRATED` domains are missing from
- * `STATIC_TOOL_MODULES` and `snow_create_catalog_variable` is not re-exported,
- * so nine published tools never enter anyone's index (issue #307), and
- * `snow_comprehensive_search` is the reverse case. Scoring `tools.json`
- * instead moves every metric and counts unreachable tools as findable, which
- * is the opposite of what this measures.
+ * actually searches, rather than the catalog `tools.json` advertises. Those
+ * were different sets when this suite landed: nine published tools were
+ * missing from `STATIC_TOOL_MODULES` or from a domain index, so the registry
+ * held 429 against the manifest's 437 (#307, fixed; the two lists are now
+ * pinned to each other by registry-manifest-parity.test.ts). Keep reading the
+ * registry anyway — it is the set a session can reach, and scoring anything
+ * else would count unreachable tools as findable.
  *
  * One deliberate deviation from a session: `search()` is called with the whole
  * catalog as its limit instead of the default 20, so MRR is not truncated at
  * 1/20. The @k slices are identical either way.
  *
- * CURRENT SCORE (429 tools, 101 queries): recall@1 0.267, recall@5 0.505,
- * recall@20 0.663, MRR 0.385. Two thirds of realistic requests do reach the
+ * CURRENT SCORE (445 tools, 101 queries): recall@1 0.267, recall@5 0.505,
+ * recall@20 0.663, MRR 0.384. Two thirds of realistic requests do reach the
  * right tool eventually, but a quarter of them put `snow_sp_theme_manage`
  * first — its keywords contain "theme"/"theming", and the word-level rules
  * match substrings for any query word longer than two characters, so every
@@ -43,7 +43,7 @@ import { EVAL_QUERIES } from "./tool-search-eval.queries"
  *
  * `search()` sorts by score alone and the sort is stable, so tools on equal
  * scores come back in index order — which means part of the measurement is
- * array position, not ranking. Scoring the same 429 tools in 24 different
+ * array position, not ranking. Scoring the same catalog in 24 different
  * orders (production, reversed, by id, 20 shuffles) spans recall@1
  * 0.248-0.297, recall@5 0.465-0.515, recall@20 0.653-0.693, MRR 0.368-0.397.
  * These floors sit under the bottom of that band, so adding a tool that lands
