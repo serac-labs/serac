@@ -251,9 +251,21 @@ describe("tool_search — the registry-fallback branch", () => {
   beforeEach(() => {
     // A populated index that cannot match the query below, so the search falls
     // through to the registry while `indexStats.total > 0` stays true.
+    //
+    // It has to share no WORD with "snow_query_table", not merely fail a
+    // substring test: this used to hold snow_query_incidents, which the old
+    // substring ranker could not match against the whole query string but the
+    // token-level one matches on "query" — a real hit, and the fallback branch
+    // then never ran.
     ToolSearch.clearIndex()
     ToolSearch.registerTools([
-      { id: "snow_query_incidents", description: "Query incidents", category: "itsm", keywords: [], deferred: true },
+      {
+        id: "snow_sp_widget_clone",
+        description: "Clone a Service Portal widget",
+        category: "service-portal",
+        keywords: [],
+        deferred: true,
+      },
     ])
   })
 

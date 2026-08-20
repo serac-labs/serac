@@ -35,6 +35,17 @@ const ALLOWLIST: AllowedPattern[] = [
   },
   {
     file: "tool-search.ts",
+    pattern: /^const STOP_WORDS = new Set\(/,
+    reason: "Frozen English stop-word list used by the ranker; read-only, identical for every tenant",
+  },
+  {
+    file: "tool-search.ts",
+    pattern: /^let searchDocs:/,
+    reason:
+      "Tokenised form of toolIndex plus its IDF table, rebuilt from that index and cleared with it; same static, tenant-agnostic metadata",
+  },
+  {
+    file: "tool-search.ts",
     pattern: /^let sessionStore:/,
     reason: "Session-store reference, set once at bootstrap via setSessionStore; the store itself is tenant-scoped",
   },
