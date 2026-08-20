@@ -16,6 +16,10 @@
   "workspaces": [
     "packages/*"
   ],
+  "overrides": {
+    "form-data": "4.0.6",
+    "hono": "4.12.34"
+  },
   "devDependencies": {
     "oxlint": "1.60.0",
     "oxlint-tsgolint": "0.21.0",
@@ -30,5 +34,8 @@
   "prettier": {
     "semi": false,
     "printWidth": 120
+  },
+  "dependencies": {
+    "form-data": "4.0.6"
   }
 }
