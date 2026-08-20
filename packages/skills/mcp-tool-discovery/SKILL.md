@@ -159,8 +159,15 @@ tool_execute({
 
 The index holds, per tool, the name with `snow_` stripped and split on `_` (keeping parts longer than two
 characters), plus the **first ten significant words of the description**. A distinguishing noun that
-appears late in a long description is not reachable by keyword. Scoring adds points for exact-id,
-substring, keyword and per-word matches, plus 25 for a domain-name match.
+appears late in a long description is not reachable by keyword.
+
+Scoring is per whole word, not per substring. Your query is split the same way the index is, English stop
+words are dropped, regular plurals are folded, and each remaining word is weighted by how rare it is
+across the catalog: a word carried by half the tools barely moves a score, a word carried by three decides
+it. The score is then multiplied by the fraction of your words that matched anything, so a tool that
+answers two thirds of the request beats one that answers a third of it emphatically. A word that is a
+prefix of an indexed token still counts, at a discount — which is how "syntax" reaches a description
+saying "SyntaxErrors".
 
 **Domain names are the best query.** They pull a whole coherent group and nothing else:
 
@@ -180,17 +187,24 @@ registry, and `adapters` is an empty placeholder. Everything else is searchable.
 `operations`, `agile`, `cmdb`, `ui-builder`. Exact per-domain counts are not worth memorising — they move
 every time a tool lands — so treat a sweep that returns exactly 10 as truncated and raise `limit`.
 
-**Table names mostly do not work.** This is the trap the old version of this guide walked readers into:
+**Table names work, because a table name is words.** `sys_script_include` is split into `sys`, `script`,
+`include` and scored on the rare ones:
 
-| Query                   | What comes back                                                        |
-| ----------------------- | ---------------------------------------------------------------------- |
-| `"sys_script_include"`  | Nothing. `No tools found matching "sys_script_include"`                |
-| `"sys_user"`            | `snow_create_acl_role`, `snow_switch_application_scope`, `snow_test_connection` — noise |
-| `"sysevent_email_action"` | `snow_create_notification`, `snow_email_notification_manage` — works, by luck |
-| `"sp_widget"`           | `snow_create_sp_widget` — works, because a tool is named after it       |
+| Query                     | First result                     |
+| ------------------------- | -------------------------------- |
+| `"sys_script_include"`    | `snow_create_script_include`     |
+| `"sysevent_email_action"` | `snow_email_notification_manage` |
+| `"sp_widget"`             | `snow_create_sp_widget`          |
+| `"sys_user"`              | `snow_impersonate_user` — the weakest of the four, because `user` is everywhere |
 
-Search the operation instead: `"script include"` finds `snow_create_script_include`, `"notification"`
-finds the email tools, `"widget"` finds the Service Portal family.
+That last row is the shape of the remaining failure: a table whose distinguishing part is a word the
+catalog uses constantly gives you a page of plausible noise. Describe the operation instead —
+`"deactivate a user"` reaches `snow_user_manage`.
+
+**Plain English works too**, and is usually better. The ranker is measured against 101 realistically
+phrased requests (`tool-search-eval.test.ts`); two thirds of them reach the right tool inside the top
+five. It also knows a small amount of vocabulary the catalog does not share with the people using it —
+a "ticket" also searches for incidents, a "column" for fields, who is on "shift" for the on-call tools.
 
 When nothing matches, the response carries a `suggestion` listing "available domains". That list is the
 **first fifteen domain names alphabetically**, `access-control` through `calculators`. It is not the domain list

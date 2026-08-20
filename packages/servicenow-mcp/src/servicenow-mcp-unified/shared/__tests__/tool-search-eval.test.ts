@@ -24,13 +24,16 @@
  * catalog as its limit instead of the default 20, so MRR is not truncated at
  * 1/20. The @k slices are identical either way.
  *
- * CURRENT SCORE (445 tools, 101 queries): recall@1 0.267, recall@5 0.505,
- * recall@20 0.663, MRR 0.384. Two thirds of realistic requests do reach the
- * right tool eventually, but a quarter of them put `snow_sp_theme_manage`
- * first — its keywords contain "theme"/"theming", and the word-level rules
- * match substrings for any query word longer than two characters, so every
- * request containing the word "the" scores it +31. Issue #298 has the
- * diagnosis; fixing the ranking is deliberately not part of this suite.
+ * CURRENT SCORE (445 tools, 101 queries): recall@1 0.426, recall@5 0.663,
+ * recall@20 0.802, MRR 0.536.
+ *
+ * It was recall@1 0.267, recall@5 0.505, recall@20 0.663, MRR 0.384 when this
+ * suite landed, against a ranker that matched query words with `includes()`:
+ * `snow_sp_theme_manage` was the top hit for a quarter of these queries
+ * because "the" is a substring of "theme" and "theming". #298 replaced that
+ * with whole-token matching, IDF, a coverage multiplier and a query-side
+ * synonym map. This file is what judged it, and what will judge the next
+ * attempt.
  */
 
 import { describe, test, expect, afterAll } from "@jest/globals"
@@ -44,20 +47,24 @@ import { EVAL_QUERIES } from "./tool-search-eval.queries"
  * `search()` sorts by score alone and the sort is stable, so tools on equal
  * scores come back in index order — which means part of the measurement is
  * array position, not ranking. Scoring the same catalog in 24 different
- * orders (production, reversed, by id, 20 shuffles) spans recall@1
- * 0.248-0.297, recall@5 0.465-0.515, recall@20 0.653-0.693, MRR 0.368-0.397.
+ * orders (production, reversed, by id, 21 shuffles) spans recall@1
+ * 0.406-0.446, recall@5 0.644-0.673, recall@20 0.782-0.812, MRR 0.523-0.544.
  * These floors sit under the bottom of that band, so adding a tool that lands
  * in a tied cluster cannot fail an unrelated PR. The gap to the measured score
  * is tie noise, not slack.
+ *
+ * The band was 0.248-0.297 / 0.465-0.515 / 0.653-0.693 / 0.368-0.397 before
+ * #298 and is narrower now: IDF-weighted scores are floats, so far fewer tools
+ * land on an identical score in the first place.
  *
  * Raise them when the ranking improves. Lowering one to make a change pass is
  * the failure mode this file exists to prevent: it means the change made
  * retrieval worse, and the number is the argument against it.
  */
-const MIN_RECALL_AT_1 = 0.24
-const MIN_RECALL_AT_5 = 0.45
-const MIN_RECALL_AT_20 = 0.63
-const MIN_MRR = 0.35
+const MIN_RECALL_AT_1 = 0.39
+const MIN_RECALL_AT_5 = 0.63
+const MIN_RECALL_AT_20 = 0.77
+const MIN_MRR = 0.51
 
 await toolRegistry.initialize()
 
