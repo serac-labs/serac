@@ -42,6 +42,12 @@ const AWAITING_PROBE = [
   "snow_app_repo_manage",
   "snow_blast_radius_sys_properties",
   "snow_cmdb_identify_reconcile",
+  // Not new — newly *published*. It is the `toolDefinitionAlias` in
+  // snow_comprehensive_search.ts, registered all along and missing from
+  // tools.json until #307. The probe's static extractor read one tool name per
+  // file, so no probe run could ever have produced an entry for it; it now
+  // reads every declared name, and the next run covers it.
+  "snow_comprehensive_search",
   "snow_describe_field",
   "snow_diagnose_setup",
   "snow_fluent_build",

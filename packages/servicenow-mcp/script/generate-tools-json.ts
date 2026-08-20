@@ -112,46 +112,64 @@ const collect = async (files: string[]) => {
   for (const file of files) {
     // Dynamic import is the only way to read a tool's real definition (some are
     // computed, not literal), and it is the only thing here that can throw.
-    const mod = await (import(file) as Promise<{ toolDefinition?: Record<string, unknown> }>).catch((err: Error) => {
+    const mod = await (import(file) as Promise<ToolModule>).catch((err: Error) => {
       failed.push(`${basename(file)} — ${err.message.split("\n")[0]}`)
       return undefined
     })
     if (!mod) continue
 
-    const def = mod.toolDefinition
-    if (!def || typeof def.name !== "string" || !def.name.startsWith("snow_")) {
+    // `toolDefinitionAlias` is the second definition a file may export: a
+    // renamed tool keeps its old name callable by spreading the new
+    // definition under the old name, and the domain index registers both
+    // (`operations/index.ts` exports both as `_def`). Reading only
+    // `toolDefinition` published 444 of the 445 tools a session can call —
+    // `snow_comprehensive_search` was reachable and undocumented (#307). It
+    // carries its own `[DEPRECATED - use …]` marker, so publishing it points
+    // callers at the replacement instead of leaving them to find the old name
+    // by accident.
+    const defs = [mod.toolDefinition, mod.toolDefinitionAlias].filter(
+      (def): def is Record<string, unknown> => !!def && typeof def.name === "string" && def.name.startsWith("snow_"),
+    )
+    if (defs.length === 0) {
       skipped.push(file)
       continue
     }
 
-    const description = String(def.description ?? "").trim()
-    const subcategory = pickString(def, "subcategory") ?? basename(dirname(file)) ?? "misc"
-
-    // De-dup: when the same tool name appears twice (rare, happens during
-    // refactors), keep the longer description — almost always the more recent
-    // / canonical one.
-    const existing = byName.get(def.name)
-    if (existing && existing.description.length >= description.length) continue
-
-    byName.set(def.name, {
-      name: def.name,
-      description,
-      subcategory,
-      permission: pickString(def, "permission"),
-      allowedRoles: pickStringArray(def, "allowedRoles", "allowed_roles"),
-      useCases: pickStringArray(def, "use_cases", "useCases"),
-      complexity: pickString(def, "complexity"),
-      frequency: pickString(def, "frequency"),
-      // Pass JSON-Schema through verbatim so the docs renderer can drive
-      // parameter tables (required flags, enums, defaults, descriptions)
-      // directly from the canonical signature — no flattening here.
-      inputSchema: pickObject(def, "inputSchema"),
-      outputSchema: pickObject(def, "outputSchema"),
-      deprecated: /\bdeprecated\b/i.test(description.slice(0, 60)) || undefined,
-    })
+    for (const def of defs) collectOne(def as ToolDefinitionShape, file, byName)
   }
 
   return { byName, skipped, failed }
+}
+
+type ToolModule = { toolDefinition?: Record<string, unknown>; toolDefinitionAlias?: Record<string, unknown> }
+type ToolDefinitionShape = Record<string, unknown> & { name: string }
+
+const collectOne = (def: ToolDefinitionShape, file: string, byName: Map<string, ToolEntry>) => {
+  const description = String(def.description ?? "").trim()
+  const subcategory = pickString(def, "subcategory") ?? basename(dirname(file)) ?? "misc"
+
+  // De-dup: when the same tool name appears twice (rare, happens during
+  // refactors), keep the longer description — almost always the more recent
+  // / canonical one.
+  const existing = byName.get(def.name)
+  if (existing && existing.description.length >= description.length) return
+
+  byName.set(def.name, {
+    name: def.name,
+    description,
+    subcategory,
+    permission: pickString(def, "permission"),
+    allowedRoles: pickStringArray(def, "allowedRoles", "allowed_roles"),
+    useCases: pickStringArray(def, "use_cases", "useCases"),
+    complexity: pickString(def, "complexity"),
+    frequency: pickString(def, "frequency"),
+    // Pass JSON-Schema through verbatim so the docs renderer can drive
+    // parameter tables (required flags, enums, defaults, descriptions)
+    // directly from the canonical signature — no flattening here.
+    inputSchema: pickObject(def, "inputSchema"),
+    outputSchema: pickObject(def, "outputSchema"),
+    deprecated: /\bdeprecated\b/i.test(description.slice(0, 60)) || undefined,
+  })
 }
 
 const group = (tools: ToolEntry[]) => {

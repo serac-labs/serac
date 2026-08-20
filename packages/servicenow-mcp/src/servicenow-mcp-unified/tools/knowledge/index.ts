@@ -10,6 +10,10 @@ export {
   toolDefinition as snow_create_catalog_item_def,
   execute as snow_create_catalog_item_exec,
 } from "./snow_create_catalog_item.js"
+export {
+  toolDefinition as snow_create_catalog_variable_def,
+  execute as snow_create_catalog_variable_exec,
+} from "./snow_create_catalog_variable.js"
 
 // Merged Knowledge Article Management (v8.2.0)
 // Replaces: create, update, get_details, publish, retire, search (6 → 1)

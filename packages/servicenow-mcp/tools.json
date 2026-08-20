@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-17T23:43:09.683Z",
-  "count": 444,
+  "generatedAt": "2026-08-20T09:57:40.829Z",
+  "count": 445,
   "groups": [
     {
       "name": "access-control",
@@ -20691,6 +20691,77 @@
               "query"
             ]
           }
+        },
+        {
+          "name": "snow_comprehensive_search",
+          "description": "[DEPRECATED - use snow_search_artifacts] Search ServiceNow development artifacts (widgets, pages, scripts, flows, UI actions, client scripts). For data/table searches, use snow_query_table or snow_fuzzy_search instead.",
+          "permission": "read",
+          "allowedRoles": [
+            "developer",
+            "stakeholder",
+            "admin"
+          ],
+          "useCases": [
+            "artifact-search",
+            "development-search",
+            "find-widget",
+            "find-script"
+          ],
+          "complexity": "intermediate",
+          "frequency": "high",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "query": {
+                "type": "string",
+                "description": "Search query - matches against name, title, and description fields"
+              },
+              "types": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "widget",
+                    "page",
+                    "flow",
+                    "script_include",
+                    "business_rule",
+                    "client_script",
+                    "ui_action",
+                    "ui_policy",
+                    "ui_page",
+                    "scheduled_job",
+                    "all"
+                  ]
+                },
+                "description": "Artifact types to search (default: all)",
+                "default": [
+                  "all"
+                ]
+              },
+              "limit": {
+                "type": "number",
+                "description": "Maximum results per artifact type (default: 10)",
+                "default": 10,
+                "minimum": 1,
+                "maximum": 50
+              },
+              "include_inactive": {
+                "type": "boolean",
+                "description": "Include inactive/disabled artifacts",
+                "default": false
+              },
+              "search_tables": {
+                "type": "boolean",
+                "description": "Also search sys_db_object for matching table definitions (slower)",
+                "default": false
+              }
+            },
+            "required": [
+              "query"
+            ]
+          },
+          "deprecated": true
         },
         {
           "name": "snow_fuzzy_search",
