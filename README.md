@@ -82,7 +82,7 @@ the multi-tenancy rules are in the [package README](packages/servicenow-mcp/READ
 
 ### As a Claude Code plugin
 
-The repository is also a plugin marketplace, so the server and all 63 skills arrive in one step:
+The repository is also a plugin marketplace, so the server and all 70 skills arrive in one step:
 
 ```
 /plugin marketplace add serac-labs/serac
