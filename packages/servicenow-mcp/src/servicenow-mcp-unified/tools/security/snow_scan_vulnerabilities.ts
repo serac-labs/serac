@@ -17,9 +17,11 @@ export const toolDefinition: MCPToolDefinition = {
   frequency: "high",
 
   // Permission enforcement
-  // Classification: READ - Scan function - scans for vulnerabilities without modifying
-  permission: "read",
-  allowedRoles: ["developer", "stakeholder", "admin"],
+  // Classification: WRITE - creates an sn_vul_scan record.
+  permission: "write",
+  allowedRoles: ["developer", "admin"],
+  // A scan run is an operational record, not configuration.
+  updateSet: "exempt",
   inputSchema: {
     type: "object",
     properties: {

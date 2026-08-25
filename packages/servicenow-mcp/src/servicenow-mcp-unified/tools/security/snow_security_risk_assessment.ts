@@ -20,9 +20,14 @@ export const toolDefinition: MCPToolDefinition = {
   frequency: "medium",
 
   // Permission enforcement
-  // Classification: READ - Assessment function - analyzes security risks without modifying
-  permission: "read",
-  allowedRoles: ["developer", "stakeholder", "admin"],
+  // Classification: WRITE - creates a risk_assessment record and PATCHes it.
+  // It was declared "read" on the strength of the word "assessment"; the five
+  // guards that key on this field were all disarmed as a result.
+  permission: "write",
+  allowedRoles: ["developer", "admin"],
+  // A risk_assessment row is a GRC operational record, not configuration —
+  // ServiceNow does not capture it in an update set.
+  updateSet: "exempt",
   inputSchema: {
     type: "object",
     properties: {

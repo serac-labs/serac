@@ -19,9 +19,13 @@ export const toolDefinition: MCPToolDefinition = {
   frequency: "medium",
 
   // Permission enforcement
-  // Classification: READ - Scan function - scans compliance without modifying
-  permission: "read",
-  allowedRoles: ["developer", "stakeholder", "admin"],
+  // Classification: WRITE - creates and PATCHes sn_compliance_scan and creates
+  // sn_compliance_report. "Scans without modifying" described the intent, not
+  // the code.
+  permission: "write",
+  allowedRoles: ["developer", "admin"],
+  // A scan run and its report are operational records, not configuration.
+  updateSet: "exempt",
   inputSchema: {
     type: "object",
     properties: {

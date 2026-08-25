@@ -20,9 +20,14 @@ export const toolDefinition: MCPToolDefinition = {
   frequency: "medium",
 
   // Permission enforcement
-  // Classification: READ - Query/analysis operation
-  permission: "read",
-  allowedRoles: ["developer", "stakeholder", "admin"],
+  // Classification: WRITE - `run_write_test` defaults to true and POSTs then
+  // DELETEs an sp_widget probe. Mostly a read tool, but the write is real and
+  // on by default, so the production guard must be able to see it.
+  permission: "write",
+  allowedRoles: ["developer", "admin"],
+  // The probe widget is created and removed within the same call, and this is
+  // a pre-flight diagnostic that runs before an update set is usually chosen.
+  updateSet: "exempt",
   inputSchema: {
     type: "object",
     properties: {
