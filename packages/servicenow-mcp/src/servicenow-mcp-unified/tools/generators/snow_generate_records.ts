@@ -17,9 +17,15 @@ export const toolDefinition: MCPToolDefinition = {
   frequency: "low",
 
   // Permission enforcement
-  // Classification: READ - Query/analysis operation
-  permission: "read",
-  allowedRoles: ["developer", "stakeholder", "admin"],
+  // Classification: WRITE - inserts `count` records into a caller-named table.
+  // This is an unbounded bulk-insert primitive; it was declared "read" by a
+  // name heuristic and every write guard trusted that.
+  permission: "write",
+  allowedRoles: ["developer", "admin"],
+  // Deliberately NOT exempt. The target table is supplied by the caller, so we
+  // cannot assert the write is data-shaped rather than configuration — an
+  // update set is the fail-closed default for an insert primitive.
+  updateSet: "required",
   inputSchema: {
     type: "object",
     properties: {

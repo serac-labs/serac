@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-20T09:57:40.829Z",
+  "generatedAt": "2026-08-25T09:17:49.808Z",
   "count": 445,
   "groups": [
     {
@@ -3828,10 +3828,9 @@
         {
           "name": "snow_run_compliance_scan",
           "description": "Run compliance scans against security frameworks (SOX, GDPR, HIPAA, PCI-DSS)",
-          "permission": "read",
+          "permission": "write",
           "allowedRoles": [
             "developer",
-            "stakeholder",
             "admin"
           ],
           "useCases": [
@@ -7568,10 +7567,9 @@
         {
           "name": "snow_auth_diagnostics",
           "description": "Performs comprehensive authentication and permission diagnostics. Tests OAuth tokens, API access, table permissions, and provides specific remediation steps.",
-          "permission": "read",
+          "permission": "write",
           "allowedRoles": [
             "developer",
-            "stakeholder",
             "admin"
           ],
           "useCases": [
@@ -19256,10 +19254,9 @@
         {
           "name": "snow_security_risk_assessment",
           "description": "Perform comprehensive security risk assessment analyzing access controls, vulnerabilities, and security posture",
-          "permission": "read",
+          "permission": "write",
           "allowedRoles": [
             "developer",
-            "stakeholder",
             "admin"
           ],
           "useCases": [
@@ -23101,10 +23098,9 @@
         {
           "name": "snow_generate_records",
           "description": "Generate multiple test records",
-          "permission": "read",
+          "permission": "write",
           "allowedRoles": [
             "developer",
-            "stakeholder",
             "admin"
           ],
           "useCases": [
@@ -25883,10 +25879,9 @@
         {
           "name": "snow_scan_vulnerabilities",
           "description": "Scan for security vulnerabilities",
-          "permission": "read",
+          "permission": "write",
           "allowedRoles": [
             "developer",
-            "stakeholder",
             "admin"
           ],
           "useCases": [
