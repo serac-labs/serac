@@ -80,6 +80,23 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 
       workflowInfo = workflowQuery.data.result[0]
       resolvedWorkflowId = workflowInfo.sys_id
+
+      // wf_context.workflow_version references wf_workflow_version, not wf_workflow
+      const versionQuery = await client.get("/api/now/table/wf_workflow_version", {
+        params: {
+          sysparm_query: `workflow=${resolvedWorkflowId}^published=true`,
+          sysparm_fields: "sys_id,published",
+          sysparm_limit: 1,
+        },
+      })
+
+      if (!versionQuery.data?.result?.[0]) {
+        throw new SnowFlowError(ErrorType.NOT_FOUND, `No published version for workflow: ${workflow_name}`, {
+          retryable: false,
+        })
+      }
+
+      resolvedWorkflowId = versionQuery.data.result[0].sys_id
     } else if (workflow_sys_id) {
       // Get workflow info for response
       const workflowQuery = await client.get(`/api/now/table/wf_workflow/${workflow_sys_id}`, {
