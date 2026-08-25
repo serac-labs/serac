@@ -3,7 +3,7 @@
   "name": "io.github.serac-labs/servicenow-mcp",
   "title": "Serac ServiceNow",
   "description": "400+ ServiceNow tools over stdio or streamable HTTP, plus blast-radius impact analysis",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "websiteUrl": "https://docs.serac.build",
   "repository": {
     "url": "https://github.com/serac-labs/serac",
@@ -15,7 +15,7 @@
     {
       "registryType": "npm",
       "identifier": "@serac-labs/servicenow-mcp",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "transport": {
         "type": "stdio"
       },

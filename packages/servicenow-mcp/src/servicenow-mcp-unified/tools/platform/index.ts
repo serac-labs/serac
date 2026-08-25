@@ -12,6 +12,10 @@ export {
   execute as snow_session_context_exec,
 } from "./snow_session_context.js"
 export {
+  toolDefinition as snow_instance_visibility_def,
+  execute as snow_instance_visibility_exec,
+} from "./snow_instance_visibility.js"
+export {
   toolDefinition as snow_create_script_include_def,
   execute as snow_create_script_include_exec,
 } from "./snow_create_script_include.js"

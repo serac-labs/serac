@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@serac-labs/servicenow-mcp",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "mcpName": "io.github.serac-labs/servicenow-mcp",
   "description": "Unified ServiceNow MCP server (400+ snow_* tools), blast-radius analysis, stdio + HTTP transports.",
   "license": "Apache-2.0",
@@ -29,6 +29,7 @@
     "./enterprise-proxy": "./src/enterprise-proxy/index.ts",
     "./blast-radius": "./src/servicenow-mcp-unified/tools/blast-radius/index.ts",
     "./sn-roles": "./src/sn-roles.ts",
+    "./setup-doctor": "./src/servicenow-mcp-unified/shared/instance-diagnostics.ts",
     "./types": "./src/servicenow-mcp-unified/shared/types.ts",
     "./auth": "./src/servicenow-mcp-unified/shared/auth.ts",
     "./error-handler": "./src/servicenow-mcp-unified/shared/error-handler.ts",

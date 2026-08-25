@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-25T09:17:49.808Z",
-  "count": 445,
+  "generatedAt": "2026-08-25T21:56:04.196Z",
+  "count": 446,
   "groups": [
     {
       "name": "access-control",
@@ -8381,6 +8381,72 @@
           "inputSchema": {
             "type": "object",
             "properties": {}
+          }
+        },
+        {
+          "name": "snow_instance_visibility",
+          "description": "Report what this ServiceNow connection can actually see: per table whether the read succeeds (with the HTTP status and the row count behind it), which roles the account holds and which ones a refused table needs, whether javascript: date filters resolve on this instance or are silently dropped, whether a condition on an unknown column is ignored or returns no rows, and which release, build, edition and plugin count answered. Call this when queries come back empty or a filtered count looks wrong, before trusting any number from this instance. Read-only: every call is a GET.",
+          "permission": "read",
+          "allowedRoles": [
+            "developer",
+            "stakeholder",
+            "admin"
+          ],
+          "useCases": [
+            "empty results",
+            "permissions",
+            "roles",
+            "reachability",
+            "filters",
+            "instance identity",
+            "troubleshooting"
+          ],
+          "complexity": "beginner",
+          "frequency": "medium",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "tables": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 20,
+                "default": [],
+                "description": "Tables to probe for read access, one GET each (max 20). Omit to skip the per-table probe and report only roles, filters and identity."
+              },
+              "lifetime_days": {
+                "type": "number",
+                "default": 365,
+                "minimum": 0,
+                "description": "Bound each table's row count to rows created within this many days. 0 counts the whole table. A table that refuses the bounded read, or answers 0 to it, is re-read unbounded before that answer is reported: on a table with no sys_created_on the clause is silently dropped or matches nothing, and neither shows up as an error."
+              },
+              "date_canary": {
+                "type": "boolean",
+                "default": true,
+                "description": "Test whether javascript: date functions resolve, with one count whose clause cannot match anything. Costs two calls."
+              },
+              "canary_table": {
+                "type": "string",
+                "default": "sys_user",
+                "description": "Table the date and invalid-column canaries run against. It has to hold rows to be conclusive, and it has to be one this connection can read."
+              },
+              "invalid_query_probe": {
+                "type": "boolean",
+                "default": true,
+                "description": "Test what the instance does with a condition on a column that does not exist: ignore it and answer for the whole table, or return no rows. Costs one call."
+              },
+              "include_identity": {
+                "type": "boolean",
+                "default": true,
+                "description": "Read release, build tag, edition, active-plugin count and domain scope. Costs three calls."
+              },
+              "include_role_coverage": {
+                "type": "boolean",
+                "default": true,
+                "description": "Read the roles the account holds and fold them against the shipped role manifest. Costs one call. With this off, a refused table lists every role that could read it instead of only the ones this account is missing."
+              }
+            }
           }
         },
         {

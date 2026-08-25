@@ -9,10 +9,18 @@
  * CI, and why `validatedOn` / `testedAt` are part of the payload — they are the
  * only staleness signal a consumer gets. See README.md, "The roles manifest".
  *
- * This module sits at the top of `src/` rather than under `shared/` because the
- * manifest sits at the package root — live services fetch it from `main` at a
- * literal raw.githubusercontent.com URL, so it cannot move. `../` from here
- * resolves to that root both from `src/` and from the published `dist/`.
+ * This module sits at the top of `src/` because the manifest sits at the
+ * package root: `../` from here resolves to that root both from `src/` in a
+ * checkout and from `dist/` in the published tarball, which is what lets one
+ * path serve both.
+ *
+ * The supported way to read it is this module, from the installed package —
+ * that is what `exports["./sn-roles"]` and the `files` entry are for. It is
+ * ALSO fetched from `main` over raw.githubusercontent.com by docs.serac.build,
+ * so moving the file is still a production change rather than a refactor (the
+ * consumer table in README.md is the list). What is no longer true is that a
+ * literal GitHub URL is the only way in: a consumer reaching for one should
+ * take the dependency instead.
  */
 
 import { readFileSync } from "node:fs"

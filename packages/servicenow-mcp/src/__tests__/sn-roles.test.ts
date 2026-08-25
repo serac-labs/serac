@@ -58,6 +58,7 @@ const AWAITING_PROBE = [
   "snow_fluent_install",
   "snow_fluent_status",
   "snow_fluent_transform",
+  "snow_instance_visibility",
   "snow_scripted_rest_api_manage",
   "snow_validate_query",
 ]

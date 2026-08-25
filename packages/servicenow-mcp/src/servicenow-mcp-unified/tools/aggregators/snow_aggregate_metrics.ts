@@ -113,7 +113,17 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       // A rejected call is nearly always about the parameters, so carry the
       // same request detail the success path carries. Arguments refused before
       // the request went out have none, and get an empty metadata object.
-      error?.snow_request ?? {},
+      //
+      // http_status rides along beside it because 403, 401 and 400 need three
+      // different responses — ask for a role, re-authenticate, fix the query —
+      // and the only other place that distinction survives is inside the
+      // prose. A caller should not have to regex an error message to find out
+      // which of the three happened; a call refused before it went out has no
+      // status, and the field is absent rather than guessed at.
+      {
+        ...(error?.snow_request ?? {}),
+        ...(typeof error?.response?.status === "number" ? { http_status: error.response.status } : {}),
+      },
     )
   })
 }
@@ -314,5 +324,5 @@ function summarize(
   ].join("\n")
 }
 
-export const version = "1.1.0"
+export const version = "1.2.0"
 export const author = "Serac SDK Migration"
