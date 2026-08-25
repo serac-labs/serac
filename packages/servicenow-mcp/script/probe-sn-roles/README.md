@@ -5,11 +5,12 @@ reading the live instance's ACL definitions directly. Output:
 `packages/servicenow-mcp/sn-roles.manifest.json`.
 
 It is a standalone artifact, not an input to `generate-tools-json.ts` — the two
-manifests are fetched separately and joined client-side. Both are read from
-`main` over raw.githubusercontent.com by the Serac Portal's tool-permissions
-proxy and by `docs.serac.build`, so the checked-in copy IS the published
-artifact. Moving or renaming it breaks production; see the consumer list in
-`../../README.md`.
+manifests are fetched separately and joined client-side. The roles manifest also
+ships inside the npm tarball, behind `exports["./sn-roles"]`, and that is the
+supported way for a service to read it. `docs.serac.build` still fetches both
+from `main` over raw.githubusercontent.com, so the checked-in copy IS the
+published artifact and moving or renaming it is still a production change; see
+the consumer list in `../../README.md`.
 
 ## Why ACL-based, not empirical?
 

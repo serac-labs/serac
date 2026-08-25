@@ -19,20 +19,27 @@
 import { describe, expect, test } from "@jest/globals"
 import * as http from "http"
 import { spawn } from "node:child_process"
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs"
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "node:fs"
 import { tmpdir } from "node:os"
 import { join } from "node:path"
 
 import {
   classifyApiResponse,
+  classifyDateCanary,
+  classifyInvalidQuery,
   classifyReachability,
+  classifyTableRead,
   classifyTokenResponse,
   classifyTransportFailure,
+  heldRoles,
   inspectInstanceUrl,
   loadRolesManifest,
+  manifestStamp,
+  mapProperties,
   renderReport,
   runSetupDoctor,
   summarizeRoleCoverage,
+  summarizeTableAccess,
   type Observed,
 } from "../setup-doctor.js"
 
@@ -255,6 +262,270 @@ describe("role coverage, against the committed sn-roles.manifest.json", () => {
     expect(summarizeRoleCoverage(handBuilt, ["catalog_admin"]).blocked).toBe(2) // half a bundle unlocks nothing
     expect(summarizeRoleCoverage(handBuilt, ["catalog_admin", "catalog_editor"]).blocked).toBe(1)
     expect(summarizeRoleCoverage(handBuilt, []).unresolved).toBe(1)
+  })
+})
+
+// ---------------------------------------------------------------------------
+// The instance probes: what the caller's own credential can see
+// ---------------------------------------------------------------------------
+
+/** One row and a count header — what a bounded read of a populated table answers. */
+const ONE_ROW = `{"result":[{"sys_id":"46b66a40a9fe198101f243dfbc79033d"}]}`
+
+/** The four identity properties, as sys_properties returns them. */
+const PROPERTIES = `{"result":[{"name":"glide.buildname","value":"Zurich"},{"name":"glide.buildtag","value":"glide-zurich-06-25-2026__patch2-08-01-2026_08-14-2026_1417.zip"},{"name":"glide.license.edition","value":"Enterprise"},{"name":"glide.product.description","value":"Service Management"}]}`
+
+const answered = (status: number, body: string, totalCount?: string, contentType = "application/json") => ({
+  observed: { status, body, contentType, totalCount },
+})
+
+describe("one table read, classified", () => {
+  test("a 200 with a count is readable, and the count is the count", () => {
+    expect(classifyTableRead("sys_update_xml", 365, answered(200, ONE_ROW, "8123"))).toMatchObject({
+      table: "sys_update_xml",
+      readable: true,
+      httpStatus: 200,
+      lifetime: 8123,
+      lifetimeWindowDays: 365,
+    })
+  })
+
+  test("a 200 with no count header is readable with no number, never readable with zero", () => {
+    // A 0 here lands in the "this table holds nothing" branch on the other
+    // side, which is a diagnosis about the customer's instance made out of a
+    // missing header.
+    expect(classifyTableRead("sys_update_xml", 365, answered(200, ONE_ROW)).lifetime).toBeNull()
+  })
+
+  test("an unbounded read says so, rather than claiming a window it did not apply", () => {
+    expect(classifyTableRead("sys_update_set", null, answered(200, ONE_ROW, "12")).lifetimeWindowDays).toBeNull()
+  })
+
+  test("a 403 keeps its status and quotes what ServiceNow said", () => {
+    // The status is the difference between "ask for a role", "authenticate
+    // again" and "fix the query", and it must survive as a number rather than
+    // inside prose a caller has to regex.
+    const read = classifyTableRead("sys_user_has_role", 365, answered(403, INSUFFICIENT_RIGHTS))
+
+    expect(read.readable).toBe(false)
+    expect(read.httpStatus).toBe(403)
+    expect(read.error).toContain("HTTP 403")
+    expect(read.error).toContain("Insufficient rights to query records")
+  })
+
+  test("a hibernation page is not a readable empty table", () => {
+    // HTTP 200, HTML body, no count header: without the html check every table
+    // on a sleeping instance comes back readable and holding nothing.
+    const read = classifyTableRead("sys_user", 365, answered(200, HIBERNATING_PAGE, undefined, "text/html"))
+
+    expect(read.readable).toBe(false)
+    expect(read.error).toContain("hibernating")
+  })
+
+  test("a request that never arrived has no status to report", () => {
+    const read = classifyTableRead("sys_user", 365, {
+      failure: { code: "ENOTFOUND", message: "getaddrinfo ENOTFOUND dev12345.service-now.com" },
+    })
+
+    expect(read.readable).toBe(false)
+    expect(read.httpStatus).toBeUndefined()
+    expect(read.error).toContain("ENOTFOUND")
+  })
+})
+
+describe("do javascript: date functions resolve on this instance", () => {
+  test("a clause that cannot match matching nothing means the function resolved", () => {
+    expect(classifyDateCanary(0, 8123)).toBe("resolved")
+  })
+
+  test("a clause that cannot match matching the whole table means it was dropped", () => {
+    expect(classifyDateCanary(8123, 8123)).toBe("evaporated")
+  })
+
+  test("an empty table proves nothing either way", () => {
+    // Both regimes answer 0 on a table with no rows, so "resolved" here would
+    // hand a downgrade to every withheld figure on the instance on the
+    // strength of a measurement that measured nothing.
+    expect(classifyDateCanary(0, 0)).toBe("inconclusive")
+  })
+
+  test("a count that could not be made never becomes a verdict", () => {
+    expect(classifyDateCanary(null, 8123)).toBe("inconclusive")
+    expect(classifyDateCanary(0, null)).toBe("inconclusive")
+  })
+
+  test("a partial match is neither, and is not silently rounded to one of them", () => {
+    expect(classifyDateCanary(3, 8123)).toBe("inconclusive")
+  })
+})
+
+describe("which invalid-query regime the instance is in", () => {
+  test("a condition on a column that does not exist answering for the whole table is the ignore regime", () => {
+    expect(classifyInvalidQuery(8123, 8123)).toBe("ignores")
+  })
+
+  test("the same condition answering zero is glide.invalid_query.returns_no_rows", () => {
+    // The inverse signature, and the reason it is worth a call: under this
+    // regime a dropped clause reads as a confident 0 rather than a confident
+    // total, and nothing else in the response distinguishes the two.
+    expect(classifyInvalidQuery(0, 8123)).toBe("returns_no_rows")
+  })
+
+  test("an instance that refuses the query outright is neither", () => {
+    expect(classifyInvalidQuery(null, 8123)).toBe("unknown")
+  })
+
+  test("an empty table cannot separate the two", () => {
+    expect(classifyInvalidQuery(0, 0)).toBe("unknown")
+    expect(classifyInvalidQuery(0, null)).toBe("unknown")
+  })
+})
+
+describe("the held-role list is a floor, not an inventory", () => {
+  const page = (rows: number) =>
+    JSON.stringify({ result: Array.from({ length: rows }, (_, index) => ({ "role.name": `role_${index}` })) })
+
+  test("a short page is the whole list, sorted and deduplicated", () => {
+    const roles = heldRoles({ status: 200, body: `{"result":[{"role.name":"itil"},{"role.name":"admin"},{"role.name":"itil"}]}` })
+
+    expect(roles.held).toEqual(["admin", "itil"])
+    expect(roles.truncated).toBe(false)
+    expect(roles.readable).toBe(true)
+  })
+
+  test("a full page is flagged, because that is the case that matters", () => {
+    // The query asks for 500 rows with no ORDERBY, and it is admins who
+    // overflow it. Deciding "this account cannot read that table" from a cut
+    // off list is wrong in exactly the direction that hurts.
+    expect(heldRoles({ status: 200, body: page(500) }).truncated).toBe(true)
+    expect(heldRoles({ status: 200, body: page(499) }).truncated).toBe(false)
+  })
+
+  test("a refused read is not an account that holds no roles", () => {
+    // Reading sys_user_has_role needs a role of its own, so a 403 here says
+    // nothing at all about what the account holds.
+    const roles = heldRoles({ status: 403, body: INSUFFICIENT_RIGHTS })
+
+    expect(roles.readable).toBe(false)
+    expect(roles.held).toEqual([])
+    expect(roles.truncated).toBe(false)
+  })
+
+  test("neither is a hibernation page that happens to arrive with a 200", () => {
+    // The status alone said "readable" here, and the page parses to zero rows,
+    // so a sleeping instance reported an account with no roles — and every
+    // coverage number downstream was then computed from a login page. Same
+    // fabrication as the 403, through a different door.
+    const roles = heldRoles({ status: 200, body: HIBERNATING_PAGE, contentType: "text/html" })
+
+    expect(roles.readable).toBe(false)
+    expect(roles.httpStatus).toBe(200)
+    expect(roles.held).toEqual([])
+  })
+})
+
+describe("what the package publishes as /setup-doctor", () => {
+  // The module holds two halves: everything above the line reads THE MACHINE
+  // (`runSetupDoctor` walks environment variables and every auth.json on disk),
+  // everything below reads THE INSTANCE through the caller's own credential.
+  // That line is why snow_diagnose_setup is stdio-only. A subpath exporting the
+  // whole module hands the machine-reading half to every npm consumer including
+  // a multi-tenant backend, which is the same thing the stdio annotation
+  // refuses, arriving through the library door.
+  const manifest = JSON.parse(readFileSync(join(import.meta.dirname, "..", "..", "..", "..", "package.json"), "utf-8"))
+
+  test("the subpath resolves to the instance half, not to setup-doctor.ts", () => {
+    expect(manifest.exports["./setup-doctor"]).toBe("./src/servicenow-mcp-unified/shared/instance-diagnostics.ts")
+  })
+
+  test("the probes and classifiers are published", async () => {
+    const published = await import("../instance-diagnostics.js")
+
+    expect(Object.keys(published)).toEqual(
+      expect.arrayContaining(["probeReach", "probeHeldRoles", "probeTableRead", "classifyTableRead", "heldRoles"]),
+    )
+  })
+
+  test("runSetupDoctor and renderReport are not", async () => {
+    const published = await import("../instance-diagnostics.js")
+
+    expect(Object.keys(published)).not.toContain("runSetupDoctor")
+    expect(Object.keys(published)).not.toContain("renderReport")
+  })
+})
+
+describe("which instance answered", () => {
+  test("release is the build name, and the product description is kept apart from it", () => {
+    // The portal mapped its `version` column from glide.product.description
+    // with buildname only as a fallback, so every instance it discovered reads
+    // "Service Management" under a heading that says Release.
+    const identity = mapProperties({ status: 200, body: PROPERTIES })
+
+    expect(identity.release).toBe("Zurich")
+    expect(identity.buildName).toBe("Zurich")
+    expect(identity.productDescription).toBe("Service Management")
+    expect(identity.buildTag).toContain("glide-zurich")
+    expect(identity.edition).toBe("Enterprise")
+  })
+
+  test("a refused read names no field at all, rather than naming them empty", () => {
+    expect(Object.values(mapProperties({ status: 403, body: INSUFFICIENT_RIGHTS })).filter(Boolean)).toEqual([])
+  })
+
+  test("a property the instance does not carry is absent, not blank", () => {
+    const identity = mapProperties({ status: 200, body: `{"result":[{"name":"glide.buildname","value":""}]}` })
+
+    expect(identity.release).toBeUndefined()
+    expect(identity.edition).toBeUndefined()
+  })
+})
+
+describe("the manifest advises about a table, and never outranks the probe", () => {
+  const manifest = loadRolesManifest()
+
+  test("a table the manifest knows lists the roles that can read it", () => {
+    const advice = summarizeTableAccess(manifest, "sys_update_xml", [])
+
+    expect(advice.missingRoles).toEqual(["teamdev_user", "update_set_admin", "update_set_previewer", "upgrade_admin"])
+    expect(advice.scriptAcls).toBe(0)
+  })
+
+  test("held admin satisfies every table, including the ones no ACL names it on", () => {
+    // admin bypasses ACLs outright, so it appears in almost no ACL row —
+    // neither sys_update_set's nor sys_user_has_role's. A naive intersection
+    // calls an admin connection blocked on both, which is the modal connection
+    // and the two tables an operations pass exists to read.
+    expect(summarizeTableAccess(manifest, "sys_update_set", ["admin"]).missingRoles).toEqual([])
+    expect(summarizeTableAccess(manifest, "sys_user_has_role", ["admin"]).missingRoles).toEqual([])
+  })
+
+  test("one role off the list is enough, because the list is an OR", () => {
+    expect(summarizeTableAccess(manifest, "sys_update_xml", ["update_set_admin"]).missingRoles).toEqual([])
+    expect(summarizeTableAccess(manifest, "sys_update_xml", ["itil"]).missingRoles.length).toBeGreaterThan(0)
+  })
+
+  test("public is never offered as a role to ask for, and a table that names it needs none", () => {
+    // sys_user read folds to {public, snc_internal} on all nineteen of its
+    // primitives. Rendering "ask for snc_internal" would tell every connection
+    // on earth it cannot read a user record.
+    expect(summarizeTableAccess(manifest, "sys_user", []).missingRoles).toEqual([])
+  })
+
+  test("a table the manifest has never seen produces no advice rather than a guess", () => {
+    expect(summarizeTableAccess(manifest, "u_no_such_table", [])).toEqual({ missingRoles: [], scriptAcls: 0 })
+  })
+
+  test("scriptAcls comes back even where the role list is satisfied", () => {
+    // It is reported on every table, not only where it is non-zero: the count
+    // comes from the ACL `script` column alone, so 0 means "no scripted ACL
+    // was seen", never "no row filter applies".
+    expect(summarizeTableAccess(manifest, "sys_properties", ["snc_internal"]).scriptAcls).toBe(1)
+  })
+
+  test("the manifest's own age is passed through, because the advice expires", () => {
+    expect(manifestStamp(manifest).validatedOn).toContain("glide-")
+    expect(manifestStamp(manifest).testedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/)
+    expect(manifestStamp(undefined)).toEqual({ validatedOn: undefined, testedAt: undefined })
   })
 })
 

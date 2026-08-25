@@ -53,6 +53,19 @@ function extractSnError(error: any): string {
   return error?.message || `HTTP ${status}`
 }
 
+/**
+ * Re-throwing loses the response, and the response is the only machine-
+ * readable half of an auth failure: 401 says the credential is dead, a missing
+ * status says the request never arrived, and a caller has to be able to tell
+ * those apart without parsing English. Attached rather than re-wrapped so the
+ * shape matches what the interceptors below already hand back.
+ */
+function attachResponse<E extends Error>(error: E, from: any): E {
+  if (from?.response) (error as any).response = from.response
+  if (from?.config) (error as any).config = from.config
+  return error
+}
+
 // Extended AxiosInstance with ServiceNow helper methods
 export interface ExtendedAxiosInstance extends AxiosInstance {
   getRecord(table: string, sys_id: string): Promise<any>
@@ -169,7 +182,17 @@ export class ServiceNowAuthManager {
 
         // Normalize response structure for consistent API handling
         // ServiceNow sometimes returns data directly without 'result' wrapper
-        if (response.data && response.data.result === undefined) {
+        //
+        // `typeof data === "object"` is load-bearing, not defensive noise. A
+        // hibernating instance answers 200 with an HTML login page, so `data`
+        // is a string primitive and `data.result = []` throws "Attempted to
+        // assign to readonly property" in strict mode. That synthetic
+        // TypeError carries no `.response`, so every caller files a sleeping
+        // instance as a transport failure and htmlDiagnosis — written for
+        // exactly this page — never runs. 13 of 14 production instances are
+        // developer PDIs, which hibernate. Leaving a non-object body untouched
+        // is what lets the HTML reach the classifiers.
+        if (response.data && typeof response.data === "object" && response.data.result === undefined) {
           // If response has sys_id directly or is an array, wrap it in result
           if (response.data.sys_id || Array.isArray(response.data)) {
             response.data = { result: response.data }
@@ -524,13 +547,19 @@ export class ServiceNowAuthManager {
         mcpDebug("[Auth] Basic auth successful")
         return accessToken
       } catch (testError: any) {
-        const detail = extractSnError(testError)
-        throw new Error(`Basic auth failed: ${detail}`)
+        // Carry the response, the way every interceptor above already does.
+        // "The credential is dead" (401 on every endpoint) and "the instance
+        // could not be reached" need different answers from a caller, and
+        // before this the only place that distinction survived was inside the
+        // prose of the message below — so a caller had to regex an error
+        // string to find the status. Same rule as snow_aggregate_metrics'
+        // http_status metadata.
+        throw attachResponse(new Error(`Basic auth failed: ${extractSnError(testError)}`), testError)
       }
     } catch (error: any) {
       const detail = extractSnError(error)
       mcpDebug("[Auth] Basic auth failed:", detail)
-      throw new Error(`Authentication failed: ${detail}`)
+      throw attachResponse(new Error(`Authentication failed: ${detail}`), error)
     }
   }
 
@@ -585,13 +614,12 @@ export class ServiceNowAuthManager {
         mcpDebug("[Auth] Username/password authentication successful")
         return accessToken
       } catch (testError: any) {
-        const detail = extractSnError(testError)
-        throw new Error(`Username/password authentication failed: ${detail}`)
+        throw attachResponse(new Error(`Username/password authentication failed: ${extractSnError(testError)}`), testError)
       }
     } catch (error: any) {
       const detail = extractSnError(error)
       mcpDebug("[Auth] Username/password authentication failed:", detail)
-      throw new Error(`Authentication failed: ${detail}`)
+      throw attachResponse(new Error(`Authentication failed: ${detail}`), error)
     }
   }
 

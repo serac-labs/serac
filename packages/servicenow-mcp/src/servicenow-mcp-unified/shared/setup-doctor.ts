@@ -63,6 +63,12 @@ export interface Observed {
   contentType?: string
   body: string
   location?: string
+  /**
+   * `x-total-count`, verbatim. Only the instance probes below ask for it — the
+   * setup walk reads one row and never counts — so it is absent on everything
+   * the six checks classify.
+   */
+  totalCount?: string
 }
 
 /** A request that never got a response: DNS, TCP, TLS, or a timeout. */
@@ -70,6 +76,9 @@ export interface TransportFailure {
   code?: string
   message: string
 }
+
+/** Either the instance answered, or the request never got there. Never both. */
+export type Probed = { observed: Observed } | { failure: TransportFailure }
 
 export interface SetupReport {
   ok: boolean
@@ -832,10 +841,7 @@ const summarizeAuthFile = (path: string): { instance?: string; modified: string 
 // Probing — observe only, decide nothing
 // ---------------------------------------------------------------------------
 
-const probe = async (
-  url: string,
-  authorization?: string,
-): Promise<{ observed: Observed } | { failure: TransportFailure }> =>
+const probe = async (url: string, authorization?: string): Promise<Probed> =>
   fetch(url, {
     headers: { Accept: "application/json", ...(authorization ? { Authorization: authorization } : {}) },
     // Manual: a redirect to a login page is a finding, and following it would
@@ -905,8 +911,13 @@ const transportFailure = (error: unknown): TransportFailure => {
  * answers every request — REST included — with an HTML page, so every tool
  * looks like it has a JSON parse bug. Detected by content, because the status
  * is usually 200 and the content-type is not always set.
+ *
+ * Exported because the instance probes below have to make the same call before
+ * they may report a 200 as a successful read: an HTML page carries no
+ * x-total-count, so a hibernating instance would otherwise come back as "every
+ * table readable, every table empty".
  */
-const htmlDiagnosis = (step: CheckStep, observed: Observed): Check | undefined => {
+export const htmlDiagnosis = (step: CheckStep, observed: Observed): Check | undefined => {
   const isHtml = (observed.contentType ?? "").includes("text/html") || /^\s*<(!doctype|html)/i.test(observed.body)
   if (!isHtml) return undefined
 
@@ -937,7 +948,51 @@ const htmlDiagnosis = (step: CheckStep, observed: Observed): Check | undefined =
   }
 }
 
-const classifyRoles = (observed: Observed): Check => {
+/**
+ * The roles the authenticated account holds, as the sys_user_has_role page
+ * came back — no verdict attached.
+ *
+ * Split out of `classifyRoles` so a caller can have the list and the
+ * truncation flag as data rather than as prose inside a report. `truncated` is
+ * the important half: the query asks for one ROLE_ROWS_CAP-row page with no
+ * ORDERBY, so a full page means the list is a floor and the account holds an
+ * unknown number more. Deciding anything from `held` alone on a truncated read
+ * — "this account cannot reach that table" — is wrong in exactly the direction
+ * that hurts, because the accounts that overflow the page are the admins.
+ */
+export interface HeldRoles {
+  /** Distinct role names, sorted. Empty when the read was refused. */
+  held: string[]
+  /** The page came back full: `held` is a floor, not an inventory. */
+  truncated: boolean
+  /**
+   * False when the instance refused the read — which needs a role of its own —
+   * or answered something that is not a role list at all.
+   */
+  readable: boolean
+  httpStatus: number
+}
+
+export const heldRoles = (observed: Observed): HeldRoles => {
+  const rows = asArray(asRecord(parseJson(observed.body))?.result) ?? []
+  return {
+    held: [
+      ...new Set(
+        rows.map((row) => str(asRecord(row)?.["role.name"])).filter((role): role is string => role !== undefined),
+      ),
+    ].sort(),
+    truncated: rows.length >= ROLE_ROWS_CAP,
+    // The status alone is not enough: a hibernating instance answers 200 with
+    // an HTML login page, which parses to zero rows. Reading that as "readable,
+    // holds nothing" is the same fabrication a 403 produces — an empty list
+    // presented as a measurement — and every role-coverage number downstream
+    // is then computed from a page that never mentioned roles.
+    readable: observed.status === 200 && htmlDiagnosis("roles", observed) === undefined,
+    httpStatus: observed.status,
+  }
+}
+
+export const classifyRoles = (observed: Observed): Check => {
   const html = htmlDiagnosis("roles", observed)
   if (html) return html
 
@@ -957,15 +1012,11 @@ const classifyRoles = (observed: Observed): Check => {
       ],
     }
 
-  const rows = asArray(asRecord(body)?.result) ?? []
-  const held = [
-    ...new Set(rows.map((row) => str(asRecord(row)?.["role.name"])).filter((role): role is string => role !== undefined)),
-  ].sort()
+  const { held, truncated } = heldRoles(observed)
 
-  const capped =
-    rows.length >= ROLE_ROWS_CAP
-      ? [`the query returned its full ${ROLE_ROWS_CAP}-row page, so this list is cut off and the counts below are a floor`]
-      : []
+  const capped = truncated
+    ? [`the query returned its full ${ROLE_ROWS_CAP}-row page, so this list is cut off and the counts below are a floor`]
+    : []
 
   // Admin accounts hold hundreds of roles; the list is a hint, not an inventory.
   const listed = held.length > 12 ? `${held.slice(0, 12).join(", ")} and ${held.length - 12} more` : held.join(", ")
@@ -1018,6 +1069,552 @@ const classifyRoles = (observed: Observed): Check => {
       "This is not a setup error — it is what the account can do. Ask an admin for the role a failing tool needs.",
     ],
   }
+}
+
+// ---------------------------------------------------------------------------
+// Instance probes — what the caller's own credential can see
+// ---------------------------------------------------------------------------
+
+/**
+ * WHERE THE LINE IS, and why it decides which transports a tool runs on.
+ *
+ * Everything above reads THE MACHINE. `runSetupDoctor` and `resolveChain` walk
+ * environment variables, every known auth.json path and its mtime, and report
+ * which of them won. On HTTP one process serves every tenant, so that report
+ * describes the SERVER's configuration to whoever asked — which is why
+ * `snow_diagnose_setup` carries `transports: ["stdio"]`.
+ *
+ * Everything below reads THE INSTANCE, through a client the caller's own
+ * credentials produced. It reads no file, no environment variable, and it must
+ * never call `runSetupDoctor` or `resolveChain` — the moment it does, the tool
+ * on top of it stops being HTTP-safe and the transport annotation that says so
+ * is nowhere near this file. That is the whole of why
+ * `snow_instance_visibility` runs on both transports and its neighbour does
+ * not. Keep the line where it is.
+ */
+
+/**
+ * Just enough of the authenticated axios client to issue a bounded GET.
+ *
+ * Structural on purpose: this module still imports nothing from `auth.ts`, the
+ * tool passes the real client in, and the probes stay callable with anything
+ * that answers a GET.
+ */
+export interface ProbeClient {
+  get(url: string, config?: { params?: Record<string, string | number> }): Promise<unknown>
+}
+
+/** A table read as the probe saw it. Advice from the manifest is not in here. */
+export interface TableRead {
+  table: string
+  /** True only for a 2xx that was not an HTML page. */
+  readable: boolean
+  /** Absent when the request never got an answer at all. */
+  httpStatus?: number
+  /**
+   * The machine-readable reason a 2xx was still not a read:
+   * `instance-hibernating` or `html-instead-of-json`, the same codes
+   * `htmlDiagnosis` puts on a Check. Absent otherwise, because every other
+   * refusal is already named by `httpStatus`.
+   *
+   * Without it `readable: false, httpStatus: 200` is the one row a consumer
+   * cannot classify from the status alone — and on a sleeping developer
+   * instance that is every row.
+   */
+  code?: string
+  /**
+   * Rows in scope, from `x-total-count`. `null` — never `0` — when the
+   * instance sent no count: "could not be counted" and "holds nothing" are
+   * opposite answers for anyone deciding whether a zero on this table is real.
+   */
+  lifetime: number | null
+  /**
+   * The window `lifetime` was counted over; `null` when it is the whole table.
+   *
+   * Read it beside the date canary. On an instance where `javascript:` does
+   * not resolve, a bounded count IS the whole table wearing a window's label,
+   * and the two are returned from the same call so nobody has to trust one
+   * without the other.
+   */
+  lifetimeWindowDays: number | null
+  /** What went wrong, verbatim, when the read did not succeed. */
+  error?: string
+}
+
+/** What the role manifest advises about reading a table. Advice, never evidence. */
+export interface TableAdvice {
+  /** Roles that would unlock the read, minus the ones the account already holds. */
+  missingRoles: string[]
+  /**
+   * How many of the matching ACLs carry a condition or an advanced script.
+   * Those run per record and the probe behind the manifest never evaluated
+   * them, so a role list with `scriptAcls > 0` is necessary but may not be
+   * sufficient — and `acl-resolve.ts` computes this from the `script` column
+   * alone, so the ordinary condition-based row filter is not even counted.
+   */
+  scriptAcls: number
+}
+
+export type DateVerdict = "resolved" | "evaporated" | "inconclusive"
+
+export interface DateFunctions {
+  /** The date function under test, as it appears in the clause. */
+  fn: string
+  verdict: DateVerdict
+  /** Rows matched by a clause that cannot match anything. `null` when the count failed. */
+  canary: number | null
+  /** Rows on the whole table — what a dropped clause returns instead. */
+  total: number | null
+}
+
+export type InvalidQueryVerdict = "ignores" | "returns_no_rows" | "unknown"
+
+export interface InvalidQuery {
+  verdict: InvalidQueryVerdict
+  /** The column that does not exist, so a reader can reproduce the call. */
+  field: string
+  /** Rows the instance matched for a condition on it. */
+  matched: number | null
+  total: number | null
+}
+
+export interface InstanceIdentity {
+  /** `glide.buildname` — the release family, e.g. "Zurich". */
+  release?: string
+  /** `glide.buildtag` — the exact build, patch and hotfix. */
+  buildTag?: string
+  /**
+   * `glide.buildname` again, under the name the portal's
+   * `servicenow_instance_discovered.build_name` column already carries. Same
+   * property, two readers: one wants the label "Release", the other wants its
+   * column filled with what was always meant to be in it.
+   */
+  buildName?: string
+  /** `glide.license.edition`. */
+  edition?: string
+  /**
+   * `glide.product.description` — the licensed product line ("Service
+   * Management"), NOT a release. Kept because it is worth showing, and named
+   * so nobody prints it under a Release heading again.
+   */
+  productDescription?: string
+  /** Active plugins, counted rather than listed. `null` when v_plugin refused. */
+  pluginCount: number | null
+  /**
+   * Whether domain separation is installed. There is no `not_separated`: the
+   * plugin id below is uncorroborated in ServiceNow's own documentation, so an
+   * absent row is "we did not find it", never "this instance does not have it".
+   */
+  domainSeparated: "separated" | "unknown"
+  /** The domain of the account the tools run as, when the instance names one. */
+  integrationUserDomain?: string
+}
+
+/** The four properties worth asking for, as one OR'd read. */
+const IDENTITY_PROPERTIES = ["glide.buildname", "glide.buildtag", "glide.license.edition", "glide.product.description"]
+
+/**
+ * A column no instance has. Asking for a condition on it is the only way to
+ * find out which of ServiceNow's two invalid-query regimes is in force, and
+ * the prefix makes it obvious in a log who asked and why.
+ */
+const CANARY_FIELD = "serac_canary_no_such_field"
+
+/** Whether the API answers this credential at all, and who it answers as. */
+export interface Reach {
+  check: Check
+  /** The caller's own domain, when the instance names one. */
+  domain?: string
+}
+
+/**
+ * The authenticated cousin of `classifyReachability`: that one asks whether the
+ * HOST behaves like a ServiceNow instance before any credential exists, this
+ * one asks whether the REST API accepts the credential in hand and who it
+ * thinks is calling. Every other probe below is worthless without it — a 401
+ * here means every table would come back unreadable for one reason that has
+ * nothing to do with the tables.
+ *
+ * The domain rides along because it comes off the same row: `sys_domain.name`
+ * where domain separation is installed, the raw reference otherwise, and
+ * nothing at all where the plugin is not there — ServiceNow drops an unknown
+ * field from `sysparm_fields` rather than refusing the read.
+ *
+ * WHAT THIS ROW IS NOT ALLOWED TO ASK FOR. `user_name` and `name` are absent
+ * on purpose: they are the integration account's login and the human display
+ * name behind it, and this Check is returned as data and rendered by whoever
+ * called — stored, not read once by the person who owns the credential, which
+ * is the whole difference from snow_diagnose_setup. The field list is the
+ * control, so the title is overridden below rather than the name being asked
+ * for and then dropped. `active` stays: it is not personal and it is the only
+ * way to report "that account is marked inactive", which is a real cause of an
+ * instance that answers nothing.
+ */
+export const probeReach = async (client: ProbeClient): Promise<Reach> => {
+  const seen = await answered(
+    client.get("/api/now/table/sys_user", {
+      params: {
+        sysparm_query: "sys_id=javascript:gs.getUserID()",
+        sysparm_fields: "active,sys_domain,sys_domain.name",
+        sysparm_limit: 1,
+      },
+    }),
+  )
+  if ("failure" in seen) return { check: classifyTransportFailure(seen.failure) }
+
+  // classifyApiResponse keeps naming the account — the stdio doctor prints it
+  // to the one person who owns that credential and wants to see which account
+  // it resolved to. Here the same sentence would travel, so the fact replaces
+  // the person. With no `user_name` in the row it would read "Authenticated as
+  // unknown" anyway.
+  const check = classifyApiResponse(seen.observed)
+  const user = asRecord(asArray(asRecord(parseJson(seen.observed.body))?.result)?.[0])
+  return {
+    check: check.code === "api-ok" ? { ...check, title: "The REST API accepted this credential." } : check,
+    domain: str(user?.["sys_domain.name"]) ?? str(user?.sys_domain),
+  }
+}
+
+/**
+ * The roles the authenticated account holds, read the way
+ * `snow_session_context` and the setup walk already read them: `user=` alone,
+ * no filter on `state`, one page of `ROLE_ROWS_CAP`.
+ *
+ * Reading sys_user_has_role needs a role of its own, so a refusal is a finding
+ * — `readable: false` with an empty list — and never an exception.
+ */
+export const probeHeldRoles = async (client: ProbeClient): Promise<HeldRoles> => {
+  const seen = await answered(
+    client.get("/api/now/table/sys_user_has_role", {
+      params: {
+        sysparm_query: "user=javascript:gs.getUserID()",
+        sysparm_fields: "role.name",
+        sysparm_limit: ROLE_ROWS_CAP,
+      },
+    }),
+  )
+  return "failure" in seen
+    ? { held: [], truncated: false, readable: false, httpStatus: 0 }
+    : heldRoles(seen.observed)
+}
+
+/**
+ * Can this connection read this table, and how much is in it?
+ *
+ * The sole authority on `readable`. A static role map cannot answer this —
+ * `admin` bypasses ACLs without appearing in any ACL row, `public` is not a
+ * grantable role, and the held-role list is capped — so anything that decides
+ * "unreadable" from the manifest is guessing, and guesses wrong on precisely
+ * the admin-credentialled developer instances most connections turn out to be.
+ *
+ * `lifetimeDays` bounds the count by `sys_created_on` (creation, not update:
+ * a lifetime is about when the rows came into existence). A table that refuses
+ * the bounded read is re-read UNBOUNDED before it is called unreadable — a
+ * view with no `sys_created_on` would otherwise be reported as "no read
+ * access" on the strength of a column the caller never asked about.
+ *
+ * A bounded read that comes back 0 is re-read for the same reason, and it is
+ * the more common half: NEITHER invalid-query regime answers 400. On a table
+ * without `sys_created_on` the ignore regime drops the clause and hands back
+ * the whole-table count wearing the window's label, and
+ * `glide.invalid_query.returns_no_rows` hands back 0 on a full table. The
+ * first is mislabelled and the second is a confident zero — the one answer a
+ * caller acts on directly ("the read succeeded and there is nothing here"),
+ * and therefore the one that must not be wrong. `v_plugin` demonstrates it:
+ * `{readable: true, lifetime: 0, lifetimeWindowDays: 365}` in the same payload
+ * whose identity block counts 412 active plugins.
+ *
+ * The cost is one extra GET on tables that would otherwise report zero. The
+ * unbounded number is reported with `lifetimeWindowDays: null`, because after
+ * a zero nothing here can show that the window was ever applied.
+ */
+export const probeTableRead = async (
+  client: ProbeClient,
+  table: string,
+  lifetimeDays: number,
+): Promise<TableRead> => {
+  const days = Number.isFinite(lifetimeDays) && lifetimeDays > 0 ? Math.floor(lifetimeDays) : 0
+  const bounded = days === 0 ? undefined : classifyTableRead(table, days, await count(client, table, since(days)))
+  if (bounded?.readable && bounded.lifetime !== 0) return bounded
+  // 400 is the instance saying it could not make sense of the request, which
+  // on a bounded read is far more likely to be the date column than the table:
+  // v_plugin is a view. A 401 or 403 is about the table itself and re-asking
+  // only spends another call to hear the same refusal.
+  if (bounded && !bounded.readable && bounded.httpStatus !== 400) return bounded
+
+  const unbounded = classifyTableRead(table, null, await count(client, table, ""))
+  // A bounded read that worked outranks an unbounded one that did not. The
+  // re-read is here to disambiguate a zero, never to demote a table that just
+  // answered into "no read access".
+  return bounded?.readable && !unbounded.readable ? bounded : unbounded
+}
+
+/** Does `javascript:` actually resolve in an encoded query on this instance? */
+export const dateFunctionCanary = async (
+  client: ProbeClient,
+  table: string,
+  fn: string,
+  total: number | null,
+): Promise<DateFunctions> => {
+  // ONE count, with a clause that contradicts itself: no row can be created
+  // both at or after an instant and before the same instant. Zero is the only
+  // correct answer, so anything else is the clause not being applied. The
+  // three-count partition this replaces raced against its own table — one row
+  // written between the counts satisfied none of its branches — and `sys_user`
+  // is the highest-churn table on any instance with LDAP, SSO or an HR import.
+  const clause = `sys_created_on>=javascript:${fn}(0)^sys_created_on<javascript:${fn}(0)`
+  const canary = counted(await count(client, table, clause))
+  return { fn, verdict: classifyDateCanary(canary, total), canary, total }
+}
+
+/**
+ * Which of the two invalid-query regimes this instance is in.
+ *
+ * Worth one call per pass because it inverts the reading of every other number
+ * here. Under the ignore regime a condition the instance cannot apply is
+ * dropped and the query answers for the whole table; under
+ * `glide.invalid_query.returns_no_rows` the same condition answers zero. A
+ * confident `0` and a confident total are the same failure wearing opposite
+ * clothes, and nothing in the response distinguishes them.
+ */
+export const invalidQueryProbe = async (
+  client: ProbeClient,
+  table: string,
+  total: number | null,
+): Promise<InvalidQuery> => {
+  const matched = counted(await count(client, table, `${CANARY_FIELD}=1`))
+  return { field: CANARY_FIELD, verdict: classifyInvalidQuery(matched, total), matched, total }
+}
+
+/**
+ * Which instance this is: release, build, edition, plugin count, domain scope.
+ *
+ * `domain` is the caller's own, taken from the `sys_user` row the reach check
+ * already read rather than costing a second one.
+ */
+export const readInstanceIdentity = async (client: ProbeClient, domain?: string): Promise<InstanceIdentity> => {
+  const properties = await answered(
+    client.get("/api/now/table/sys_properties", {
+      params: {
+        sysparm_query: `nameIN${IDENTITY_PROPERTIES.join(",")}`,
+        sysparm_fields: "name,value",
+        sysparm_limit: IDENTITY_PROPERTIES.length,
+      },
+    }),
+  )
+
+  // Two bounded counts rather than one page of rows. discoverPlugins reads 50
+  // plugins ordered by sys_updated_on under a comment that already anticipates
+  // "200+ entries", so both the count and the com.glide.domain test would be
+  // decided by a recency window that can exclude the very row being looked for.
+  const plugins = counted(await count(client, "v_plugin", "active=true"))
+  const domains = counted(await count(client, "v_plugin", "active=true^id=com.glide.domain"))
+
+  return {
+    ...("failure" in properties ? {} : mapProperties(properties.observed)),
+    pluginCount: plugins,
+    domainSeparated: domains > 0 ? "separated" : "unknown",
+    integrationUserDomain: domain,
+  }
+}
+
+/**
+ * The four properties, mapped onto the names a reader means by them.
+ *
+ * `release` is `glide.buildname`. It is NOT `glide.product.description`, which
+ * holds the licensed product line — the portal's own discovery mapped its
+ * `version` column from the description with buildname as a fallback, which is
+ * why every instance it stored reads "Service Management" under a heading that
+ * says Release. Both come back here so no consumer has to choose.
+ */
+export const mapProperties = (observed: Observed): Partial<InstanceIdentity> => {
+  const rows = observed.status === 200 ? (asArray(asRecord(parseJson(observed.body))?.result) ?? []) : []
+  const values = new Map(rows.map((row) => [str(asRecord(row)?.name), str(asRecord(row)?.value)]))
+  return {
+    release: values.get("glide.buildname"),
+    buildTag: values.get("glide.buildtag"),
+    buildName: values.get("glide.buildname"),
+    edition: values.get("glide.license.edition"),
+    productDescription: values.get("glide.product.description"),
+  }
+}
+
+/** What the probe saw, turned into a verdict. Pure — the network part only observes. */
+export const classifyTableRead = (table: string, lifetimeWindowDays: number | null, probed: Probed): TableRead => {
+  if ("failure" in probed)
+    return {
+      table,
+      readable: false,
+      lifetime: null,
+      lifetimeWindowDays,
+      error: `${probed.failure.code ? `${probed.failure.code}: ` : ""}${probed.failure.message}`,
+    }
+
+  const observed = probed.observed
+  const html = htmlDiagnosis("api", observed)
+  if (html)
+    return {
+      table,
+      readable: false,
+      httpStatus: observed.status,
+      code: html.code,
+      lifetime: null,
+      lifetimeWindowDays,
+      error: html.title,
+    }
+
+  if (observed.status < 200 || observed.status > 299)
+    return {
+      table,
+      readable: false,
+      httpStatus: observed.status,
+      lifetime: null,
+      lifetimeWindowDays,
+      error: [`HTTP ${observed.status}`, said(observed)].filter(Boolean).join(" — "),
+    }
+
+  return { table, readable: true, httpStatus: observed.status, lifetime: counted(probed), lifetimeWindowDays }
+}
+
+/**
+ * `L === 0` is tested FIRST, against the order the design prose gives.
+ *
+ * On an empty table the self-contradictory clause answers 0 whether it was
+ * applied or dropped, so the count is evidence of nothing and calling it
+ * `resolved` would hand a downgrade to every suspect figure on the instance.
+ * A table with rows separates the two: 0 means the clause was applied, and the
+ * whole table means it was not.
+ *
+ * One interaction worth knowing rather than encoding: under
+ * `glide.invalid_query.returns_no_rows` a clause the instance cannot apply
+ * also answers 0, so `resolved` on such an instance means "either the function
+ * resolves or nothing survives an unusable clause". `invalidQueryProbe` names
+ * that regime in the same pass; folding it in here would hide which of the two
+ * measurements the verdict came from.
+ */
+export const classifyDateCanary = (canary: number | null, total: number | null): DateVerdict => {
+  if (canary === null || total === null || total === 0) return "inconclusive"
+  if (canary === 0) return "resolved"
+  if (canary === total) return "evaporated"
+  // Unreachable on a still table: a dropped clause returns everything and an
+  // applied one returns nothing. Reached when rows were written mid-probe.
+  return "inconclusive"
+}
+
+/**
+ * A 400 lands here as `unknown`: an instance that refuses an unknown column
+ * outright is a third behaviour, and the two names below would both be lies
+ * about it.
+ */
+export const classifyInvalidQuery = (matched: number | null, total: number | null): InvalidQueryVerdict => {
+  if (matched === null || total === null || total === 0) return "unknown"
+  if (matched === total) return "ignores"
+  if (matched === 0) return "returns_no_rows"
+  return "unknown"
+}
+
+/**
+ * What the manifest says about reading one table, folded across every tool
+ * that reads it, minus what the account already holds.
+ *
+ * Advice, not evidence: it answers "which role would you ask for", never
+ * "can you read this" — `probeTableRead` owns that. Three of the manifest's
+ * own properties are honoured here rather than in the caller, because getting
+ * any of them wrong turns advice into a wrong refusal:
+ *
+ *  - held `admin` satisfies everything. It bypasses ACLs outright and
+ *    therefore appears in almost no ACL row: `admin` is in the read list of
+ *    exactly one of the ten tables an operations pass looks at.
+ *  - `public` is ServiceNow's "no authentication required" marker, not a role
+ *    anyone can be granted, so it never appears in advice — and a primitive
+ *    that names it needs nothing, the way the manifest's own `minimumBundle`
+ *    already treats it.
+ *  - a primitive whose role list is EMPTY means ACL rows exist and name no
+ *    role, which any authenticated caller passes.
+ *
+ * Both of the last two would otherwise demand a role for a table that needs
+ * none: `sys_user` read folds to {public, snc_internal} on every one of its
+ * nineteen primitives, so a naive subtraction tells every connection on earth
+ * to go ask for snc_internal before it can read a user record.
+ */
+export const summarizeTableAccess = (manifest: unknown, table: string, held: string[]): TableAdvice => {
+  const primitives = Object.values(asRecord(asRecord(manifest)?.tools) ?? {})
+    .flatMap((tool) => asArray(asRecord(tool)?.primitives) ?? [])
+    .map((primitive) => asRecord(primitive))
+    .filter((primitive) => str(primitive?.table) === table && str(primitive?.operation) === "read")
+
+  const roles = primitives.map((primitive) => (asArray(primitive?.roles) ?? []).map(String))
+  const grantable = [...new Set(roles.flat().filter((role) => role !== "public"))].sort()
+  const owned = new Set(held)
+  const satisfied =
+    owned.has("admin") ||
+    roles.some((list) => list.length === 0 || list.includes("public")) ||
+    grantable.length === 0 ||
+    grantable.some((role) => owned.has(role))
+
+  return {
+    missingRoles: satisfied ? [] : grantable,
+    scriptAcls: primitives.reduce(
+      (worst, primitive) => Math.max(worst, typeof primitive?.scriptAcls === "number" ? primitive.scriptAcls : 0),
+      0,
+    ),
+  }
+}
+
+/** The manifest's own staleness signal, passed through to whoever renders its advice. */
+export const manifestStamp = (manifest: unknown): { validatedOn?: string; testedAt?: string } => ({
+  validatedOn: str(asRecord(manifest)?.validatedOn),
+  testedAt: str(asRecord(manifest)?.testedAt),
+})
+
+/** One bounded read whose answer is the `x-total-count` header, not the row. */
+const count = (client: ProbeClient, table: string, query: string): Promise<Probed> =>
+  answered(
+    client.get(`/api/now/table/${encodeURIComponent(table)}`, {
+      params: { ...(query === "" ? {} : { sysparm_query: query }), sysparm_limit: 1, sysparm_fields: "sys_id" },
+    }),
+  )
+
+/**
+ * A GET that resolves either way. Axios rejects on 4xx, and the shared
+ * client's interceptor rejects a 200 whose body carries a ServiceNow error as
+ * well; both attach the response, and a refusal is a finding here rather than
+ * an exception.
+ */
+const answered = (result: Promise<unknown>): Promise<Probed> =>
+  result
+    .then((response): Probed => ({ observed: observe(response) }))
+    .catch((error: unknown): Probed => {
+      const response = asRecord(error)?.response
+      return response ? { observed: observe(response) } : { failure: transportFailure(error) }
+    })
+
+/** An axios response as an `Observed`, so the classifiers above work unchanged. */
+const observe = (response: unknown): Observed => {
+  const record = asRecord(response)
+  const headers = asRecord(record?.headers)
+  const data = record?.data
+  return {
+    status: typeof record?.status === "number" ? record.status : 0,
+    contentType: str(headers?.["content-type"]),
+    body: (typeof data === "string" ? data : JSON.stringify(data ?? null)).slice(0, BODY_CAP),
+    totalCount: str(headers?.["x-total-count"]),
+  }
+}
+
+const since = (days: number) => `sys_created_on>=javascript:gs.daysAgoStart(${days})`
+
+/** The count a probe came back with, or null — never 0 — when there was none. */
+const counted = (probed: Probed): number | null => {
+  if ("failure" in probed) return null
+  const total = probed.observed.totalCount
+  return probed.observed.status === 200 && total !== undefined && /^\d+$/.test(total) ? Number(total) : null
+}
+
+/** What ServiceNow said about a refusal, when it said anything. */
+const said = (observed: Observed): string => {
+  const error = asRecord(parseJson(observed.body)?.error)
+  return str(error?.message) ?? str(error?.detail) ?? ""
 }
 
 // ---------------------------------------------------------------------------

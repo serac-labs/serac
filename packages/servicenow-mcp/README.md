@@ -81,6 +81,16 @@ It exits non-zero when something is wrong, prints nothing to stdout on the serve
 secret. `snow_diagnose_setup` returns the same report to the model — useful when the MCP client hides the
 server's stderr, which most of them do. That tool is stdio-only: the report describes the local process.
 
+Once the connection works the question changes — "it connects, so why is everything empty?" — and
+`snow_instance_visibility` answers that one instead. Per table: whether the read succeeds, the HTTP status
+if it does not, the row count behind it, and which role to ask for. Plus two things nothing else reports.
+Whether `javascript:` date functions resolve in an encoded query on this instance, tested with a single
+count whose clause cannot match anything: if that count comes back as the whole table, every "last 7 days"
+number you have is a whole-table number. And which invalid-query regime the instance runs — whether a
+condition on a column that does not exist is ignored, so the query answers for everything, or returns no
+rows, so it answers zero. It reads only the instance and never the machine, so unlike `snow_diagnose_setup`
+it runs on both transports.
+
 ## Use it as a library
 
 ESM only. The package exports named subpaths rather than one barrel, so importing blast-radius does not
@@ -105,10 +115,16 @@ Each tool is exported as a `*_def` / `*_exec` pair: the MCP tool definition and 
 | `/http`             | The streamable-HTTP transport, as a Hono app                  |
 | `/blast-radius`     | Impact-analysis tools, usable without the MCP layer           |
 | `/sn-roles`         | The ServiceNow roles each tool needs — see below              |
+| `/setup-doctor`     | The connection classifiers and instance probes, as functions  |
 | `/types`            | `ServiceNowContext`, `MCPToolDefinition`, …                   |
 | `/auth`             | OAuth + basic auth, token cache, authenticated Axios client   |
 | `/error-handler`    | Result envelopes and error classification                     |
 | `/enterprise-proxy` | Client for the licensed enterprise tool catalog               |
+
+`/setup-doctor` is the instance-reading half only. `runSetupDoctor` and `renderReport` walk environment
+variables and every `auth.json` on the machine, which on a server that serves more than one tenant answers
+about the server rather than about the asker — the same reason `snow_diagnose_setup` is stdio-only — so
+they are not published.
 
 ## A note on tenancy
 
