@@ -13,6 +13,7 @@
 import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
+import { resolveWorkflowVersion } from "../../shared/workflow-version.js"
 
 const LEGACY_WARNING =
   "⚠️ LEGACY: ServiceNow Workflow is deprecated. For new automations, consider Flow Designer (not programmable via Serac, but specs can be generated)."
@@ -36,11 +37,12 @@ export const toolDefinition: MCPToolDefinition = {
     properties: {
       workflow_sys_id: {
         type: "string",
-        description: "Workflow sys_id (from wf_workflow table)",
+        description:
+          "wf_workflow sys_id, or a wf_workflow_version sys_id. A workflow id is resolved to the published version.",
       },
       workflow_name: {
         type: "string",
-        description: "Workflow name (alternative to sys_id)",
+        description: "Workflow name (alternative to sys_id). Resolved to the published wf_workflow_version.",
       },
       table: {
         type: "string",
@@ -60,52 +62,9 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 
   try {
     const client = await getAuthenticatedClient(context)
-
-    // Resolve workflow if name provided
-    let resolvedWorkflowId = workflow_sys_id
-    let workflowInfo: any = null
-
-    if (!workflow_sys_id && workflow_name) {
-      const workflowQuery = await client.get("/api/now/table/wf_workflow", {
-        params: {
-          sysparm_query: `name=${workflow_name}`,
-          sysparm_fields: "sys_id,name,table,active",
-          sysparm_limit: 1,
-        },
-      })
-
-      if (!workflowQuery.data?.result?.[0]) {
-        throw new SnowFlowError(ErrorType.NOT_FOUND, `Workflow not found: ${workflow_name}`, { retryable: false })
-      }
-
-      workflowInfo = workflowQuery.data.result[0]
-      resolvedWorkflowId = workflowInfo.sys_id
-
-      // wf_context.workflow_version references wf_workflow_version, not wf_workflow
-      const versionQuery = await client.get("/api/now/table/wf_workflow_version", {
-        params: {
-          sysparm_query: `workflow=${resolvedWorkflowId}^published=true`,
-          sysparm_fields: "sys_id,published",
-          sysparm_limit: 1,
-        },
-      })
-
-      if (!versionQuery.data?.result?.[0]) {
-        throw new SnowFlowError(ErrorType.NOT_FOUND, `No published version for workflow: ${workflow_name}`, {
-          retryable: false,
-        })
-      }
-
-      resolvedWorkflowId = versionQuery.data.result[0].sys_id
-    } else if (workflow_sys_id) {
-      // Get workflow info for response
-      const workflowQuery = await client.get(`/api/now/table/wf_workflow/${workflow_sys_id}`, {
-        params: {
-          sysparm_fields: "sys_id,name,table,active",
-        },
-      })
-      workflowInfo = workflowQuery.data?.result
-    }
+    const input = workflow_sys_id || workflow_name
+    const resolved = input ? await resolveWorkflowVersion(client, input) : undefined
+    const versionSysId = resolved?.versionSysId
 
     // Verify record exists
     const recordCheck = await client.get(`/api/now/table/${table}/${record_sys_id}`, {
@@ -121,7 +80,7 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     // Start workflow by creating a workflow context
     // This is the standard way to programmatically start workflows
     const contextResponse = await client.post("/api/now/table/wf_context", {
-      workflow_version: resolvedWorkflowId,
+      workflow_version: versionSysId,
       table: table,
       id: record_sys_id,
       state: "executing",
@@ -132,8 +91,9 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
       return createSuccessResult(
         {
           started: true,
-          workflow_sys_id: resolvedWorkflowId,
-          workflow_name: workflowInfo?.name || "Unknown",
+          workflow_sys_id: resolved?.workflowSysId ?? versionSysId,
+          workflow_version_sys_id: versionSysId,
+          workflow_name: resolved?.name || "Unknown",
           record_sys_id,
           table,
           context_sys_id: contextResponse.data.result.sys_id,
@@ -153,8 +113,9 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
     return createSuccessResult(
       {
         started: false,
-        workflow_sys_id: resolvedWorkflowId,
-        workflow_name: workflowInfo?.name || "Unknown",
+        workflow_sys_id: resolved?.workflowSysId ?? versionSysId,
+        workflow_version_sys_id: versionSysId,
+        workflow_name: resolved?.name || "Unknown",
         record_sys_id,
         table,
         message:

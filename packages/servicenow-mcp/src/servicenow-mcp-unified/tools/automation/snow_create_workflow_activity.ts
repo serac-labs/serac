@@ -13,6 +13,7 @@
 import { type MCPToolDefinition, type ServiceNowContext, type ToolResult } from "../../shared/types.js"
 import { getAuthenticatedClient } from "../../shared/auth.js"
 import { createSuccessResult, createErrorResult, SnowFlowError, ErrorType } from "../../shared/error-handler.js"
+import { resolveWorkflowVersion } from "../../shared/workflow-version.js"
 
 const LEGACY_WARNING =
   "⚠️ LEGACY: Workflow activities are deprecated. Consider Flow Designer for new automations (ask Serac to generate a Flow Designer specification)."
@@ -36,7 +37,11 @@ export const toolDefinition: MCPToolDefinition = {
     type: "object",
     properties: {
       name: { type: "string", description: "Activity name" },
-      workflowName: { type: "string", description: "Parent workflow name or sys_id" },
+      workflowName: {
+        type: "string",
+        description:
+          "Parent workflow name or sys_id (wf_workflow or wf_workflow_version). Names and workflow ids resolve to the published version.",
+      },
       activityType: { type: "string", description: "Activity type (approval, script, notification, etc.)" },
       script: { type: "string", description: "Activity script (ES5 only!)" },
       condition: { type: "string", description: "Activity condition" },
@@ -52,30 +57,11 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
 
   try {
     const client = await getAuthenticatedClient(context)
-
-    // Resolve workflow ID if name provided
-    let resolvedWorkflowId = workflowName
-    if (!workflowName.match(/^[a-f0-9]{32}$/)) {
-      const workflowQuery = await client.get(
-        `/api/now/table/wf_workflow?sysparm_query=name=${workflowName}&sysparm_limit=1`,
-      )
-      if (!workflowQuery.data.result || workflowQuery.data.result.length === 0) {
-        throw new SnowFlowError(ErrorType.SERVICENOW_API_ERROR, `Workflow not found: ${workflowName}`)
-      }
-      const workflowSysId = workflowQuery.data.result[0].sys_id
-      // wf_activity.workflow_version references wf_workflow_version, not wf_workflow
-      const versionQuery = await client.get(
-        `/api/now/table/wf_workflow_version?sysparm_query=workflow=${workflowSysId}^published=true&sysparm_limit=1`,
-      )
-      if (!versionQuery.data.result || versionQuery.data.result.length === 0) {
-        throw new SnowFlowError(ErrorType.SERVICENOW_API_ERROR, `No published version for workflow: ${workflowName}`)
-      }
-      resolvedWorkflowId = versionQuery.data.result[0].sys_id
-    }
+    const resolved = await resolveWorkflowVersion(client, workflowName)
 
     const activityData: any = {
       name,
-      workflow_version: resolvedWorkflowId,
+      workflow_version: resolved.versionSysId,
       activity_definition: activityType,
       order,
       description,
@@ -98,7 +84,8 @@ export async function execute(args: any, context: ServiceNowContext): Promise<To
         workflow_activity: {
           sys_id: activity.sys_id,
           name: activity.name,
-          workflow_id: resolvedWorkflowId,
+          workflow_id: resolved.workflowSysId ?? resolved.versionSysId,
+          workflow_version_sys_id: resolved.versionSysId,
           activity_type: activityType,
           order,
         },

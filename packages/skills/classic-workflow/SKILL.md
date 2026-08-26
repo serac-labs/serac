@@ -56,21 +56,20 @@ await snow_query_table({
 
 ### The trap in the write tools
 
-`snow_create_workflow_activity` and `snow_start_workflow` both set the `workflow_version` field, and
-both resolve a name by looking it up in **`wf_workflow`** — which returns a workflow sys_id, not a
-version sys_id. `wf_activity.workflow_version` and `wf_context.workflow_version` reference
-`wf_workflow_version`. Passing a name therefore points the new row at a version that does not exist.
+`snow_create_workflow_activity` and `snow_start_workflow` both set the `workflow_version` field.
+`wf_activity.workflow_version` and `wf_context.workflow_version` reference `wf_workflow_version`, not
+`wf_workflow`. The tools resolve that for you:
 
-Both parameters skip the lookup when you give them a 32-character hex sys_id, and that is the way to use
-them: **resolve the version yourself and pass its sys_id.**
+- a **name** looks up `wf_workflow` and then the published version (`workflow=<id>^published=true`)
+- a **32-character hex** is `GET wf_workflow_version/<id>` first; if that is not a version, it is treated
+  as a workflow and the published version is resolved
+- no published version is an error — they will not write a dangling reference
+
+Pass a name or a `wf_workflow` sys_id. You do not need to look up the version yourself. A version
+sys_id still works (it is used as-is), but it is not a workaround.
 
 ```javascript
-const versions = await snow_query_table({ table: "wf_workflow_version",
-                                          query: "workflow=" + workflowSysId + "^published=true",
-                                          fields: "sys_id" })
-const versionSysId = versions.records[0].sys_id
-
-await snow_create_workflow_activity({ name: "Manager approval", workflowName: versionSysId,
+await snow_create_workflow_activity({ name: "Manager approval", workflowName: "Incident Approval",
                                       activityType: "approval", order: 100 })
 ```
 
@@ -117,14 +116,15 @@ one activity waiting on an approval nobody sees.
 ## Starting one
 
 ```javascript
-await snow_start_workflow({ workflow_sys_id: versionSysId, table: "sc_req_item", record_sys_id: ritm })
+await snow_start_workflow({ workflow_name: "Standard Change Approval", table: "sc_req_item",
+                            record_sys_id: ritm })
 ```
+
+`workflow_sys_id` accepts a `wf_workflow` id or a version id; both resolve as above. The result includes
+`workflow_version_sys_id` so the next call does not reuse a version as a workflow.
 
 It inserts a `wf_context` and returns. Workflows are asynchronous: a success here means the context was
 created, not that anything ran. Poll `wf_context.state` rather than assuming.
-
-Note the same version trap: pass a `wf_workflow_version` sys_id. If the call succeeds and nothing ever
-runs, an unresolvable `workflow_version` is the first thing to check.
 
 ## When to leave it alone
 
