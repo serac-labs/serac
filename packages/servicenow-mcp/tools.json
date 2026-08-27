@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T21:56:04.196Z",
+  "generatedAt": "2026-08-26T09:07:15.546Z",
   "count": 446,
   "groups": [
     {
@@ -26110,7 +26110,7 @@
               },
               "workflowName": {
                 "type": "string",
-                "description": "Parent workflow name or sys_id"
+                "description": "Parent workflow name or sys_id (wf_workflow or wf_workflow_version). Names and workflow ids resolve to the published version."
               },
               "activityType": {
                 "type": "string",
@@ -26162,11 +26162,11 @@
             "properties": {
               "workflow_sys_id": {
                 "type": "string",
-                "description": "Workflow sys_id (from wf_workflow table)"
+                "description": "wf_workflow sys_id, or a wf_workflow_version sys_id. A workflow id is resolved to the published version."
               },
               "workflow_name": {
                 "type": "string",
-                "description": "Workflow name (alternative to sys_id)"
+                "description": "Workflow name (alternative to sys_id). Resolved to the published wf_workflow_version."
               },
               "table": {
                 "type": "string",
